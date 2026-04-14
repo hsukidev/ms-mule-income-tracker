@@ -2,7 +2,7 @@ export interface Boss {
   id: string;
   name: string;
   family: string;
-  mesoValue: number;
+  crystalValue: number;
 }
 
 export interface BossFamily {

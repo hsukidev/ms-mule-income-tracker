@@ -1,7 +1,7 @@
 import { ActionIcon, Group, Text, useMantineColorScheme } from '@mantine/core';
 import { IconSun, IconMoon } from '@tabler/icons-react';
 
-export function Header({ totalIncome, muleCount }: { totalIncome: number; muleCount: number }) {
+export function Header({ totalWeeklyIncome, muleCount }: { totalWeeklyIncome: number; muleCount: number }) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
@@ -12,7 +12,7 @@ export function Header({ totalIncome, muleCount }: { totalIncome: number; muleCo
         <Text size="sm" c="dimmed">{muleCount} mule{muleCount !== 1 ? 's' : ''}</Text>
       </div>
       <Group>
-        <Text size="lg" fw={600}>Weekly: {totalIncome.toLocaleString('en-US')} mesos</Text>
+        <Text size="lg" fw={600}>Weekly: {totalWeeklyIncome.toLocaleString('en-US')} mesos</Text>
         <ActionIcon
           variant="outline"
           onClick={toggleColorScheme}

@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Paper } from '@mantine/core';
 import type { Mule } from '../types';
-import { calculateMuleIncome } from '../data/bosses';
+import { calculatePotentialIncome } from '../data/bosses';
 import { formatMeso } from '../utils/meso';
 
 const COLORS = [
@@ -29,7 +29,7 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
     .filter((m) => m.selectedBosses.length > 0)
     .map((m, i) => ({
       name: m.name || 'Unnamed Mule',
-      value: calculateMuleIncome(m.selectedBosses),
+      value: calculatePotentialIncome(m.selectedBosses),
       muleId: m.id,
       fill: COLORS[i % COLORS.length],
     }));

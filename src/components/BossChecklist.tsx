@@ -87,7 +87,7 @@ function BossFamilyGroup({
             <Radio
               key={boss.id}
               value={boss.id}
-              label={`${boss.name} (${formatMeso(boss.mesoValue)})`}
+              label={`${boss.name} (${formatMeso(boss.crystalValue)})`}
               size="sm"
             />
           ))}

@@ -15,7 +15,7 @@ import {
 import { useMantineColorScheme } from '@mantine/core';
 import { IconTrash, IconChevronDown, IconChevronUp, IconGripVertical } from '@tabler/icons-react';
 import type { Mule } from '../types';
-import { calculateMuleIncome, bosses } from '../data/bosses';
+import { calculatePotentialIncome, bosses } from '../data/bosses';
 import { formatMeso } from '../utils/meso';
 import { BossChecklist } from './BossChecklist';
 
@@ -31,7 +31,7 @@ interface MuleCardProps {
 export function MuleCard({ mule, expanded, onExpandChange, onUpdate, onDelete, dragHandleProps }: MuleCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { colorScheme } = useMantineColorScheme();
-  const income = calculateMuleIncome(mule.selectedBosses);
+  const potentialIncome = calculatePotentialIncome(mule.selectedBosses);
 
   const selectedBossNames = mule.selectedBosses
     .map((id) => bosses.find((b) => b.id === id)?.name)
@@ -60,7 +60,7 @@ export function MuleCard({ mule, expanded, onExpandChange, onUpdate, onDelete, d
                 <Badge variant="outline" size="sm">Lv. {mule.level}</Badge>
               )}
               <Text size="sm" fw={700} c={colorScheme === 'dark' ? 'yellow' : 'orange'}>
-                {formatMeso(income)}/week
+                {formatMeso(potentialIncome)}/week
               </Text>
             </Group>
           </div>
@@ -109,7 +109,7 @@ export function MuleCard({ mule, expanded, onExpandChange, onUpdate, onDelete, d
             </Group>
 
             <Text size="sm" fw={600}>
-              Bosses ({selectedBossNames.length} selected — {formatMeso(income)}/week)
+              Bosses ({selectedBossNames.length} selected — {formatMeso(potentialIncome)}/week)
             </Text>
 
             <BossChecklist
