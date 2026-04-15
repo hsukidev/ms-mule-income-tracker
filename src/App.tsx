@@ -16,7 +16,7 @@ import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor 
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { IconPlus } from '@tabler/icons-react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useMules } from './hooks/useMules';
 import { calculatePotentialIncome } from './data/bosses';
 import { formatMeso } from './utils/meso';
@@ -47,7 +47,6 @@ function AppContent() {
   const [abbreviated, setAbbreviated] = useState(true);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 
   const totalWeeklyIncome = mules.reduce(
@@ -116,7 +115,6 @@ function AppContent() {
           </Group>
 
           <div
-            ref={gridRef}
             style={{
               border: isDragging ? '1px dotted var(--mantine-color-dimmed)' : '1px dotted transparent',
               borderRadius: 'var(--mantine-radius-sm)',
