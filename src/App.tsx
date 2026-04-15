@@ -16,7 +16,7 @@ import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor 
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { IconPlus } from '@tabler/icons-react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { DragBoundary } from './components/DragBoundary';
 import { useMules } from './hooks/useMules';
 import { calculatePotentialIncome } from './data/bosses';
@@ -33,7 +33,6 @@ function AppContent() {
   const [abbreviated, setAbbreviated] = useState(true);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 
   const totalWeeklyIncome = mules.reduce(
@@ -111,18 +110,17 @@ function AppContent() {
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
               <DragBoundary isDragging={isDragging}>
                 <SimpleGrid
-                  ref={gridRef}
                   cols={{ xl: 4, lg: 3, md: 2, sm: 1 }}
                   spacing="sm"
                 >
-                {mules.map((mule) => (
-                  <SortableMuleCharacterCard
-                    key={mule.id}
-                    mule={mule}
-                    onClick={() => setSelectedMuleId(mule.id)}
-                  />
-                ))}
-              </SimpleGrid>
+                  {mules.map((mule) => (
+                    <SortableMuleCharacterCard
+                      key={mule.id}
+                      mule={mule}
+                      onClick={() => setSelectedMuleId(mule.id)}
+                    />
+                  ))}
+                </SimpleGrid>
               </DragBoundary>
             </SortableContext>
           </DndContext>
