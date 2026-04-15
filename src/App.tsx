@@ -3,7 +3,6 @@ import '@mantine/charts/styles.css';
 
 import {
   MantineProvider,
-  createTheme,
   Container,
   Stack,
   Button,
@@ -24,23 +23,7 @@ import { SortableMuleCharacterCard } from './components/SortableMuleCharacterCar
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { Header } from './components/Header';
 import { IncomePieChart } from './components/IncomePieChart';
-
-const theme = createTheme({
-  colors: {
-    dark: [
-      '#C1C1C1',
-      '#A6A6A6',
-      '#8B8B8B',
-      '#777777',
-      '#5C5C5C',
-      '#404040',
-      '#303030',
-      '#252525',
-      '#1D1D1D',
-      '#161616',
-    ],
-  },
-});
+import { darkCharcoalTheme } from './theme/theme';
 
 function AppContent() {
   const { mules, addMule, updateMule, deleteMule, reorderMules } = useMules();
@@ -161,7 +144,7 @@ function AppContent() {
 
 function App() {
   return (
-    <MantineProvider theme={theme} defaultColorScheme="dark">
+    <MantineProvider theme={darkCharcoalTheme} defaultColorScheme="dark">
       <AppContent />
     </MantineProvider>
   );
