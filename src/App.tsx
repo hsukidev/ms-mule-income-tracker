@@ -14,8 +14,10 @@ import {
 } from '@mantine/core';
 import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { IconPlus } from '@tabler/icons-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { DragBoundary } from './components/DragBoundary';
 import { useMules } from './hooks/useMules';
 import { calculatePotentialIncome } from './data/bosses';
 import { formatMeso } from './utils/meso';
@@ -30,6 +32,8 @@ function AppContent() {
   const { mules, addMule, updateMule, deleteMule, reorderMules } = useMules();
   const [abbreviated, setAbbreviated] = useState(true);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 
   const totalWeeklyIncome = mules.reduce(
@@ -37,8 +41,13 @@ function AppContent() {
     0,
   );
 
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setIsDragging(false);
       const { active, over } = event;
       if (over && active.id !== over.id) {
         const oldIndex = mules.findIndex((m) => m.id === active.id);
@@ -94,14 +103,18 @@ function AppContent() {
 
           <DndContext
             collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             sensors={sensors}
+            modifiers={[restrictToParentElement]}
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
-              <SimpleGrid
-                cols={{ xl: 4, lg: 3, md: 2, sm: 1 }}
-                spacing="sm"
-              >
+              <DragBoundary isDragging={isDragging}>
+                <SimpleGrid
+                  ref={gridRef}
+                  cols={{ xl: 4, lg: 3, md: 2, sm: 1 }}
+                  spacing="sm"
+                >
                 {mules.map((mule) => (
                   <SortableMuleCharacterCard
                     key={mule.id}
@@ -110,6 +123,7 @@ function AppContent() {
                   />
                 ))}
               </SimpleGrid>
+              </DragBoundary>
             </SortableContext>
           </DndContext>
         </Stack>
