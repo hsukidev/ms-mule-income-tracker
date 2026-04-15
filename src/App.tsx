@@ -16,6 +16,7 @@ import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { IconPlus } from '@tabler/icons-react';
 import { useState, useCallback } from 'react';
+import { DragBoundary } from './components/DragBoundary';
 import { useMules } from './hooks/useMules';
 import { calculatePotentialIncome } from './data/bosses';
 import { formatMeso } from './utils/meso';
@@ -97,22 +98,15 @@ function AppContent() {
             </Button>
           </Group>
 
-          <div
-            style={{
-              border: isDragging ? '1px dotted var(--mantine-color-dimmed)' : '1px dotted transparent',
-              borderRadius: 'var(--mantine-radius-sm)',
-              padding: isDragging ? 'var(--mantine-spacing-xs)' : undefined,
-              transition: 'border-color 200ms ease',
-            }}
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            sensors={sensors}
+            modifiers={[restrictToParentElement]}
           >
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              sensors={sensors}
-              modifiers={[restrictToParentElement]}
-            >
-              <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
+              <DragBoundary isDragging={isDragging}>
                 <SimpleGrid
                   cols={{ xl: 4, lg: 3, md: 2, sm: 1 }}
                   spacing="sm"
@@ -125,9 +119,9 @@ function AppContent() {
                     />
                   ))}
                 </SimpleGrid>
-              </SortableContext>
-            </DndContext>
-          </div>
+              </DragBoundary>
+            </SortableContext>
+          </DndContext>
         </Stack>
       </Container>
 
