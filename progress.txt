@@ -93,3 +93,12 @@
   - SimpleGrid from Mantine handles responsive columns via cols prop object: { xl: 4, lg: 3, md: 2, sm: 1 }
   - When removing old components, verify no remaining imports reference them
 ---
+
+## [2026-04-14] - US-009
+- Updated Header component to use formatMeso instead of raw toLocaleString
+- Added `abbreviated` prop to Header so it obeys the toggle state
+- Updated App.tsx to pass `abbreviated` to Header
+- **Learnings for future iterations:**
+  - Header now consistently uses formatMeso(weeklyIncome, abbreviated) 
+  - The abbreviated toggle in the paper section also applies to the header now
+---
