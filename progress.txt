@@ -14,3 +14,11 @@
   - formatMeso takes (value, abbreviated) where abbreviated defaults to true
   - Build passes but warns about chunk size (>500kb) - can ignore for now
 ---
+
+## [2026-04-14] - US-002
+- Added tests for calculatePotentialIncome in src/data/__tests__/bosses.test.ts
+- Tests cover: empty array, single boss, multiple bosses, unknown boss ID
+- All 11 tests passing (7 formatMeso + 4 calculatePotentialIncome)
+- **Learnings for future iterations:**
+  - calculatePotentialIncome uses getBossById internally, unknown IDs return 0 value
+---
