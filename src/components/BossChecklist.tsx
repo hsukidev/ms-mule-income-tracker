@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { TextInput, Radio, Stack, Group, Text } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
-import { bossFamilies, getBossById } from '../data/bosses';
+import { bossFamilies } from '../data/bosses';
 import { formatMeso } from '../utils/meso';
+import { selectBoss } from '../utils/selectBoss';
 
 interface BossChecklistProps {
   selectedBosses: string[];
@@ -18,18 +19,7 @@ export function BossChecklist({ selectedBosses, onChange }: BossChecklistProps) 
   );
 
   function handleSelect(family: string, bossId: string) {
-    const existingId = selectedBosses.find((id) => {
-      const boss = getBossById(id);
-      return boss?.family === family;
-    });
-
-    if (existingId === bossId) {
-      onChange(selectedBosses.filter((id) => id !== bossId));
-    } else if (existingId) {
-      onChange(selectedBosses.filter((id) => id !== existingId).concat(bossId));
-    } else {
-      onChange([...selectedBosses, bossId]);
-    }
+    onChange(selectBoss(selectedBosses, bossId, family));
   }
 
   return (
