@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# MS Mule Income Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal tool for MapleStory GMS Reboot players to track potential weekly meso income from boss crystal sales across multiple mule characters.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Mule character cards** — Portrait cards (2:3 ratio) with avatar, name, level, class, and potential weekly income displayed in a responsive grid
+- **Boss crystal reference data** — 75+ hardcoded boss crystal values for GMS Reboot, grouped into families with mutual exclusivity (one difficulty per family per week)
+- **Side drawer editor** — Click a card to open a right-side drawer with inline editing for name, level, class, boss selection, and delete with confirmation
+- **Searchable boss checklist** — Checkboxes enforce one-per-family selection with auto-replace; uncheck to deselect
+- **Drag-and-drop reorder** — Free grid reordering (left, right, up, down) with click vs drag distinction via distance threshold
+- **Income pie chart** — Donut chart showing per-mule income breakdown; click a slice to open that mule's drawer
+- **Meso formatting** — Toggle between abbreviated (18B, 529M) and full (18,000,000,000) display
+- **Dark/light mode** — Toggle in header, persists via Mantine color scheme
+- **Auto-save** — All changes persist to localStorage immediately
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** + **TypeScript** + **Vite**
+- **Mantine UI v9** — Components, theming, charts
+- **Recharts** — Pie chart
+- **dnd-kit** — Sortable grid with `PointerSensor`
+- **Vitest** — Testing
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build & Test
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build    # TypeScript check + production build
+npm run test     # Vitest
+npm run lint     # ESLint
 ```
+
+## Architecture
+
+| Path | Purpose |
+|------|---------|
+| `src/data/bosses.ts` | Boss reference data, families, `calculatePotentialIncome` |
+| `src/types/index.ts` | `Mule`, `Boss`, `BossFamily` type definitions |
+| `src/utils/meso.ts` | `formatMeso` — abbreviated/full meso formatting |
+| `src/utils/selectBoss.ts` | `selectBoss` — one-per-family selection logic |
+| `src/hooks/useMules.ts` | Mule CRUD + reorder + localStorage persistence |
+| `src/components/MuleCharacterCard.tsx` | Portrait card (200x300px, 2:3 ratio) |
+| `src/components/SortableMuleCharacterCard.tsx` | dnd-kit sortable wrapper |
+| `src/components/MuleDetailDrawer.tsx` | Right-side drawer for editing |
+| `src/components/BossCheckboxList.tsx` | Searchable boss checklist |
+| `src/components/Header.tsx` | App header with income display + dark mode toggle |
+| `src/components/IncomePieChart.tsx` | Recharts pie chart |
+
+## Domain Language
+
+See [UBIQUITOUS_LANGUAGE.md](./UBIQUITOUS_LANGUAGE.md) for the canonical domain terms used throughout the codebase (Mule, Boss Family, Crystal Value, Potential Income, Entry Slot, etc.).
+
+## Future Enhancements
+
+- Party size division (Crystal Value / Party Size, 1–6 players)
+- Mule Preset templates for fast-creating multiple mules
+- Mule Class dropdown (currently free text)
+- Daily boss reset tracking
+- Sort/filter by name, level, class, or income
+- Persistent manual reorder order
+- Custom or class-based avatar images
