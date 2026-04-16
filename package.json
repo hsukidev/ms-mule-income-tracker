@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "sandcastle": "pnpm exec tsx .sandcastle/main.ts",
-    "git:prune": "git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D"
+    "git:prune": "rm -rf ./sandcastle/logs && rm -rf ./sandcastle/worktrees && git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D"
   },
   "dependencies": {
     "@ai-hero/sandcastle": "^0.4.5",
