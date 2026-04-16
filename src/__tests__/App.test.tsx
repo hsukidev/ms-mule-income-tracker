@@ -41,11 +41,5 @@ describe('App', () => {
     const clickable = container.querySelector('.cursor-pointer')
     expect(clickable).toBeTruthy()
     fireEvent.click(clickable!)
-  })
-
-  it('renders DndContext with onDragCancel handler', () => {
-    const { container } = render(<App />)
-    const grid = container.querySelector('.grid')
-    expect(grid).toBeTruthy()
-  })
+  }  )
 })

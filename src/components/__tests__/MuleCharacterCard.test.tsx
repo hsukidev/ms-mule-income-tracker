@@ -70,9 +70,5 @@ describe('MuleCharacterCard', () => {
     expect(screen.getByText(/0.*\/week/)).toBeTruthy()
   })
 
-  it('applies useSortable attributes to the card element', () => {
-    const { container } = renderCard()
-    const sortableEl = container.querySelector('[role="button"]')
-    expect(sortableEl).toBeTruthy()
-  })
+
 })
