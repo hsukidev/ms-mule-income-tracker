@@ -1,47 +1,45 @@
-import { Card, Text, Badge, Group } from '@mantine/core';
-import type { Mule } from '../types';
-import { getMuleIncome } from '../modules/income';
-import placeholderPng from '../assets/placeholder.png';
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import type { Mule } from '../types'
+import { getMuleIncome } from '../modules/income'
+import placeholderPng from '../assets/placeholder.png'
 
 interface MuleCharacterCardProps {
-  mule: Mule;
-  onClick: () => void;
+  mule: Mule
+  onClick: () => void
 }
 
 export function MuleCharacterCard({ mule, onClick }: MuleCharacterCardProps) {
-  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, true);
+  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, true)
 
   return (
     <Card
-      shadow="sm"
-      radius="md"
-      withBorder
-      style={{ width: 200, height: 300, cursor: 'pointer', padding: 0, overflow: 'hidden' }}
+      className="shadow-sm rounded-lg border w-[200px] h-[300px] cursor-pointer overflow-hidden p-0"
       onClick={onClick}
     >
-      <div style={{ height: '60%', overflow: 'hidden' }}>
+      <div className="h-[60%] overflow-hidden">
         <img
           src={placeholderPng}
           alt={mule.name || 'Mule avatar'}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          className="w-full h-full object-cover"
         />
       </div>
-      <div style={{ padding: 'var(--mantine-spacing-sm)', display: 'flex', flexDirection: 'column', gap: 'var(--mantine-spacing-xs)', height: '40%' }}>
-        <Text fw={600} size="sm" truncate>
+      <div className="p-2 flex flex-col gap-1 h-[40%]">
+        <p className="text-sm font-semibold truncate">
           {mule.name || 'Unnamed Mule'}
-        </Text>
-        <Group gap="xs" wrap="nowrap">
+        </p>
+        <div className="flex gap-1 flex-nowrap">
           {mule.level > 0 && (
-            <Badge variant="outline" size="sm">Lv. {mule.level}</Badge>
+            <Badge variant="outline" className="text-xs">Lv. {mule.level}</Badge>
           )}
           {mule.muleClass && (
-            <Badge variant="light" size="sm">{mule.muleClass}</Badge>
+            <Badge variant="secondary" className="text-xs">{mule.muleClass}</Badge>
           )}
-        </Group>
-        <Text size="sm" fw={700} c="yellow">
+        </div>
+        <p className="text-sm font-bold text-yellow-500">
           {potentialIncome}/week
-        </Text>
+        </p>
       </div>
     </Card>
-  );
+  )
 }
