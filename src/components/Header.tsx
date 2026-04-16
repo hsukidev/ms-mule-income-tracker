@@ -1,32 +1,36 @@
-import { ActionIcon, Group, Text, useMantineColorScheme } from '@mantine/core';
-import { IconSun, IconMoon } from '@tabler/icons-react';
+import { IconSun, IconMoon } from '@tabler/icons-react'
+import { useTheme } from '@/context/ThemeProvider'
+import { Button } from '@/components/ui/button'
 
 interface HeaderProps {
-  totalWeeklyIncome: string;
-  muleCount: number;
+  totalWeeklyIncome: string
+  muleCount: number
 }
 
 export function Header({ totalWeeklyIncome, muleCount }: HeaderProps) {
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
+  const { theme, toggleTheme } = useTheme()
 
   return (
-    <Group justify="space-between" py="md" px="lg">
+    <div className="flex items-center justify-between py-3 px-6">
       <div>
-        <Text size="xl" fw={700}>Mule Crystal Tracker</Text>
-        <Text size="sm" c="dimmed">{muleCount} mule{muleCount !== 1 ? 's' : ''}</Text>
+        <h1 className="text-xl font-bold">Mule Crystal Tracker</h1>
+        <p className="text-sm text-muted-foreground">
+          {muleCount} mule{muleCount !== 1 ? 's' : ''}
+        </p>
       </div>
-      <Group>
-        <Text size="lg" fw={600}>Weekly: {totalWeeklyIncome} mesos</Text>
-        <ActionIcon
+      <div className="flex items-center gap-2">
+        <p className="text-lg font-semibold">
+          Weekly: {totalWeeklyIncome} mesos
+        </p>
+        <Button
           variant="outline"
-          onClick={toggleColorScheme}
+          size="icon"
+          onClick={toggleTheme}
           aria-label="Toggle color scheme"
-          size="lg"
         >
-          {dark ? <IconSun size={18} /> : <IconMoon size={18} />}
-        </ActionIcon>
-      </Group>
-    </Group>
-  );
+          {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+        </Button>
+      </div>
+    </div>
+  )
 }
