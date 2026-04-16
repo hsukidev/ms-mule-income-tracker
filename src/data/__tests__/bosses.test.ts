@@ -22,7 +22,7 @@ describe('calculatePotentialIncome', () => {
 })
 
 describe('getBossById', () => {
-  it('returns boss by id using O(1) Map lookup', () => {
+  it('returns boss by id', () => {
     const boss = getBossById('hard-lucid')
     expect(boss).toBeDefined()
     expect(boss!.name).toBe('Hard Lucid')
