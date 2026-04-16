@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { computeMuleIncome, computeTotalIncome, getMuleIncome, getTotalIncome } from '../income'
-import type { IncomeDisplay, IncomeResult } from '../income'
 
 describe('computeMuleIncome', () => {
   it('returns correct raw and formatted for a mule with selected bosses (abbreviated)', () => {
@@ -37,12 +36,6 @@ describe('computeMuleIncome', () => {
     const result = computeMuleIncome(['hard-lucid'], false)
     expect(result.raw).toBe(504000000)
     expect(result.formatted).toBe('504,000,000')
-  })
-
-  it('returns IncomeDisplay type with raw and formatted', () => {
-    const result: IncomeDisplay = computeMuleIncome(['hard-lucid'], true)
-    expect(typeof result.raw).toBe('number')
-    expect(typeof result.formatted).toBe('string')
   })
 
   it('handles unknown boss ids gracefully', () => {
@@ -110,13 +103,13 @@ describe('computeTotalIncome', () => {
 
 describe('backward compatibility: getMuleIncome / getTotalIncome', () => {
   it('getMuleIncome still works', () => {
-    const result: IncomeResult = getMuleIncome(['hard-lucid'], true)
+    const result = getMuleIncome(['hard-lucid'], true)
     expect(result.raw).toBe(504000000)
     expect(result.formatted).toBe('504M')
   })
 
   it('getTotalIncome still works', () => {
-    const result: IncomeResult = getTotalIncome([{ selectedBosses: ['hard-lucid'] }], true)
+    const result = getTotalIncome([{ selectedBosses: ['hard-lucid'] }], true)
     expect(result.raw).toBe(504000000)
     expect(result.formatted).toBe('504M')
   })
