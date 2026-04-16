@@ -2,7 +2,7 @@ import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor 
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { Plus } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import { ThemeProvider } from './context/ThemeProvider';
 import { useMules } from './hooks/useMules';
@@ -24,6 +24,12 @@ function AppContent() {
   const [abbreviated, setAbbreviated] = useState(true);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (selectedMuleId && !mules.find((m) => m.id === selectedMuleId)) {
+      setSelectedMuleId(null);
+    }
+  }, [mules, selectedMuleId]);
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 
   const { formatted: totalWeeklyIncome } = getTotalIncome(mules, abbreviated);
