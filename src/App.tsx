@@ -18,6 +18,7 @@ import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { IconPlus } from '@tabler/icons-react';
 import { useState, useCallback } from 'react';
 
+import { ThemeProvider } from './context/ThemeProvider';
 import { useMules } from './hooks/useMules';
 import { getTotalIncome } from './modules/income';
 import { SortableMuleCharacterCard } from './components/SortableMuleCharacterCard';
@@ -157,9 +158,11 @@ function AppContent() {
 
 function App() {
   return (
-    <MantineProvider theme={darkCharcoalTheme} defaultColorScheme="dark">
-      <AppContent />
-    </MantineProvider>
+    <ThemeProvider defaultTheme="dark">
+      <MantineProvider theme={darkCharcoalTheme} defaultColorScheme="dark">
+        <AppContent />
+      </MantineProvider>
+    </ThemeProvider>
   );
 }
 
