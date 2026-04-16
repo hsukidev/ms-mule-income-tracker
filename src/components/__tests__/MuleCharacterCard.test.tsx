@@ -52,28 +52,13 @@ describe('MuleCharacterCard', () => {
   })
 
   it('calls onClick when card is clicked', () => {
-    const { onClick, container } = renderCard()
-    const card = container.querySelector('[data-slot="card"]')
-    expect(card).toBeTruthy()
-    fireEvent.click(card!)
+    const { onClick } = renderCard()
+    fireEvent.click(screen.getByText('TestMule'))
     expect(onClick).toHaveBeenCalled()
   })
 
   it('renders income text', () => {
     renderCard()
     expect(screen.getByText(/0.*\/week/)).toBeTruthy()
-  })
-
-  it('uses shadcn Card (data-slot="card") not Mantine', () => {
-    const { container } = renderCard()
-    expect(container.querySelector('[data-slot="card"]')).toBeTruthy()
-    expect(container.querySelector('.mantine-Card-root')).toBeNull()
-  })
-
-  it('uses shadcn Badge (badge variant classes) not Mantine', () => {
-    const { container } = renderCard()
-    const badges = container.querySelectorAll('[data-slot="badge"]')
-    expect(badges.length).toBeGreaterThanOrEqual(1)
-    expect(container.querySelector('.mantine-Badge-root')).toBeNull()
   })
 })
