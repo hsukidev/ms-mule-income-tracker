@@ -5,7 +5,8 @@ import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { ThemeProvider } from './context/ThemeProvider';
-import { IncomeProvider, useTotalIncome, useFormatPreference } from './modules/income-context';
+import { IncomeProvider } from './modules/IncomeProvider';
+import { useTotalIncome, useFormatPreference } from './modules/income-hooks';
 import { useMules } from './hooks/useMules';
 import { MuleCharacterCard } from './components/MuleCharacterCard';
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';

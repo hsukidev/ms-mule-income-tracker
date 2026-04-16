@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toggleBoss, getFamilies } from '../data/bossSelection';
-import { useFormatPreference } from '../modules/income-context';
+import { useFormatPreference } from '../modules/income-hooks';
 
 interface BossCheckboxListProps {
   selectedBosses: string[];

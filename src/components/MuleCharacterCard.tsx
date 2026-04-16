@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Mule } from '../types'
-import { useMuleIncome } from '../modules/income-context'
+import { useMuleIncome } from '../modules/income-hooks'
 import placeholderPng from '../assets/placeholder.png'
 
 interface MuleCharacterCardProps {

@@ -11,7 +11,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import type { Mule } from '../types';
-import { useMuleIncome } from '../modules/income-context';
+import { useMuleIncome } from '../modules/income-hooks';
 import { BossCheckboxList } from './BossCheckboxList';
 import placeholderPng from '../assets/placeholder.png';
 
@@ -25,7 +25,7 @@ interface MuleDetailDrawerProps {
 
 export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: MuleDetailDrawerProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const muleIncome = useMuleIncome(mule ?? { selectedBosses: [] });
+  const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
 
   function handleClose() {
     setConfirmDelete(false);
@@ -39,8 +39,6 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   }
 
   if (!mule) return null;
-
-  const { formatted: potentialIncome } = muleIncome;
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>

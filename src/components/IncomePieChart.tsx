@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
 import { computeMuleIncome } from '../modules/income';
-import { useFormatPreference } from '../modules/income-context';
+import { useFormatPreference } from '../modules/income-hooks';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 
 const COLORS = [

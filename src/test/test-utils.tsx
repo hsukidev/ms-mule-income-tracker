@@ -1,7 +1,7 @@
 import { type ReactElement } from 'react'
 import { render as rtlRender, type RenderOptions } from '@testing-library/react'
 import { ThemeProvider } from '@/context/ThemeProvider'
-import { IncomeProvider } from '@/modules/income-context'
+import { IncomeProvider } from '@/modules/IncomeProvider'
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   defaultTheme?: 'dark' | 'light'

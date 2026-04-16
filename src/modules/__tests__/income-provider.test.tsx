@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import {
   IncomeProvider,
+} from '../IncomeProvider'
+import {
   useFormatPreference,
   useMuleIncome,
   useTotalIncome,
-} from '../income-context'
+} from '../income-hooks'
 
 function FormatPreferenceConsumer() {
   const { abbreviated, toggle } = useFormatPreference()
@@ -82,24 +84,6 @@ describe('useMuleIncome', () => {
     })
     expect(result.current.raw).toBe(0)
     expect(result.current.formatted).toBe('0')
-  })
-
-  it('updates formatted when context toggles abbreviated', () => {
-    const mule = { selectedBosses: ['hard-lucid'] }
-
-    function Wrapper({ children }: { children: React.ReactNode }) {
-      return <IncomeProvider>{children}</IncomeProvider>
-    }
-
-    const { result } = renderHook(() => useMuleIncome(mule), { wrapper: Wrapper })
-
-    expect(result.current.formatted).toBe('504M')
-
-    const { result: prefResult } = renderHook(() => useFormatPreference(), { wrapper: Wrapper })
-    act(() => { prefResult.current.toggle() })
-
-    // After toggle, the hook should recompute (but since they're separate renders,
-    // we test the toggle behavior in the IncomeProvider test above)
   })
 })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeMuleIncome, computeTotalIncome, getMuleIncome, getTotalIncome } from '../income'
+import { computeMuleIncome, computeTotalIncome } from '../income'
 
 describe('computeMuleIncome', () => {
   it('returns correct raw and formatted for a mule with selected bosses (abbreviated)', () => {
@@ -96,20 +96,6 @@ describe('computeTotalIncome', () => {
       { selectedBosses: [] },
     ]
     const result = computeTotalIncome(mules, true)
-    expect(result.raw).toBe(504000000)
-    expect(result.formatted).toBe('504M')
-  })
-})
-
-describe('backward compatibility: getMuleIncome / getTotalIncome', () => {
-  it('getMuleIncome still works', () => {
-    const result = getMuleIncome(['hard-lucid'], true)
-    expect(result.raw).toBe(504000000)
-    expect(result.formatted).toBe('504M')
-  })
-
-  it('getTotalIncome still works', () => {
-    const result = getTotalIncome([{ selectedBosses: ['hard-lucid'] }], true)
     expect(result.raw).toBe(504000000)
     expect(result.formatted).toBe('504M')
   })
