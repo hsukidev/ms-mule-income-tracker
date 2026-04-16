@@ -1,7 +1,7 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { Paper } from '@mantine/core';
+import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
 import { getMuleIncome } from '../modules/income';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 
 const COLORS = [
   '#228be6', '#40c057', '#fab005', '#fd7e14', '#be4bdb',
@@ -40,17 +40,25 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
 
   if (data.length === 0) {
     return (
-      <Paper p="xl" radius="md" withBorder>
-        <div style={{ textAlign: 'center', color: 'var(--mantine-color-dimmed)' }}>
+      <div className="rounded-lg border bg-card p-6">
+        <div className="text-center text-muted-foreground">
           Add mules and select bosses to see the income breakdown
         </div>
-      </Paper>
+      </div>
     );
   }
 
+  const chartConfig: ChartConfig = {};
+  data.forEach((item, i) => {
+    chartConfig[item.muleId] = {
+      label: item.name,
+      color: COLORS[i % COLORS.length],
+    };
+  });
+
   return (
-    <Paper p="md" radius="md" withBorder>
-      <ResponsiveContainer width="100%" height={300}>
+    <div className="rounded-lg border bg-card p-4">
+      <ChartContainer config={chartConfig} className="h-[300px] w-full">
         <PieChart>
           <Pie
             data={data}
@@ -72,11 +80,9 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
               <Cell key={`cell-${index}`} fill={entry.fill} />
             ))}
           </Pie>
-          <Tooltip
-            formatter={(_value, _name, entry) => entry?.payload?.formatted ?? String(_value)}
-          />
+          <ChartTooltip content={<ChartTooltipContent />} />
         </PieChart>
-      </ResponsiveContainer>
-    </Paper>
+      </ChartContainer>
+    </div>
   );
 }
