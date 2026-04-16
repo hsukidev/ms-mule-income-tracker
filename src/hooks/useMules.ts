@@ -39,26 +39,24 @@ function loadMules(): Mule[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      const parsed: unknown[] = JSON.parse(data);
+      const parsed: unknown = JSON.parse(data);
       if (!Array.isArray(parsed)) {
         return lastKnownGood.current ?? [];
       }
       const validated = parsed.map(validateMule);
       const validMules = validated.filter((m): m is Mule => m !== null);
-      const needsSave =
-        validMules.length !== parsed.length ||
-        parsed.some((raw, i) => {
-          const v = validated[i];
-          if (v === null) return true;
-          const rawBosses = (raw as Record<string, unknown>)
-            .selectedBosses;
-          return (
-            Array.isArray(rawBosses) &&
-            v.selectedBosses.length !== rawBosses.length
-          );
-        });
+      const hasInvalidEntries = validMules.length !== parsed.length;
+      const hasPrunedBosses = parsed.some((raw, i) => {
+        const valid = validated[i];
+        if (valid === null) return false;
+        const rawBosses = (raw as Record<string, unknown>).selectedBosses;
+        return (
+          Array.isArray(rawBosses) &&
+          valid.selectedBosses.length !== rawBosses.length
+        );
+      });
       lastKnownGood.current = validMules;
-      if (needsSave) {
+      if (hasInvalidEntries || hasPrunedBosses) {
         saveMules(validMules);
       }
       return validMules;
@@ -71,7 +69,7 @@ function loadMules(): Mule[] {
   return [];
 }
 
-export function saveMules(mules: Mule[]): void {
+function saveMules(mules: Mule[]): void {
   const serialized = JSON.stringify(mules);
   if (writeFailedOnce) return;
   try {

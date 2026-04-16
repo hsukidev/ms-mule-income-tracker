@@ -162,7 +162,7 @@ describe('useMules', () => {
     })
 
     it('falls back to sessionStorage on QuotaExceededError', () => {
-      const mockSetItem = vi.fn((key: string, _value: string) => {
+      const mockSetItem = vi.fn((key: string) => {
         if (key === 'maplestory-mule-tracker') {
           const error = new DOMException(
             'QuotaExceededError',
