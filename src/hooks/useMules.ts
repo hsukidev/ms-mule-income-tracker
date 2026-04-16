@@ -31,7 +31,21 @@ export function useMules() {
   const lastKnownGood = useRef<Mule[] | null>(null);
   const writeFailedRef = useRef(false);
 
-  const loadMules = useCallback((): Mule[] => {
+  const saveMules = useCallback((mules: Mule[]): void => {
+    const serialized = JSON.stringify(mules);
+    try {
+      localStorage.setItem(STORAGE_KEY, serialized);
+      writeFailedRef.current = false;
+    } catch {
+      try {
+        sessionStorage.setItem(FALLBACK_KEY, serialized);
+      } catch {
+        writeFailedRef.current = true;
+      }
+    }
+  }, []);
+
+  function loadMules(): Mule[] {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       if (data) {
@@ -63,21 +77,7 @@ export function useMules() {
       }
     }
     return [];
-  }, []);
-
-  const saveMules = useCallback((mules: Mule[]): void => {
-    const serialized = JSON.stringify(mules);
-    try {
-      localStorage.setItem(STORAGE_KEY, serialized);
-      writeFailedRef.current = false;
-    } catch {
-      try {
-        sessionStorage.setItem(FALLBACK_KEY, serialized);
-      } catch {
-        writeFailedRef.current = true;
-      }
-    }
-  }, []);
+  }
 
   const [mules, setMules] = useState<Mule[]>(loadMules);
 
