@@ -27,9 +27,7 @@ function AppContent() {
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const selectedMule = selectedMuleId
-    ? mules.find((m) => m.id === selectedMuleId) ?? null
-    : null;
+  const selectedMule = mules.find((m) => m.id === selectedMuleId) ?? null;
 
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 

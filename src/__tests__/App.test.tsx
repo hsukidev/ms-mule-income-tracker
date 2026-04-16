@@ -36,7 +36,7 @@ describe('App', () => {
     const clickable = container.querySelector('.cursor-pointer')
     expect(clickable).toBeTruthy()
     fireEvent.click(clickable!)
-  }  )
+  })
 
   describe('selectedMuleId self-healing', () => {
     it('clears selectedMuleId when the selected mule is deleted', async () => {

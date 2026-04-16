@@ -130,7 +130,6 @@ describe('useMules', () => {
       expect(result.current.mules[0].selectedBosses).toEqual(['hard-lucid'])
     })
 
-
   })
 
   describe('saveMules', () => {

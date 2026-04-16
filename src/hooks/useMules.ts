@@ -53,7 +53,6 @@ export function useMules() {
         return validMules;
       }
     } catch {
-      // fall through
     }
     return [];
   }
