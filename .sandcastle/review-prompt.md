@@ -6,7 +6,7 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 ## Branch diff
 
-!`git diff main...{{BRANCH}}`
+!`git diff main...{{BRANCH}} -- . ':!package-lock.json'`
 
 ## Commits on this branch
 
