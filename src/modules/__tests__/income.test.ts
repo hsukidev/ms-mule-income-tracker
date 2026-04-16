@@ -78,4 +78,5 @@ describe('getTotalIncome', () => {
     expect(result.raw).toBe(504000000)
     expect(result.formatted).toBe('504M')
   })
+
 })
