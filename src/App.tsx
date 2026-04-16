@@ -26,7 +26,6 @@ import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { Header } from './components/Header';
 import { IncomePieChart } from './components/IncomePieChart';
 
-
 const dragBoundaryStyle: React.CSSProperties = {
   borderStyle: 'dotted',
   borderWidth: '2px',
