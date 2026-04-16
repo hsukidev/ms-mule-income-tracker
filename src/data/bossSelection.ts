@@ -15,22 +15,16 @@ export interface FamilyView {
 
 export function validateBossSelection(ids: string[]): string[] {
   const valid = ids.filter((id) => ALL_BOSS_IDS.has(id));
-  const seenFamilies = new Map<string, string>();
+  const familyWinners = new Map<string, string>();
   for (const id of valid) {
-    const boss = getBossById(id);
-    if (!boss) continue;
-    const existing = seenFamilies.get(boss.family);
-    if (!existing) {
-      seenFamilies.set(boss.family, id);
-    } else {
-      const existingBoss = getBossById(existing)!;
-      if (boss.crystalValue > existingBoss.crystalValue) {
-        seenFamilies.set(boss.family, id);
-      }
+    const boss = getBossById(id)!;
+    const currentWinner = familyWinners.get(boss.family);
+    if (!currentWinner || boss.crystalValue > getBossById(currentWinner)!.crystalValue) {
+      familyWinners.set(boss.family, id);
     }
   }
-  const familySet = new Set(seenFamilies.values());
-  return valid.filter((id) => familySet.has(id));
+  const winnerIds = new Set(familyWinners.values());
+  return valid.filter((id) => winnerIds.has(id));
 }
 
 export function toggleBoss(selectedIds: string[], bossId: string): string[] {
