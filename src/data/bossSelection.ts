@@ -27,8 +27,7 @@ export function toggleBoss(selectedIds: string[], bossId: string): string[] {
 
 const DIFFICULTY_PREFIX = /^(Extreme|Chaos|Hard|Normal|Easy) /;
 
-export function getFamilies(selectedIds: string[], search?: string, options?: { abbreviated?: boolean }): FamilyView[] {
-  const abbreviated = options?.abbreviated ?? true;
+export function getFamilies(selectedIds: string[], search: string, { abbreviated = true }: { abbreviated?: boolean } = {}): FamilyView[] {
   const selectedSet = new Set(selectedIds);
 
   const families: FamilyView[] = bossFamilies.map((bf) => ({

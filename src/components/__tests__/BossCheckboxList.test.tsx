@@ -72,11 +72,6 @@ describe('BossCheckboxList', () => {
     expect(screen.getByText('Lucid')).toBeTruthy()
   })
 
-  it('uses formatMeso for crystal value labels', () => {
-    renderList()
-    expect(screen.getByText(/504M/)).toBeTruthy()
-  })
-
   it('shows abbreviated values by default', () => {
     renderList()
     expect(screen.getByText(/504M/)).toBeTruthy()

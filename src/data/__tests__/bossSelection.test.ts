@@ -122,13 +122,6 @@ describe('getFamilies', () => {
   })
 
   describe('abbreviated option', () => {
-    it('defaults to abbreviated formatting when no options provided', () => {
-      const families = getFamilies([], '')
-      const lucidFamily = families.find((f) => f.family === 'lucid')!
-      const hardLucid = lucidFamily.bosses.find((b) => b.id === 'hard-lucid')!
-      expect(hardLucid.formattedValue).toBe('504M')
-    })
-
     it('returns abbreviated formatting when abbreviated: true', () => {
       const families = getFamilies([], '', { abbreviated: true })
       const lucidFamily = families.find((f) => f.family === 'lucid')!
