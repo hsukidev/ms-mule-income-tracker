@@ -34,7 +34,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
   if (!mule) return null;
 
-  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses);
+  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, true);
 
   return (
     <Drawer

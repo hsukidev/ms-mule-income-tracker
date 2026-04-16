@@ -9,7 +9,7 @@ interface MuleCharacterCardProps {
 }
 
 export function MuleCharacterCard({ mule, onClick }: MuleCharacterCardProps) {
-  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses);
+  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, true);
 
   return (
     <Card

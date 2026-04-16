@@ -28,14 +28,14 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
   const data: ChartDataItem[] = mules
     .filter((m) => m.selectedBosses.length > 0)
     .map((m, i) => {
-      const { raw, formatted } = getMuleIncome(m.selectedBosses, abbreviated)
+      const { raw, formatted } = getMuleIncome(m.selectedBosses, abbreviated);
       return {
         name: m.name || 'Unnamed Mule',
         value: raw,
         formatted,
         muleId: m.id,
         fill: COLORS[i % COLORS.length],
-      }
+      };
     });
 
   if (data.length === 0) {
@@ -73,10 +73,7 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
             ))}
           </Pie>
           <Tooltip
-            formatter={(_value, _name, entry) => {
-              const item = data.find((d) => d.muleId === entry?.payload?.muleId)
-              return item?.formatted ?? String(_value)
-            }}
+            formatter={(_value, _name, entry) => entry?.payload?.formatted ?? String(_value)}
           />
         </PieChart>
       </ResponsiveContainer>

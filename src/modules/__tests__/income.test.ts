@@ -38,12 +38,6 @@ describe('getMuleIncome', () => {
     expect(result.raw).toBe(0)
     expect(result.formatted).toBe('0')
   })
-
-  it('defaults abbreviated to true', () => {
-    const withExplicit = getMuleIncome(['hard-lucid'], true)
-    const withDefault = getMuleIncome(['hard-lucid'])
-    expect(withDefault).toEqual(withExplicit)
-  })
 })
 
 describe('getTotalIncome', () => {
@@ -85,10 +79,4 @@ describe('getTotalIncome', () => {
     expect(result.formatted).toBe('504M')
   })
 
-  it('defaults abbreviated to true', () => {
-    const mules = [{ selectedBosses: ['hard-lucid'] }]
-    const withExplicit = getTotalIncome(mules, true)
-    const withDefault = getTotalIncome(mules)
-    expect(withDefault).toEqual(withExplicit)
-  })
 })
