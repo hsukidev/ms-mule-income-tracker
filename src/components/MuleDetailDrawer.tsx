@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { IconTrash } from '@tabler/icons-react';
+import { Trash2 } from 'lucide-react';
 import type { Mule } from '../types';
 import { getMuleIncome } from '../modules/income';
 import { BossCheckboxList } from './BossCheckboxList';
@@ -125,7 +125,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                 className="text-red-500 hover:text-red-600"
                 onClick={() => setConfirmDelete(true)}
               >
-                <IconTrash className="mr-1 h-3.5 w-3.5" />
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
                 Delete
               </Button>
             </div>

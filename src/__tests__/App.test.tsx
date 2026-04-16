@@ -1,6 +1,9 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@/test/test-utils'
 import App from '../App'
+import appSrc from '../App?raw'
+import headerSrc from '../components/Header?raw'
+import drawerSrc from '../components/MuleDetailDrawer?raw'
 
 describe('App', () => {
   beforeEach(() => {
@@ -8,9 +11,11 @@ describe('App', () => {
     document.documentElement.classList.remove('dark')
   })
 
-  it('renders without Mantine provider attributes', () => {
-    const { container } = render(<App />)
-    expect(container.querySelector('[data-mantine-color-scheme]')).toBeNull()
+  it('source files have no @tabler/icons-react imports', () => {
+    const sources = [appSrc, headerSrc, drawerSrc]
+    for (const src of sources) {
+      expect(src).not.toContain('@tabler/icons-react')
+    }
   })
 
   it('renders Add Mule button', () => {
