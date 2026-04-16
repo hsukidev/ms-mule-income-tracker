@@ -11,13 +11,14 @@ A personal tool for MapleStory GMS Reboot players to track potential weekly meso
 - **Drag-and-drop reorder** — Free grid reordering (left, right, up, down) with click vs drag distinction via distance threshold
 - **Income pie chart** — Donut chart showing per-mule income breakdown; click a slice to open that mule's drawer
 - **Meso formatting** — Toggle between abbreviated (18B, 529M) and full (18,000,000,000) display
-- **Dark/light mode** — Toggle in header, persists via Mantine color scheme
+- **Dark/light mode** — Toggle in header, persists via localStorage and Tailwind class strategy
 - **Auto-save** — All changes persist to localStorage immediately
 
 ## Tech Stack
 
 - **React 19** + **TypeScript** + **Vite**
-- **Mantine UI v9** — Components, theming, charts
+- **shadcn/ui** — Components and theming (Tailwind CSS + Radix primitives)
+- **Tailwind CSS v4** — Utility-first styling
 - **Recharts** — Pie chart
 - **dnd-kit** — Sortable grid with `PointerSensor`
 - **Vitest** — Testing

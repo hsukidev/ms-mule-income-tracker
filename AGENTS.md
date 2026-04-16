@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project Overview
-MS Mule Income Tracker - a React + TypeScript app using Mantine UI, dnd-kit for drag-and-drop, and Recharts for pie charts.
+MS Mule Income Tracker - a React + TypeScript app using shadcn/ui + Tailwind CSS, dnd-kit for drag-and-drop, and Recharts for pie charts.
 
 ## Build & Test Commands
 - `npm run build` - TypeScript check + Vite production build
@@ -25,7 +25,7 @@ MS Mule Income Tracker - a React + TypeScript app using Mantine UI, dnd-kit for 
 - Boss selection uses `toggleBoss()` from `src/data/bossSelection.ts` - preserves array order on family replacement (uses map, not filter+concat)
 - MuleCharacterCard takes `onClick` prop (no drag handle; full card is drag surface via Sortable wrapper)
 - DndContext uses PointerSensor with distance:5 activation, rectSortingStrategy, no axis restriction
-- SimpleGrid with responsive cols: { xl: 4, lg: 3, md: 2, sm: 1 }
+- Tailwind CSS Grid with responsive cols: xl:4, lg:3, md:2, sm:2
 - selectedMuleId state drives drawer open/close (not expanded)
 - Header receives `abbreviated` prop to stay in sync with income display toggle
 - Test files live in `__tests__` directories next to the source they test
