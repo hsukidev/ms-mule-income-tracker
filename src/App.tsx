@@ -62,17 +62,13 @@ function AppContent() {
       <div className="container mx-auto max-w-5xl py-4 px-4">
         <div className="flex flex-col gap-4">
           <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Weekly Income</p>
-                <p
-                  className="text-xl font-bold cursor-pointer"
-                  onClick={() => setAbbreviated(!abbreviated)}
-                >
-                  {totalWeeklyIncome} mesos
-                </p>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground">Total Weekly Income</p>
+            <p
+              className="text-xl font-bold cursor-pointer"
+              onClick={() => setAbbreviated(!abbreviated)}
+            >
+              {totalWeeklyIncome} mesos
+            </p>
             <IncomePieChart
               mules={mules}
               abbreviated={abbreviated}
