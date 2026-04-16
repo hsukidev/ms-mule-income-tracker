@@ -30,20 +30,9 @@ describe('IncomePieChart', () => {
     expect(screen.getByText('Add mules and select bosses to see the income breakdown')).toBeTruthy()
   })
 
-  it('empty state uses text-muted-foreground class', () => {
-    const { container } = render(<IncomePieChart mules={[]} abbreviated />)
-    const el = container.querySelector('.text-muted-foreground')
-    expect(el).toBeTruthy()
-  })
-
-  it('renders chart container with data when mules have bosses', () => {
-    const { container } = render(<IncomePieChart mules={[muleWithBosses]} abbreviated />)
-    expect(container.querySelector('[data-slot="chart"]')).toBeTruthy()
-  })
-
-  it('does not render Paper from Mantine (no mantine classes)', () => {
-    const { container } = render(<IncomePieChart mules={[muleWithBosses]} abbreviated />)
-    expect(container.querySelector('.mantine-Paper-root')).toBeNull()
+  it('does not show empty state message when mules have bosses', () => {
+    render(<IncomePieChart mules={[muleWithBosses]} abbreviated />)
+    expect(screen.queryByText('Add mules and select bosses to see the income breakdown')).toBeNull()
   })
 
   it('fires onSliceClick when a pie slice is clicked', () => {

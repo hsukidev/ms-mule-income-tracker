@@ -48,13 +48,12 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
     );
   }
 
-  const chartConfig: ChartConfig = {};
-  data.forEach((item, i) => {
-    chartConfig[item.muleId] = {
-      label: item.name,
-      color: COLORS[i % COLORS.length],
-    };
-  });
+  const chartConfig: ChartConfig = Object.fromEntries(
+    data.map((item) => [
+      item.muleId,
+      { label: item.name, color: item.fill },
+    ])
+  );
 
   return (
     <div className="rounded-lg border bg-card p-4">
@@ -70,9 +69,8 @@ export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieCh
             innerRadius={60}
             paddingAngle={2}
             onClick={(_event, index) => {
-              if (onSliceClick && data[index]) {
-                onSliceClick(data[index].muleId);
-              }
+              const muleId = data[index]?.muleId;
+              if (muleId != null) onSliceClick?.(muleId);
             }}
             style={{ cursor: onSliceClick ? 'pointer' : 'default' }}
           >
