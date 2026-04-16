@@ -3,10 +3,11 @@ import { render, screen, fireEvent } from '@/test/test-utils'
 import { BossCheckboxList } from '../BossCheckboxList'
 
 function renderList(selectedBosses: string[] = [], onChange = vi.fn(), abbreviated?: boolean) {
-  const props: React.ComponentProps<typeof BossCheckboxList> = { selectedBosses, onChange }
-  if (abbreviated !== undefined) props.abbreviated = abbreviated
   return {
-    ...render(<BossCheckboxList {...props} />),
+    ...render(
+      <BossCheckboxList selectedBosses={selectedBosses} onChange={onChange} />,
+      abbreviated !== undefined ? { defaultAbbreviated: abbreviated } : undefined,
+    ),
     onChange,
   }
 }

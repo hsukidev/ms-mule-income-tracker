@@ -4,15 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toggleBoss, getFamilies } from '../data/bossSelection';
+import { useFormatPreference } from '../modules/income-context';
 
 interface BossCheckboxListProps {
   selectedBosses: string[];
   onChange: (selectedBosses: string[]) => void;
-  abbreviated?: boolean;
 }
 
-export function BossCheckboxList({ selectedBosses, onChange, abbreviated = true }: BossCheckboxListProps) {
+export function BossCheckboxList({ selectedBosses, onChange }: BossCheckboxListProps) {
   const [search, setSearch] = useState('');
+  const { abbreviated } = useFormatPreference();
 
   const families = getFamilies(selectedBosses, search, { abbreviated });
 

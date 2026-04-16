@@ -1,6 +1,7 @@
 import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
-import { getMuleIncome } from '../modules/income';
+import { computeMuleIncome } from '../modules/income';
+import { useFormatPreference } from '../modules/income-context';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 
 const COLORS = [
@@ -20,15 +21,15 @@ interface ChartDataItem {
 
 interface IncomePieChartProps {
   mules: Mule[];
-  abbreviated: boolean;
   onSliceClick?: (muleId: string) => void;
 }
 
-export function IncomePieChart({ mules, abbreviated, onSliceClick }: IncomePieChartProps) {
+export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
+  const { abbreviated } = useFormatPreference();
   const data: ChartDataItem[] = mules
     .filter((m) => m.selectedBosses.length > 0)
     .map((m, i) => {
-      const { raw, formatted } = getMuleIncome(m.selectedBosses, abbreviated);
+      const { raw, formatted } = computeMuleIncome(m.selectedBosses, abbreviated);
       return {
         name: m.name || 'Unnamed Mule',
         value: raw,

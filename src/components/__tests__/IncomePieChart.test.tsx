@@ -21,24 +21,24 @@ const muleNoBosses: Mule = {
 
 describe('IncomePieChart', () => {
   it('shows empty state when no mules have bosses selected', () => {
-    render(<IncomePieChart mules={[muleNoBosses]} abbreviated />)
+    render(<IncomePieChart mules={[muleNoBosses]} />)
     expect(screen.getByText('Add mules and select bosses to see the income breakdown')).toBeTruthy()
   })
 
   it('shows empty state when mules array is empty', () => {
-    render(<IncomePieChart mules={[]} abbreviated />)
+    render(<IncomePieChart mules={[]} />)
     expect(screen.getByText('Add mules and select bosses to see the income breakdown')).toBeTruthy()
   })
 
   it('does not show empty state message when mules have bosses', () => {
-    render(<IncomePieChart mules={[muleWithBosses]} abbreviated />)
+    render(<IncomePieChart mules={[muleWithBosses]} />)
     expect(screen.queryByText('Add mules and select bosses to see the income breakdown')).toBeNull()
   })
 
   it('fires onSliceClick when a pie slice is clicked', () => {
     const onSliceClick = vi.fn()
     const { container } = render(
-      <IncomePieChart mules={[muleWithBosses]} abbreviated onSliceClick={onSliceClick} />
+      <IncomePieChart mules={[muleWithBosses]} onSliceClick={onSliceClick} />
     )
     const paths = container.querySelectorAll('.recharts-pie-sector')
     if (paths.length > 0) {

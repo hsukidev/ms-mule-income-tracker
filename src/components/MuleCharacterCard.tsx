@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Mule } from '../types'
-import { getMuleIncome } from '../modules/income'
+import { useMuleIncome } from '../modules/income-context'
 import placeholderPng from '../assets/placeholder.png'
 
 interface MuleCharacterCardProps {
@@ -15,7 +15,7 @@ export function MuleCharacterCard({ mule, onClick }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: mule.id })
 
-  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, true)
+  const { formatted: potentialIncome } = useMuleIncome(mule)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),

@@ -5,8 +5,8 @@ import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { ThemeProvider } from './context/ThemeProvider';
+import { IncomeProvider, useTotalIncome, useFormatPreference } from './modules/income-context';
 import { useMules } from './hooks/useMules';
-import { getTotalIncome } from './modules/income';
 import { MuleCharacterCard } from './components/MuleCharacterCard';
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { Header } from './components/Header';
@@ -21,12 +21,11 @@ const dragBoundaryStyle: React.CSSProperties = {
 
 function AppContent() {
   const { mules, addMule, updateMule, deleteMule, reorderMules } = useMules();
-  const [abbreviated, setAbbreviated] = useState(true);
+  const { formatted: totalWeeklyIncome } = useTotalIncome(mules);
+  const { toggle: toggleAbbreviated } = useFormatPreference();
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
-
-  const { formatted: totalWeeklyIncome } = getTotalIncome(mules, abbreviated);
 
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
@@ -69,13 +68,12 @@ function AppContent() {
             <p className="text-sm text-muted-foreground">Total Weekly Income</p>
             <p
               className="text-xl font-bold cursor-pointer"
-              onClick={() => setAbbreviated(!abbreviated)}
+              onClick={toggleAbbreviated}
             >
               {totalWeeklyIncome} mesos
             </p>
             <IncomePieChart
               mules={mules}
-              abbreviated={abbreviated}
               onSliceClick={handleSliceClick}
             />
           </div>
@@ -118,7 +116,6 @@ function AppContent() {
         onClose={() => setSelectedMuleId(null)}
         onUpdate={updateMule}
         onDelete={deleteMule}
-        abbreviated={abbreviated}
       />
     </div>
   );
@@ -127,7 +124,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark">
-      <AppContent />
+      <IncomeProvider>
+        <AppContent />
+      </IncomeProvider>
     </ThemeProvider>
   );
 }

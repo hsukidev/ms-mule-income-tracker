@@ -11,7 +11,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import type { Mule } from '../types';
-import { getMuleIncome } from '../modules/income';
+import { useMuleIncome } from '../modules/income-context';
 import { BossCheckboxList } from './BossCheckboxList';
 import placeholderPng from '../assets/placeholder.png';
 
@@ -21,11 +21,11 @@ interface MuleDetailDrawerProps {
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Omit<Mule, 'id'>>) => void;
   onDelete: (id: string) => void;
-  abbreviated?: boolean;
 }
 
-export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete, abbreviated = true }: MuleDetailDrawerProps) {
+export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: MuleDetailDrawerProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const muleIncome = useMuleIncome(mule ?? { selectedBosses: [] });
 
   function handleClose() {
     setConfirmDelete(false);
@@ -40,7 +40,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete, abbr
 
   if (!mule) return null;
 
-  const { formatted: potentialIncome } = getMuleIncome(mule.selectedBosses, abbreviated);
+  const { formatted: potentialIncome } = muleIncome;
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
@@ -102,7 +102,6 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete, abbr
           <BossCheckboxList
             selectedBosses={mule.selectedBosses}
             onChange={(selectedBosses) => onUpdate(mule.id, { selectedBosses })}
-            abbreviated={abbreviated}
           />
 
           {confirmDelete ? (
