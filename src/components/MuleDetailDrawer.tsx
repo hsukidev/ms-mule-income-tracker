@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { Trash2 } from 'lucide-react';
 import type { Mule } from '../types';
 import { getMuleIncome } from '../modules/income';
 import { BossCheckboxList } from './BossCheckboxList';
