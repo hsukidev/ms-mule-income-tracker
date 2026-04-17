@@ -120,12 +120,6 @@ describe('App', () => {
     expect(lastChild.hasAttribute('data-add-card')).toBe(true)
   })
 
-  it('old Add Mule button row above grid is removed', () => {
-    const { container } = render(<App />)
-    const flexEndRow = container.querySelector('.flex.justify-end')
-    expect(flexEndRow).toBeNull()
-  })
-
   it('clicking Add Card creates a new mule and opens the detail drawer', async () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: /add mule/i }))

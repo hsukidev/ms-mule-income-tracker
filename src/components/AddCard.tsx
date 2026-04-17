@@ -16,13 +16,10 @@ export function AddCard({ onClick }: AddCardProps) {
       role="button"
       tabIndex={0}
       style={{
-        width: '200px',
-        height: '300px',
-        borderStyle: 'dashed',
         opacity: isHovered ? HOVER_OPACITY : 1,
         transition: 'opacity 150ms',
       }}
-      className="rounded-lg border-2 border-border bg-muted flex flex-col items-center justify-center gap-2 cursor-pointer"
+      className="w-[200px] h-[300px] border-dashed rounded-lg border-2 border-border bg-muted flex flex-col items-center justify-center gap-2 cursor-pointer"
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
