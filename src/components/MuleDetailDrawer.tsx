@@ -77,7 +77,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
           />
 
           <div className="relative p-8 flex items-start gap-5 border-b border-border/50">
-            <div className="relative h-[132px] w-[92px] rounded-lg overflow-hidden border border-border/60 bg-surface-raised shrink-0">
+            <div className="relative h-[132px] w-[132px] rounded-lg overflow-hidden border border-border/60 bg-surface-raised shrink-0">
               <img
                 src={placeholderPng}
                 alt={mule.name || 'Mule avatar'}
