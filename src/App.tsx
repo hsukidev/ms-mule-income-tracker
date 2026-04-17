@@ -64,7 +64,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background">
       <Header totalWeeklyIncome={totalWeeklyIncome} muleCount={mules.length} />
-      <div className="container mx-auto max-w-5xl py-4 px-4">
+      <div className="container mx-auto max-w-7xl py-4 px-4">
         <div className="flex flex-col gap-4">
           <div className="rounded-lg border bg-card p-4">
             <p className="text-sm text-muted-foreground">Total Weekly Income</p>
@@ -97,7 +97,7 @@ function AppContent() {
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
               <div style={isDragging ? dragBoundaryStyle : {}}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
                   {mules.map((mule) => (
                     <MuleCharacterCard
                       key={mule.id}
