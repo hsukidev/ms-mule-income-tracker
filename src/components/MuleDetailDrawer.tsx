@@ -90,8 +90,8 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
               />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-                Mule Dossier
+              <p className="invisible">
+              ""
               </p>
               <h2 className="mt-1 font-display text-2xl font-bold leading-tight truncate">
                 {mule.name || <span className="text-muted-foreground italic font-normal">Unnamed Mule</span>}

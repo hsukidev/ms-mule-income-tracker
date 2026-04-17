@@ -112,11 +112,8 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
       </ChartContainer>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-sans text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
-          {hoveredName ? 'Mule' : 'Total'}
-        </span>
         <span className="font-display text-base font-semibold max-w-[140px] truncate mt-0.5">
-          {hoveredName ?? 'Ledger'}
+          {hoveredName ?? 'Total'}
         </span>
         <span className="font-mono-nums text-sm text-[var(--accent-numeric)] mt-1">
           {hoveredValue ?? (abbreviated

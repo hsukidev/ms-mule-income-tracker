@@ -102,11 +102,6 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
               Lv.{mule.level}
             </span>
           )}
-          {!hasBosses && (
-            <span className="absolute top-2 left-1/2 -translate-x-1/2 font-sans text-[9px] uppercase tracking-[0.22em] px-1.5 py-0.5 rounded-full border border-border/60 bg-background/70 text-muted-foreground">
-              unbound
-            </span>
-          )}
         </div>
 
         <div

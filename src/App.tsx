@@ -107,11 +107,6 @@ function AppContent() {
               <div className="flex flex-wrap gap-6 pt-2 border-t border-border/40 mt-2">
                 <Stat label="Mules" value={String(mules.length)} />
                 <Stat label="Active" value={String(activeMuleCount)} accent="secondary" />
-                <Stat
-                  label="Avg / Mule"
-                  value={activeMuleCount > 0 ? 'see chart' : '\u2014'}
-                  muted
-                />
               </div>
             </div>
           </div>

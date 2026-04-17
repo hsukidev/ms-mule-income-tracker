@@ -38,15 +38,6 @@ export function Header({ totalWeeklyIncome }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-5">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="font-sans text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
-              This Week
-            </span>
-            <span className="font-mono-nums text-sm text-[var(--accent-numeric)] mt-0.5">
-              {totalWeeklyIncome}
-              <span className="text-muted-foreground/70 ml-1 font-sans normal-case tracking-normal">mesos</span>
-            </span>
-          </div>
           <Button
             variant="ghost"
             size="icon"
