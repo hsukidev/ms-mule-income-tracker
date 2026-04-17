@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 
-const HOVER_OPACITY = 0.85
-
 interface AddCardProps {
   onClick: () => void
 }
@@ -15,11 +13,16 @@ export function AddCard({ onClick }: AddCardProps) {
       data-add-card
       role="button"
       tabIndex={0}
-      style={{
-        opacity: isHovered ? HOVER_OPACITY : 1,
-        transition: 'opacity 150ms',
-      }}
-      className="w-[200px] h-[300px] border-dashed rounded-lg border-2 border-border bg-muted flex flex-col items-center justify-center gap-2 cursor-pointer"
+      aria-label="Add mule"
+      className={[
+        'relative w-[200px] h-[300px] rounded-xl cursor-pointer',
+        'border-2 border-dashed',
+        'flex flex-col items-center justify-center gap-3',
+        'transition-[border-color,background-color,box-shadow] duration-200',
+        isHovered
+          ? 'border-[var(--maple)] bg-[color-mix(in_oklch,var(--maple)_6%,transparent)] shadow-[0_0_40px_-10px_var(--maple)]'
+          : 'border-border/60 bg-transparent',
+      ].join(' ')}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -30,8 +33,27 @@ export function AddCard({ onClick }: AddCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Plus size={24} className="text-muted-foreground" />
-      <span className="text-sm text-muted-foreground font-medium">Add Mule</span>
+      <div
+        aria-hidden
+        className={[
+          'flex items-center justify-center h-14 w-14 rounded-full transition-all duration-200',
+          isHovered
+            ? 'bg-[color-mix(in_oklch,var(--maple)_15%,transparent)] text-[var(--maple)]'
+            : 'bg-muted/40 text-muted-foreground',
+        ].join(' ')}
+      >
+        <Plus size={22} strokeWidth={2} />
+      </div>
+      <div className="flex flex-col items-center gap-1">
+        <span
+          className={[
+            'font-display text-lg font-semibold transition-colors',
+            isHovered ? 'text-foreground' : 'text-muted-foreground',
+          ].join(' ')}
+        >
+          Add Mule
+        </span>
+      </div>
     </div>
   )
 }

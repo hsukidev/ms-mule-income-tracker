@@ -14,9 +14,11 @@ import { Header } from './components/Header';
 import { IncomePieChart } from './components/IncomePieChart';
 
 const dragBoundaryStyle: React.CSSProperties = {
-  borderStyle: 'dotted',
-  borderWidth: '2px',
-  borderColor: 'hsl(var(--border))',
+  borderStyle: 'dashed',
+  borderWidth: '1.5px',
+  borderColor: 'color-mix(in oklch, var(--maple) 45%, transparent)',
+  borderRadius: '1rem',
+  padding: '0.75rem',
 };
 
 function AppContent() {
@@ -27,6 +29,7 @@ function AppContent() {
   const [isDragging, setIsDragging] = useState(false);
 
   const selectedMule = mules.find((m) => m.id === selectedMuleId) ?? null;
+  const activeMuleCount = mules.filter((m) => m.selectedBosses.length > 0).length;
 
   const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
 
@@ -61,22 +64,94 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Header totalWeeklyIncome={totalWeeklyIncome} muleCount={mules.length} />
-      <div className="container mx-auto max-w-7xl py-4 px-4">
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Total Weekly Income</p>
-            <p
-              className="text-xl font-bold cursor-pointer"
-              onClick={toggleAbbreviated}
-            >
-              {totalWeeklyIncome} mesos
-            </p>
+
+      <main className="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">
+          <div className="lg:col-span-8 relative overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-8 shadow-[0_0_80px_-28px_var(--maple)]">
+            <div
+              aria-hidden
+              className="absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-40 pointer-events-none"
+              style={{ background: 'radial-gradient(closest-side, var(--maple), transparent)' }}
+            />
+            <div
+              aria-hidden
+              className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full blur-3xl opacity-25 pointer-events-none"
+              style={{ background: 'radial-gradient(closest-side, var(--leaf), transparent)' }}
+            />
+            <div className="relative flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="h-1.5 w-10 rounded-full"
+                  style={{ background: 'linear-gradient(90deg, var(--maple), var(--gold))' }}
+                />
+                <p className="font-sans text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+                  Total Weekly Income
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleAbbreviated}
+                className="group flex items-baseline gap-3 text-left cursor-pointer"
+                aria-label="Toggle abbreviated meso format"
+              >
+                <span className="font-mono-nums text-5xl sm:text-6xl font-medium text-[var(--gold)] leading-none group-hover:drop-shadow-[0_0_12px_var(--maple)] transition-[filter] duration-200">
+                  {totalWeeklyIncome}
+                </span>
+                <span className="font-display italic text-2xl text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                  mesos
+                </span>
+              </button>
+              <div className="flex flex-wrap gap-6 pt-2 border-t border-border/40 mt-2">
+                <Stat label="Mules" value={String(mules.length)} />
+                <Stat label="Active" value={String(activeMuleCount)} accent="leaf" />
+                <Stat
+                  label="Avg / Mule"
+                  value={activeMuleCount > 0 ? 'see chart' : '\u2014'}
+                  muted
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 relative rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-4 overflow-hidden">
+            <div className="flex items-center justify-between px-2 pb-2">
+              <p className="font-display italic text-lg text-foreground/90">
+                Income Split
+              </p>
+              <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                by mule
+              </span>
+            </div>
             <IncomePieChart
               mules={mules}
               onSliceClick={handleSliceClick}
             />
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-end justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden
+                className="h-px w-8"
+                style={{ background: 'linear-gradient(90deg, transparent, var(--leaf))' }}
+              />
+              <h2 className="font-display text-2xl font-bold tracking-tight">
+                Roster
+              </h2>
+              <span className="font-sans text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                {mules.length} {mules.length === 1 ? 'mule' : 'mules'}
+              </span>
+            </div>
+            {mules.length > 1 && (
+              <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 hidden sm:block">
+                drag to reorder
+              </p>
+            )}
           </div>
 
           <DndContext
@@ -88,8 +163,8 @@ function AppContent() {
             modifiers={[restrictToParentElement]}
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
-              <div style={isDragging ? dragBoundaryStyle : {}}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+              <div style={isDragging ? dragBoundaryStyle : {}} className="transition-all duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {mules.map((mule) => (
                     <MuleCharacterCard
                       key={mule.id}
@@ -103,8 +178,8 @@ function AppContent() {
               </div>
             </SortableContext>
           </DndContext>
-        </div>
-      </div>
+        </section>
+      </main>
 
       <MuleDetailDrawer
         mule={selectedMule}
@@ -113,6 +188,30 @@ function AppContent() {
         onUpdate={updateMule}
         onDelete={deleteMule}
       />
+    </div>
+  );
+}
+
+interface StatProps {
+  label: string;
+  value: string;
+  accent?: 'maple' | 'leaf';
+  muted?: boolean;
+}
+
+function Stat({ label, value, accent, muted }: StatProps) {
+  const accentColor = accent === 'leaf' ? 'var(--leaf)' : 'var(--maple)';
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        {label}
+      </span>
+      <span
+        className="font-mono-nums text-xl"
+        style={{ color: muted ? undefined : accentColor }}
+      >
+        {value}
+      </span>
     </div>
   );
 }

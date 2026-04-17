@@ -22,6 +22,21 @@ interface MuleDetailDrawerProps {
   onDelete: (id: string) => void;
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <span className="font-sans text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+        {children}
+      </span>
+      <span
+        aria-hidden
+        className="flex-1 h-px"
+        style={{ background: 'linear-gradient(90deg, color-mix(in oklch, var(--leaf) 55%, transparent), transparent)' }}
+      />
+    </div>
+  );
+}
+
 export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: MuleDetailDrawerProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
@@ -41,87 +56,143 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
-      <SheetContent side="right" showCloseButton={false} className="w-[550px] sm:max-w-[550px] overflow-y-auto p-6">
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="w-[560px] sm:max-w-[560px] overflow-y-auto p-0 bg-card border-l border-border/70"
+      >
         <SheetTitle className="sr-only">Mule Details</SheetTitle>
         <SheetDescription className="sr-only">Edit mule details and boss selection</SheetDescription>
 
-        {confirmDelete ? (
-          <div className="absolute top-3 right-3 flex items-center gap-1">
-            <span className="text-sm text-red-500 font-medium">Delete?</span>
-            <Button size="xs" variant="destructive" onClick={() => handleDelete(mule.id)}>
-              Yes
-            </Button>
-            <Button size="xs" variant="outline" onClick={() => setConfirmDelete(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="absolute top-3 right-3 text-red-500 hover:text-red-600"
-            onClick={() => setConfirmDelete(true)}
-          >
-            <Trash2 />
-            <span className="sr-only">Delete</span>
-          </Button>
-        )}
-
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-2">
-            <img
-              src={placeholderPng}
-              alt={mule.name || 'Mule avatar'}
-              className="w-20 h-[120px] object-cover rounded"
-            />
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold truncate">
-                {mule.name || 'Unnamed Mule'}
-              </h2>
-              {mule.level > 0 && <p className="text-sm">Lv. {mule.level}</p>}
-              {mule.muleClass && <p className="text-sm">{mule.muleClass}</p>}
-              <p className="text-sm font-bold text-yellow-500">
-                {potentialIncome}/week
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="mule-name">Character Name</Label>
-              <Input
-                id="mule-name"
-                placeholder="Enter name"
-                value={mule.name}
-                onChange={(e) => onUpdate(mule.id, { name: e.currentTarget.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="mule-level">Level</Label>
-              <Input
-                id="mule-level"
-                type="number"
-                placeholder="Level"
-                min={0}
-                value={mule.level || ''}
-                onChange={(e) => onUpdate(mule.id, { level: Number(e.currentTarget.value) || 0 })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="mule-class">Class</Label>
-              <Input
-                id="mule-class"
-                placeholder="Enter class"
-                value={mule.muleClass}
-                onChange={(e) => onUpdate(mule.id, { muleClass: e.currentTarget.value })}
-              />
-            </div>
-          </div>
-
-          <BossCheckboxList
-            selectedBosses={mule.selectedBosses}
-            onChange={(selectedBosses) => onUpdate(mule.id, { selectedBosses })}
+        <div className="relative">
+          <div
+            aria-hidden
+            className="absolute inset-x-0 -top-px h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, var(--maple), transparent)' }}
           />
+          <div
+            aria-hidden
+            className="absolute -top-24 right-0 h-56 w-56 pointer-events-none blur-3xl opacity-30"
+            style={{ background: 'radial-gradient(closest-side, var(--maple), transparent)' }}
+          />
+
+          <div className="relative p-6 flex items-start gap-4 border-b border-border/50">
+            <div className="relative h-[108px] w-[76px] rounded-lg overflow-hidden border border-border/60 bg-surface-raised shrink-0">
+              <img
+                src={placeholderPng}
+                alt={mule.name || 'Mule avatar'}
+                className="w-full h-full object-cover"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(180deg, transparent 55%, var(--card) 100%)' }}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
+                Mule Dossier
+              </p>
+              <h2 className="mt-1 font-display text-2xl font-bold leading-tight truncate">
+                {mule.name || <span className="text-muted-foreground italic font-normal">Unnamed Mule</span>}
+              </h2>
+              <div className="mt-1 flex items-center gap-3 text-xs">
+                {mule.level > 0 && (
+                  <span className="font-mono-nums text-[var(--gold)]">Lv.{mule.level}</span>
+                )}
+                {mule.muleClass && (
+                  <span className="font-sans uppercase tracking-[0.22em] text-[10px] text-[var(--leaf)]">
+                    {mule.muleClass}
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-1.5">
+                <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
+                  Weekly
+                </span>
+                <span className="font-mono-nums text-base text-[var(--gold)]">{potentialIncome}</span>
+                <span className="font-display italic text-xs text-muted-foreground">mesos</span>
+              </div>
+            </div>
+
+            {confirmDelete ? (
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1">
+                <span className="font-sans text-xs text-destructive">Delete?</span>
+                <Button size="xs" variant="destructive" onClick={() => handleDelete(mule.id)}>
+                  Yes
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-3 right-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 />
+                <span className="sr-only">Delete</span>
+              </Button>
+            )}
+          </div>
+
+          <div className="p-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-3">
+              <SectionHeading>Identity</SectionHeading>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="mule-name" className="font-sans text-xs text-muted-foreground">
+                    Character Name
+                  </Label>
+                  <Input
+                    id="mule-name"
+                    placeholder="Enter name"
+                    value={mule.name}
+                    onChange={(e) => onUpdate(mule.id, { name: e.currentTarget.value })}
+                    className="bg-input/40 border-border/60 focus-visible:border-[var(--maple)] focus-visible:ring-[var(--ring)]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mule-level" className="font-sans text-xs text-muted-foreground">
+                      Level
+                    </Label>
+                    <Input
+                      id="mule-level"
+                      type="number"
+                      placeholder="0"
+                      min={0}
+                      value={mule.level || ''}
+                      onChange={(e) => onUpdate(mule.id, { level: Number(e.currentTarget.value) || 0 })}
+                      className="bg-input/40 border-border/60 focus-visible:border-[var(--maple)] focus-visible:ring-[var(--ring)] font-mono-nums"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mule-class" className="font-sans text-xs text-muted-foreground">
+                      Class
+                    </Label>
+                    <Input
+                      id="mule-class"
+                      placeholder="e.g. Bishop"
+                      value={mule.muleClass}
+                      onChange={(e) => onUpdate(mule.id, { muleClass: e.currentTarget.value })}
+                      className="bg-input/40 border-border/60 focus-visible:border-[var(--maple)] focus-visible:ring-[var(--ring)]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <SectionHeading>Weekly Bosses</SectionHeading>
+              <BossCheckboxList
+                selectedBosses={mule.selectedBosses}
+                onChange={(selectedBosses) => onUpdate(mule.id, { selectedBosses })}
+              />
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

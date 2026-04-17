@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Trash2 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -13,9 +11,6 @@ import {
 import type { Mule } from '../types'
 import { useMuleIncome } from '../modules/income-hooks'
 import placeholderPng from '../assets/placeholder.png'
-
-const DRAG_OPACITY = 0.5
-const HOVER_OPACITY = 0.85
 
 interface MuleCharacterCardProps {
   mule: Mule
@@ -31,14 +26,12 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
   const [isHovered, setIsHovered] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState(false)
 
-  let opacity = 1
-  if (isDragging) opacity = DRAG_OPACITY
-  else if (isHovered) opacity = HOVER_OPACITY
-
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: [transition, 'opacity 150ms'].filter(Boolean).join(', '),
-    opacity,
+    transition: [transition, 'box-shadow 180ms, transform 180ms, border-color 180ms, filter 180ms']
+      .filter(Boolean)
+      .join(', '),
+    filter: isDragging ? 'saturate(0.7) brightness(0.9)' : undefined,
   }
 
   function stopPropagation(e: React.SyntheticEvent) {
@@ -54,6 +47,8 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
     setPopoverOpen(false)
   }
 
+  const hasBosses = mule.selectedBosses.length > 0
+
   return (
     <div
       ref={setNodeRef}
@@ -61,19 +56,90 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
       data-mule-card={mule.id}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="group relative"
       {...attributes}
       {...listeners}
     >
-      <Card
-        className="shadow-sm rounded-lg border w-[200px] h-[300px] cursor-pointer overflow-hidden p-0 relative"
+      <div
         onClick={onClick}
+        className={[
+          'relative w-[200px] h-[300px] rounded-xl overflow-hidden cursor-pointer',
+          'border border-border bg-card',
+          'ring-1 ring-inset ring-white/[0.06]',
+          'transition-[transform,box-shadow,border-color] duration-200',
+          'hover:-translate-y-0.5 hover:border-[var(--maple)]/60',
+          'hover:shadow-[0_18px_40px_-18px_var(--maple),0_0_0_1px_color-mix(in_oklch,var(--maple)_35%,transparent)]',
+        ].join(' ')}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClick()
+          }
+        }}
       >
-        <div className="h-[60%] overflow-hidden">
+        <div className="relative h-[62%] overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, var(--surface-raised) 0%, var(--card) 100%)',
+            }}
+          />
           <img
             src={placeholderPng}
             alt={mule.name || 'Mule avatar'}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover opacity-95 mix-blend-normal transition-transform duration-500 group-hover:scale-[1.04]"
           />
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
+            style={{ background: 'linear-gradient(180deg, transparent, var(--card) 92%)' }}
+          />
+          {mule.level > 0 && (
+            <span className="absolute top-2 left-2 font-mono-nums text-[10px] tracking-wide px-1.5 py-0.5 rounded border border-border/60 bg-background/70 backdrop-blur-sm text-[var(--gold)]">
+              Lv.{mule.level}
+            </span>
+          )}
+          {!hasBosses && (
+            <span className="absolute top-2 left-1/2 -translate-x-1/2 font-sans text-[9px] uppercase tracking-[0.22em] px-1.5 py-0.5 rounded-full border border-border/60 bg-background/70 text-muted-foreground">
+              unbound
+            </span>
+          )}
+        </div>
+
+        <div
+          aria-hidden
+          className="absolute left-3 right-3 h-px"
+          style={{
+            top: '62%',
+            background: 'linear-gradient(90deg, transparent, var(--maple), transparent)',
+            opacity: 0.75,
+          }}
+        />
+
+        <div className="relative h-[38%] px-3 py-3 flex flex-col justify-between">
+          <div className="min-w-0">
+            <p className="font-display text-base font-bold leading-tight truncate">
+              {mule.name || <span className="text-muted-foreground italic font-normal">Unnamed</span>}
+            </p>
+            <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.22em] text-[var(--leaf)] truncate">
+              {mule.muleClass || <span className="text-muted-foreground/70">no class</span>}
+            </p>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="font-sans text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
+              weekly
+            </span>
+            <span className={[
+              'font-mono-nums text-sm',
+              hasBosses ? 'text-[var(--gold)]' : 'text-muted-foreground/60',
+            ].join(' ')}>
+              {potentialIncome}
+            </span>
+          </div>
         </div>
 
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -81,17 +147,17 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
             render={
               <button
                 aria-label="Delete mule"
-                className="absolute top-2 right-2 p-1 rounded text-red-500 hover:text-red-600 bg-black/50 hover:bg-black/70"
+                className="absolute top-2 right-2 p-1.5 rounded-md text-red-200 hover:text-white bg-black/40 hover:bg-destructive/80 border border-white/10 backdrop-blur-sm"
                 style={{
                   opacity: isHovered || popoverOpen ? 1 : 0,
-                  transition: 'opacity 100ms',
+                  transition: 'opacity 140ms, background-color 140ms, color 140ms',
                 }}
                 onClick={stopPropagation}
                 onPointerDown={stopPropagation}
               />
             }
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </PopoverTrigger>
           <PopoverContent
             className="w-auto p-3"
@@ -101,7 +167,7 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
             onPointerDown={stopPropagation}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Delete?</span>
+              <span className="font-sans text-sm">Delete this mule?</span>
               <Button size="sm" variant="destructive" onClick={handleDeleteConfirm}>
                 Yes
               </Button>
@@ -111,24 +177,7 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
             </div>
           </PopoverContent>
         </Popover>
-
-        <div className="p-2 flex flex-col gap-1 h-[40%]">
-          <p className="text-sm font-semibold truncate">
-            {mule.name || 'Unnamed Mule'}
-          </p>
-          <div className="flex gap-1 flex-nowrap">
-            {mule.level > 0 && (
-              <Badge variant="outline" className="text-xs">Lv. {mule.level}</Badge>
-            )}
-            {mule.muleClass && (
-              <Badge variant="secondary" className="text-xs">{mule.muleClass}</Badge>
-            )}
-          </div>
-          <p className="text-sm font-bold text-yellow-500">
-            {potentialIncome}/week
-          </p>
-        </div>
-      </Card>
+      </div>
     </div>
   )
 }
