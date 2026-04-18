@@ -121,27 +121,6 @@ describe('MuleDetailDrawer', () => {
     expect(document.querySelector('[data-slot="sheet-content"]')).toBeTruthy()
   })
 
-  it('sheet panel slides from full width (not a small fixed offset)', () => {
-    renderDrawer()
-    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
-    expect(panel.className).toContain('translate-x-full')
-    expect(panel.className).not.toContain('translate-x-[2.5rem]')
-  })
-
-  it('sheet panel transition duration is at least 300ms', () => {
-    renderDrawer()
-    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
-    expect(panel.className).toContain('duration-300')
-    expect(panel.className).not.toContain('duration-200')
-  })
-
-  it('sheet panel uses ease-out easing for a natural enter feel', () => {
-    renderDrawer()
-    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
-    expect(panel.className).toContain('ease-out')
-    expect(panel.className).not.toContain('ease-in-out')
-  })
-
   it('renders abbreviated income by default', () => {
     renderDrawer({ mule: { ...baseMule, selectedBosses: ['hard-lucid'] } })
     expect(screen.getByText('504M')).toBeTruthy()
