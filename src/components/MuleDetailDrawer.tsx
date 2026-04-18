@@ -198,7 +198,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
             </div>
 
             <div className="flex flex-col gap-3">
-              <SectionHeading>Weekly Bosses</SectionHeading>
+              <SectionHeading>Bosses</SectionHeading>
               <BossMatrix
                 selectedKeys={mule.selectedBosses}
                 onToggleKey={(key) => {

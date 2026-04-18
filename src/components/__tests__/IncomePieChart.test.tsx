@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/test/test-utils'
-import { IncomePieChart, describeArc } from '../IncomePieChart'
+import { IncomePieChart, describeArc, formatCompact } from '../IncomePieChart'
 import type { Mule } from '../../types'
 import { bosses } from '../../data/bosses'
 import { makeKey } from '../../data/bossSelection'
@@ -54,6 +54,20 @@ describe('IncomePieChart', () => {
         Math.abs(parseFloat(sx) - parseFloat(ex)) < 0.01 &&
         Math.abs(parseFloat(sy) - parseFloat(ey)) < 0.01
       expect(sameStartEnd).toBe(false)
+    })
+  })
+
+  describe('formatCompact (center total)', () => {
+    it('formats billions with two decimal places', () => {
+      expect(formatCompact(47_070_000_000)).toBe('47.07B')
+    })
+
+    it('formats millions with two decimal places', () => {
+      expect(formatCompact(504_000_000)).toBe('504.00M')
+    })
+
+    it('formats thousands with two decimal places', () => {
+      expect(formatCompact(12_345)).toBe('12.35K')
     })
   })
 

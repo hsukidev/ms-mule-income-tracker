@@ -178,9 +178,10 @@ describe('MuleDetailDrawer', () => {
       expect(screen.queryByPlaceholderText('Search bosses...')).toBeNull()
     })
 
-    it('keeps the "Weekly Bosses" section heading', () => {
+    it('renders the "Bosses" section heading', () => {
       renderDrawer()
-      expect(screen.getByText('Weekly Bosses')).toBeTruthy()
+      expect(screen.getByText('Bosses')).toBeTruthy()
+      expect(screen.queryByText('Weekly Bosses')).toBeNull()
     })
 
     it('clicking a tier cell calls onUpdate with toggleBoss result', () => {
