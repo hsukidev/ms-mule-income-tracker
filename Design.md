@@ -1,76 +1,81 @@
-# Redesign: Mule Income Tracker — Soft Tech Dark
+# Redesign: Mule Income Tracker — Soft Dusk Sky
 
 ## Context
-The app is a MapleStory Reboot weekly-income tracker: cards for each mule, a donut chart of the income split, and a drawer for picking bosses per character. The redesign moves from the cozy autumnal maple-amber guildhall aesthetic to a **soft tech dark** look — cool neutral surfaces, subtle violet/teal/lavender accents, clean geometric type. The goal is a modern, calm, technical dashboard feel without being sterile.
+The app is a MapleStory Reboot weekly-income tracker: cards for each mule, a donut chart of the income split, and a drawer for picking bosses per character. The design follows a **soft dusk sky** aesthetic — deep navy backgrounds fading through muted teal to warm golden amber, with soft coral-rose for destructive states. The feel is calm, atmospheric, and gently warm, like twilight settling over the world.
 
 ## Aesthetic Manifesto
-- **Vision**: soft tech dark — cool neutral backgrounds with violet primary accent, teal secondary, and lavender numerics. Stats read with crisp clarity. Clean geometric forms throughout.
-- **Type pair**: **Outfit Variable** (display, clean geometric sans) + **Manrope Variable** (body sans) + **JetBrains Mono Variable** (numerics/levels). No serif storybook feel — everything geometric and precise.
-- **Palette**: violet `oklch(0.72 0.16 280)` primary, teal `oklch(0.72 0.12 195)` secondary, lavender `oklch(0.82 0.08 280)` numerics, rose `oklch(0.65 0.14 350)` chart-4, sky `oklch(0.68 0.13 230)` chart-5.
-- **Surface philosophy**: cool-tinted darks (violet undertone, not warm brown), cards as layered cool surfaces with subtle borders and glow effects; hover = violet accent glow.
+- **Vision**: soft dusk sky — deep navy-blue surfaces with blue undertone, warm golden-amber primary accent, muted teal secondary, and soft amber numerics. Stats read with amber clarity against indigo surfaces. The palette traces a twilight gradient: deep navy → teal → gold → coral.
+- **Type pair**: **Outfit Variable** (display, clean geometric sans) + **Manrope Variable** (body sans) + **JetBrains Mono Variable** (numerics/levels). Geometric and precise.
+- **Palette**: Primary accent golden-amber `hsl(38 70% 46%)` light / `hsl(38 65% 58%)` dark. Secondary teal `hsl(175 35% 46%)` light / `hsl(175 30% 50%)` dark. Numeric display warm amber `hsl(38 65% 48%)` light / `hsl(38 55% 65%)` dark. Destructive soft coral-rose `hsl(8 65% 52%)` / `hsl(8 60% 52%)`. All neutrals carry a subtle blue undertone (hue ~228-230) for cohesion with the dusk sky atmosphere.
+- **Surface philosophy**: navy-tinted darks (hue ~228, never pure gray), cards as layered dusk surfaces with subtle borders and warm amber glow effects. Hover states glow with golden light like the last rays of sun.
 
 ---
 
 ## Design Token System — [src/index.css](src/index.css)
 
-### Semantic Color Names (renamed from old maple/leaf/gold/parchment)
-- `--accent-primary` (was `--maple`): primary interactive violet accent
-- `--accent-secondary` (was `--leaf`): teal secondary accent
-- `--accent-numeric` (was `--gold`): lavender for numerics/values
-- `--surface-dim` (was `--parchment`): cool off-white for light mode
+### Semantic Color Names
+- `--accent-primary`: warm golden-amber — the primary interactive accent, the "last light" in the dusk
+- `--accent-secondary`: muted teal — the sky's green-teal transition zone, used for labels and secondary elements
+- `--accent-numeric`: warm amber — slightly different lightness from primary, used for numeric data display
+- `--surface-dim`: slightly warmer/lower surface for recessed areas
 
 ### Dark Mode (primary — `defaultTheme="dark"`):
-- `--background: oklch(0.14 0.015 280)` · `--foreground: oklch(0.95 0.01 270)`
-- `--card: oklch(0.18 0.018 280)` · `--surface-raised: oklch(0.22 0.02 280)` · `--popover: oklch(0.17 0.018 280)`
-- `--primary: oklch(0.72 0.16 280)` (violet) · `--primary-foreground: oklch(0.14 0.02 280)`
-- `--secondary: oklch(0.24 0.02 280)` · `--muted: oklch(0.22 0.015 280)` · `--muted-foreground: oklch(0.65 0.02 270)`
-- `--accent: oklch(0.72 0.12 195)` (teal) · `--accent-foreground: oklch(0.12 0.02 280)`
-- `--destructive: oklch(0.62 0.20 25)`
-- `--border: oklch(0.30 0.02 280 / 55%)` · `--input: oklch(0.22 0.02 280)` · `--ring: oklch(0.72 0.16 280 / 60%)`
-- `--accent-primary: oklch(0.72 0.16 280)` · `--accent-secondary: oklch(0.72 0.12 195)` · `--accent-numeric: oklch(0.82 0.08 280)`
-- `--glow: 0 0 28px -4px oklch(0.72 0.16 280 / 0.45)`
-- Charts: `--chart-1` violet, `--chart-2` teal, `--chart-3` lavender, `--chart-4` rose, `--chart-5` sky
+- `--background: hsl(228 28% 10%)` deep navy · `--foreground: hsl(228 20% 94%)` soft white with blue undertone
+- `--card: hsl(228 24% 13%)` · `--surface-raised: hsl(228 22% 16%)` · `--popover: hsl(228 26% 12%)`
+- `--primary: hsl(38 65% 58%)` golden-amber · `--primary-foreground: hsl(228 28% 10%)` deep navy
+- `--secondary: hsl(228 18% 17%)` · `--muted: hsl(228 16% 16%)` · `--muted-foreground: hsl(228 12% 56%)`
+- `--accent: hsl(175 30% 50%)` teal · `--accent-foreground: hsl(175 20% 95%)`
+- `--destructive: hsl(8 60% 52%)` soft coral-rose
+- `--border: hsl(228 16% 20%)` · `--input: hsl(228 18% 17%)` · `--ring: hsl(38 65% 58%)`
+- `--accent-primary: hsl(38 65% 58%)` · `--accent-secondary: hsl(175 30% 50%)` · `--accent-numeric: hsl(38 55% 65%)`
+- `--glow: 0 0 28px -4px hsl(38 65% 58% / 0.30)` warm amber glow
+- Charts: `--chart-1` golden-amber, `--chart-2` teal, `--chart-3` light navy-blue, `--chart-4` coral-rose, `--chart-5` muted lavender
 
 ### Light Mode:
-- `--background: oklch(0.97 0.008 270)` cool white · `--foreground: oklch(0.20 0.025 280)` cool ink
-- `--primary: oklch(0.56 0.18 278)` deeper violet for contrast · `--accent: oklch(0.52 0.14 195)` teal
+- `--background: hsl(230 25% 97%)` warm cream with blue hint · `--foreground: hsl(230 30% 8%)` deep navy ink
+- `--primary: hsl(38 70% 46%)` deeper amber for contrast · `--accent: hsl(175 35% 46%)` teal
+- `--muted: hsl(230 12% 93%)` · `--muted-foreground: hsl(230 12% 42%)`
+- `--border: hsl(230 15% 88%)` · `--input: hsl(230 15% 90%)`
 - Same chart hues with adjusted lightness for cream backgrounds
 
+### Color Space
+- All semantic tokens use **HSL** (matching shadcn/ui conventions). All `color-mix()` and relative color syntax use `hsl` (e.g., `color-mix(in hsl, ...)`, `hsl(from ...)`).
+
 ### Typography:
-- `--font-display: 'Outfit Variable'` — clean geometric sans, replaces Fraunces
-- `--font-sans: 'Manrope Variable'` — retained
-- `--font-mono: 'JetBrains Mono Variable'` — retained
-- `.font-display` no longer uses WONK/SOFT variation settings (Outfit doesn't have those axes)
+- `--font-display: 'Outfit Variable'` — clean geometric sans
+- `--font-sans: 'Manrope Variable'` — body sans
+- `--font-mono: 'JetBrains Mono Variable'` — numerics/tabular
+- `.font-mono-nums` uses `font-variant-numeric: tabular-nums` with tight letter-spacing
 
 ### Atmosphere:
-- `body::before`: cool violet/teal/lavender radial gradient mesh
-- `body::after`: noise texture with cool purple-blue tinting instead of warm brown
-- Light mode overrides: lighter, subtler versions of the same cool gradients
+- `body::before`: layered radial gradients — amber glow top-left (the sun), teal wash upper-right (the green band), deep navy bottom (the fading sky). Like looking at a dusk sky tilted into the interface.
+- `body::after`: noise texture with blue-indigo tinting `(0.22, 0.20, 0.30)` — subtle atmospheric grain
+- Light mode overrides: softer, lower-opacity versions of the same dusk gradients
 
 ---
 
 ## Per-Component Notes
 
 ### [src/App.tsx](src/App.tsx) — layout
-All color references updated from `--maple`/`--leaf`/`--gold` to `--accent-primary`/`--accent-secondary`/`--accent-numeric`. Hero card shadow, gradient accents, and stat accent props all updated.
+Hero card shadow glows amber (`--accent-primary`). Gradient accents use `--accent-primary` (amber), `--accent-secondary` (teal), and `--accent-numeric` (warm gold). `color-mix()` calls use `in hsl` space. Stat accent props differentiate: secondary resolves to teal for "Active" count.
 
 ### [src/components/Header.tsx](src/components/Header.tsx)
-`LeafMark` → `CrystalMark` — a geometric hexagonal prism SVG in `--accent-secondary` with glow. Title dot `--accent-primary`. Theme toggle hover glow `--accent-primary`.
+Title dot `--accent-primary` (warm amber). Theme toggle hover uses `--accent-primary` with golden glow.
 
 ### [src/components/MuleCharacterCard.tsx](src/components/MuleCharacterCard.tsx)
-Hover glow `--accent-primary`. Level badge `--accent-numeric`. Class label `--accent-secondary`. Separator line `--accent-primary`. Income value `--accent-numeric`.
+Hover shadow and border glow `--accent-primary` (warm amber). Level badge `--accent-numeric` (gold). Class label `--accent-secondary` (teal). Separator line `--accent-primary`. Income value `--accent-numeric`. `color-mix` uses `in_hsl`.
 
 ### [src/components/IncomePieChart.tsx](src/components/IncomePieChart.tsx)
-Empty state gradient `--accent-primary`. Center label `--accent-numeric`. Chart colors driven by `--chart-1..5`.
+Empty state gradient uses `hsl(from var(--accent-primary) ...)` relative color syntax. Center label `--accent-numeric` (warm gold). Chart colors driven by `--chart-1..5` (dusk gradient: amber → teal → navy-blue → coral → lavender).
 
 ### [src/components/AddCard.tsx](src/components/AddCard.tsx)
-Hover state `--accent-primary` border, background, and glow.
+Hover state `--accent-primary` border, background (`color-mix(in_hsl, ...)`), and warm amber glow shadow.
 
 ### [src/components/MuleDetailDrawer.tsx](src/components/MuleDetailDrawer.tsx)
-Section heading rule `--accent-secondary`. Gradient accents `--accent-primary`. Level badge `--accent-numeric`. Class label `--accent-secondary`. Income badge `--accent-numeric`. Input focus borders `--accent-primary`.
+Section heading rule `--accent-secondary` (teal). Gradient accents `--accent-primary` (amber). Level badge `--accent-numeric` (gold). Class label `--accent-secondary` (teal). Income badge `--accent-numeric`. Input focus borders `--accent-primary`. `color-mix` uses `in hsl`.
 
 ### [src/components/BossCheckboxList.tsx](src/components/BossCheckboxList.tsx)
-Search icon `--accent-secondary`. Input focus `--accent-primary`. Family left accent bar `--accent-primary`/`--accent-secondary`. Claimed label `--accent-primary`. Selected row bg `--accent-primary`. Crystal values `--accent-numeric`.
+Search icon `--accent-secondary` (teal). Input focus `--accent-primary` (amber). Family left accent bar `--accent-primary`/`--accent-secondary` via `color-mix(in hsl, ...)`. Selected row bg `--accent-primary` at 10% opacity. Crystal values `--accent-numeric` (gold).
 
 ---
 

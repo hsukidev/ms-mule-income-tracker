@@ -31,7 +31,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
       <span
         aria-hidden
         className="flex-1 h-px"
-        style={{ background: 'linear-gradient(90deg, color-mix(in oklch, var(--accent-secondary) 55%, transparent), transparent)' }}
+        style={{ background: 'linear-gradient(90deg, color-mix(in hsl, var(--accent-secondary) 55%, transparent), transparent)' }}
       />
     </div>
   );

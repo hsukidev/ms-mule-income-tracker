@@ -68,7 +68,7 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
           'ring-1 ring-inset ring-white/[0.06]',
           'transition-[transform,box-shadow,border-color] duration-200',
 'hover:-translate-y-0.5 hover:border-[var(--accent-primary)]/60',
-'hover:shadow-[0_18px_40px_-18px_var(--accent-primary),0_0_0_1px_color-mix(in_oklch,var(--accent-primary)_35%,transparent)]',
+'hover:shadow-[0_18px_40px_-18px_var(--accent-primary),0_0_0_1px_color-mix(in_hsl,var(--accent-primary)_35%,transparent)]',
         ].join(' ')}
         role="button"
         tabIndex={0}

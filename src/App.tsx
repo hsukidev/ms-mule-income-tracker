@@ -16,7 +16,7 @@ import { IncomePieChart } from './components/IncomePieChart';
 const dragBoundaryStyle: React.CSSProperties = {
   borderStyle: 'dashed',
   borderWidth: '1.5px',
-  borderColor: 'color-mix(in oklch, var(--accent-primary) 45%, transparent)',
+  borderColor: 'color-mix(in hsl, var(--accent-primary) 45%, transparent)',
   borderRadius: '1rem',
   padding: '0.75rem',
 };

@@ -42,7 +42,7 @@ export function BossCheckboxList({ selectedBosses, onChange }: BossCheckboxListP
               style={{
                 boxShadow: familyHasSelection
                   ? 'inset 2px 0 0 0 var(--accent-primary)'
-                  : 'inset 2px 0 0 0 color-mix(in oklch, var(--accent-secondary) 35%, transparent)',
+                  : 'inset 2px 0 0 0 color-mix(in hsl, var(--accent-secondary) 35%, transparent)',
               }}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -61,7 +61,7 @@ export function BossCheckboxList({ selectedBosses, onChange }: BossCheckboxListP
                       className={[
                         'flex items-center gap-3 rounded-md px-2 py-1.5 cursor-pointer transition-colors',
                         boss.selected
-                          ? 'bg-[color-mix(in_oklch,var(--accent-primary)_10%,transparent)]'
+                          ? 'bg-[color-mix(in_hsl,var(--accent-primary)_10%,transparent)]'
                           : isLocked
                             ? 'opacity-55 hover:opacity-75'
                             : 'hover:bg-muted/40',

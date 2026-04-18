@@ -52,7 +52,7 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
             className="h-16 w-16 rounded-full border border-dashed border-border/60"
             style={{
               background:
-                'radial-gradient(closest-side, oklch(from var(--accent-primary) l c h / 0.12), transparent 70%)',
+                'radial-gradient(closest-side, hsl(from var(--accent-primary) h s l / 0.12), transparent 70%)',
             }}
           />
           <p className="font-display italic text-sm text-muted-foreground">
