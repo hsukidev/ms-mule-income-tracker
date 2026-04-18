@@ -73,7 +73,7 @@ describe('MuleCharacterCard', () => {
 
   it('renders income text', () => {
     renderCard()
-    expect(screen.getByText('weekly')).toBeTruthy()
+    expect(screen.getByText(/weekly/i)).toBeTruthy()
     expect(screen.getByText('0')).toBeTruthy()
   })
 
@@ -87,15 +87,15 @@ describe('MuleCharacterCard', () => {
     expect(screen.getByText('504,000,000')).toBeTruthy()
   })
 
-  it('reduces opacity on hover and restores on mouse leave', () => {
+  it('keeps card opacity at 1 when not dragging', () => {
     const { container } = renderCard()
     const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
-    // Hover effects use CSS classes; card wrapper has no inline opacity
-    expect(cardWrapper.style.opacity).toBe('')
+    // Opacity stays at 1 regardless of hover; only drop during active drag.
+    expect(cardWrapper.style.opacity).toBe('1')
     fireEvent.mouseEnter(cardWrapper)
-    expect(cardWrapper.style.opacity).toBe('')
+    expect(cardWrapper.style.opacity).toBe('1')
     fireEvent.mouseLeave(cardWrapper)
-    expect(cardWrapper.style.opacity).toBe('')
+    expect(cardWrapper.style.opacity).toBe('1')
   })
 
   describe('trash icon and delete popover', () => {
@@ -105,7 +105,8 @@ describe('MuleCharacterCard', () => {
       expect(trashButton.style.opacity).toBe('0')
 
       const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
-      fireEvent.mouseEnter(cardWrapper)
+      const panel = cardWrapper.querySelector('.panel') as HTMLElement
+      fireEvent.mouseEnter(panel)
       expect(trashButton.style.opacity).toBe('1')
     })
 
@@ -113,11 +114,12 @@ describe('MuleCharacterCard', () => {
       const { container } = renderCard()
       const trashButton = screen.getByRole('button', { name: /delete/i })
       const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
+      const panel = cardWrapper.querySelector('.panel') as HTMLElement
 
-      fireEvent.mouseEnter(cardWrapper)
+      fireEvent.mouseEnter(panel)
       expect(trashButton.style.opacity).toBe('1')
 
-      fireEvent.mouseLeave(cardWrapper)
+      fireEvent.mouseLeave(panel)
       expect(trashButton.style.opacity).toBe('0')
     })
 

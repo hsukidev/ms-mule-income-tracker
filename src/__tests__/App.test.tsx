@@ -341,12 +341,12 @@ describe('App DnD interactions', () => {
     })
   })
 
-  it('applies filter during drag and restores on drag end', async () => {
+  it('reduces opacity during drag and restores on drag end', async () => {
     const { container } = render(<App />)
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
 
     fireEvent.mouseEnter(cardA)
-    expect(cardA.style.filter).toBeFalsy()
+    expect(cardA.style.opacity).toBe('1')
 
     fireEvent.pointerDown(cardA, {
       pointerId: 1, clientX: 100, clientY: 150,
@@ -358,7 +358,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(cardA.style.filter).toBe('saturate(0.7) brightness(0.9)')
+      expect(cardA.style.opacity).toBe('0.7')
     })
 
     fireEvent.pointerUp(document, {
@@ -367,7 +367,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(cardA.style.filter).toBeFalsy()
+      expect(cardA.style.opacity).toBe('1')
     })
   })
 

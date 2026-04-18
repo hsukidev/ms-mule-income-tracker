@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
 
 interface AddCardProps {
   onClick: () => void
@@ -7,52 +6,45 @@ interface AddCardProps {
 
 export function AddCard({ onClick }: AddCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-
   return (
     <div
       data-add-card
       role="button"
       tabIndex={0}
       aria-label="Add mule"
-      className={[
-        'relative w-[200px] h-[300px] rounded-xl cursor-pointer',
-        'border-2 border-dashed',
-        'flex flex-col items-center justify-center gap-3',
-        'transition-[border-color,background-color,box-shadow] duration-200',
-        isHovered
-          ? 'border-[var(--accent-primary)] bg-[color-mix(in_hsl,var(--accent-primary)_6%,transparent)] shadow-[0_0_40px_-10px_var(--accent-primary)]'
-          : 'border-border/60 bg-transparent',
-      ].join(' ')}
       onClick={onClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onClick()
-        }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        padding: 'var(--card-pad, 16px)',
+        borderRadius: 'var(--radius, 14px)',
+        border: '2px dashed',
+        borderColor: isHovered ? 'var(--accent-raw, var(--accent))' : 'var(--border)',
+        background: isHovered ? 'var(--accent-soft)' : 'transparent',
+        cursor: 'pointer',
+        display: 'grid',
+        placeItems: 'center',
+        transition: 'border-color 150ms, background 150ms',
+        minHeight: 160,
+      }}
     >
-      <div
-        aria-hidden
-        className={[
-          'flex items-center justify-center h-14 w-14 rounded-full transition-all duration-200',
-          isHovered
-            ? 'bg-[color-mix(in_hsl,var(--accent-primary)_15%,transparent)] text-[var(--accent-primary)]'
-            : 'bg-muted/40 text-muted-foreground',
-        ].join(' ')}
-      >
-        <Plus size={22} strokeWidth={2} />
-      </div>
-      <div className="flex flex-col items-center gap-1">
-        <span
-          className={[
-            'font-display text-lg font-semibold transition-colors',
-            isHovered ? 'text-foreground' : 'text-muted-foreground',
-          ].join(' ')}
-        >
-          Add Mule
-        </span>
+      <div style={{ display: 'grid', placeItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: '50%',
+          background: isHovered ? 'var(--accent-soft)' : 'var(--surface)',
+          border: '1px solid var(--border)',
+          display: 'grid', placeItems: 'center',
+          color: isHovered ? 'var(--accent-raw, var(--accent))' : 'var(--muted-raw, var(--muted-foreground))',
+          fontSize: 24, lineHeight: 1,
+          transition: 'background 150ms, color 150ms',
+        }}>+</div>
+        <span style={{
+          color: 'var(--muted-raw, var(--muted-foreground))',
+          fontSize: 13, fontWeight: 500,
+        }}>Add Mule</span>
       </div>
     </div>
   )
