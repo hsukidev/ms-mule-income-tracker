@@ -8,10 +8,7 @@ import { makeKey } from '../../data/bossSelection'
 
 const LUCID = bosses.find((b) => b.family === 'lucid')!.id
 const HARD_LUCID = makeKey(LUCID, 'hard')
-
-vi.mock('../BossCheckboxList', () => ({
-  BossCheckboxList: () => <div data-testid="boss-checkbox-list" />,
-}))
+const NORMAL_LUCID = makeKey(LUCID, 'normal')
 
 const baseMule: Mule = {
   id: 'test-mule-1',
@@ -128,7 +125,12 @@ describe('MuleDetailDrawer', () => {
 
   it('renders abbreviated income by default', () => {
     renderDrawer({ mule: { ...baseMule, selectedBosses: [HARD_LUCID] } })
-    expect(screen.getByText('504M')).toBeTruthy()
+    // "504M" now appears both in the KPI pill and in the Matrix cell, so
+    // target the KPI pill specifically via its unique size/colour classes.
+    const kpi = document.querySelector(
+      '.font-mono-nums.text-base.text-\\[var\\(--accent-numeric\\)\\]',
+    )
+    expect(kpi?.textContent).toBe('504M')
   })
 
   it('renders full income when abbreviated is false', () => {
@@ -136,6 +138,58 @@ describe('MuleDetailDrawer', () => {
       { mule: { ...baseMule, selectedBosses: [HARD_LUCID] } },
       { defaultAbbreviated: false },
     )
+    // Full-number form is unique — no other element renders 504,000,000.
     expect(screen.getByText('504,000,000')).toBeTruthy()
+  })
+
+  describe('BossMatrix integration', () => {
+    it('renders the BossMatrix (not the old BossCheckboxList)', () => {
+      renderDrawer()
+      // The Matrix exposes a "Boss Family" column header in its grid.
+      expect(screen.getByText('Boss Family')).toBeTruthy()
+      // The old search input from BossCheckboxList must be gone.
+      expect(screen.queryByPlaceholderText('Search bosses...')).toBeNull()
+    })
+
+    it('keeps the "Weekly Bosses" section heading', () => {
+      renderDrawer()
+      expect(screen.getByText('Weekly Bosses')).toBeTruthy()
+    })
+
+    it('clicking a tier cell calls onUpdate with toggleBoss result', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({ onUpdate })
+      const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      fireEvent.click(hardLucidCell)
+      expect(onUpdate).toHaveBeenCalledWith('test-mule-1', {
+        selectedBosses: [HARD_LUCID],
+      })
+    })
+
+    it('clicking a sibling tier swaps (one-per-family rule)', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [NORMAL_LUCID] },
+        onUpdate,
+      })
+      const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      fireEvent.click(hardLucidCell)
+      expect(onUpdate).toHaveBeenCalledWith('test-mule-1', {
+        selectedBosses: [HARD_LUCID],
+      })
+    })
+
+    it('clicking the selected cell again clears it', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
+        onUpdate,
+      })
+      const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      fireEvent.click(hardLucidCell)
+      expect(onUpdate).toHaveBeenCalledWith('test-mule-1', {
+        selectedBosses: [],
+      })
+    })
   })
 })
