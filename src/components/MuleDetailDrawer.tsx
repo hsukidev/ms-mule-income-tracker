@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/sheet';
 import type { Mule } from '../types';
 import { useMuleIncome } from '../modules/income-hooks';
-import { BossCheckboxList } from './BossCheckboxList';
+import { BossMatrix } from './BossMatrix';
+import { parseKey, toggleBoss } from '../data/bossSelection';
 import placeholderPng from '../assets/placeholder.png';
 
 interface MuleDetailDrawerProps {
@@ -188,9 +189,19 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
             <div className="flex flex-col gap-3">
               <SectionHeading>Weekly Bosses</SectionHeading>
-              <BossCheckboxList
-                selectedBosses={mule.selectedBosses}
-                onChange={(selectedBosses) => onUpdate(mule.id, { selectedBosses })}
+              <BossMatrix
+                selectedKeys={mule.selectedBosses}
+                onToggleKey={(key) => {
+                  const parsed = parseKey(key);
+                  if (!parsed) return;
+                  onUpdate(mule.id, {
+                    selectedBosses: toggleBoss(
+                      mule.selectedBosses,
+                      parsed.bossId,
+                      parsed.tier,
+                    ),
+                  });
+                }}
               />
             </div>
           </div>
