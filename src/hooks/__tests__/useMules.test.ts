@@ -1,6 +1,14 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useMules } from '../useMules'
+import { bosses } from '../../data/bosses'
+import { makeKey } from '../../data/bossSelection'
+
+const LUCID = bosses.find((b) => b.family === 'lucid')!.id
+const WILL = bosses.find((b) => b.family === 'will')!.id
+const HARD_LUCID = makeKey(LUCID, 'hard')
+const NORMAL_LUCID = makeKey(LUCID, 'normal')
+const HARD_WILL = makeKey(WILL, 'hard')
 
 let localStorageStore: Record<string, string> = {}
 let sessionStorageStore: Record<string, string> = {}
@@ -53,19 +61,23 @@ describe('useMules', () => {
       expect(result.current.mules).toEqual([])
     })
 
-    it('loads valid data from localStorage', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid'],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+    it('loads valid data (native-key payload) from localStorage', () => {
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID],
+            partySizes: {},
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
-      expect(result.current.mules).toEqual(mules)
+      expect(result.current.mules).toEqual(payload.mules)
     })
 
     it('returns empty array on corrupt JSON when no previous load', () => {
@@ -75,61 +87,187 @@ describe('useMules', () => {
     })
 
     it('drops structurally invalid mules and keeps valid ones', () => {
-      const mixed = [
-        {
-          id: 'valid',
-          name: 'Valid',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid'],
-        },
-        { id: 123, name: 'BadId' },
-        { name: 'MissingId' },
-        { id: 'no-name', level: 200 },
-        {
-          id: 'bad-bosses',
-          name: 'BadBosses',
-          level: 1,
-          muleClass: 'A',
-          selectedBosses: 'not-an-array',
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mixed)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'valid',
+            name: 'Valid',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID],
+          },
+          { id: 123, name: 'BadId' },
+          { name: 'MissingId' },
+          { id: 'no-name', level: 200 },
+          {
+            id: 'bad-bosses',
+            name: 'BadBosses',
+            level: 1,
+            muleClass: 'A',
+            selectedBosses: 'not-an-array',
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
       expect(result.current.mules).toHaveLength(1)
       expect(result.current.mules[0].id).toBe('valid')
     })
 
-    it('prunes stale boss IDs from selectedBosses on load', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid', 'stale-boss-id', 'another-stale'],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+    it('prunes unknown keys from selectedBosses on load', () => {
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID, 'stale:id', 'another-stale'],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
-      expect(result.current.mules[0].selectedBosses).toEqual(['hard-lucid'])
+      expect(result.current.mules[0].selectedBosses).toEqual([HARD_LUCID])
     })
 
     it('enforces one-per-family on load', () => {
-      const mules = [
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [NORMAL_LUCID, HARD_LUCID],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
+      const { result } = renderHook(() => useMules())
+      expect(result.current.mules[0].selectedBosses).toEqual([HARD_LUCID])
+    })
+  })
+
+  describe('legacy payload migration (wipe-on-load)', () => {
+    it('clears selectedBosses when legacy prefix is detected (no schemaVersion)', () => {
+      const legacyRoot = [
         {
           id: 'a',
-          name: 'Test',
+          name: 'Legacy',
           level: 200,
           muleClass: 'Hero',
-          selectedBosses: ['normal-lucid', 'hard-lucid'],
+          selectedBosses: ['hard-lucid', 'normal-will'],
         },
       ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(legacyRoot)
       const { result } = renderHook(() => useMules())
-      expect(result.current.mules[0].selectedBosses).toEqual(['hard-lucid'])
+      expect(result.current.mules).toHaveLength(1)
+      expect(result.current.mules[0].selectedBosses).toEqual([])
     })
 
+    it('stamps schemaVersion: 2 on the persisted payload after migration', () => {
+      const legacyRoot = [
+        {
+          id: 'a',
+          name: 'Legacy',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: ['hard-lucid'],
+        },
+      ]
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(legacyRoot)
+      renderHook(() => useMules())
+      const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
+      expect(saved.schemaVersion).toBe(2)
+      expect(saved.mules[0].selectedBosses).toEqual([])
+    })
+
+    it('clears selectedBosses when any entry lacks a colon', () => {
+      // Malformed/pre-1B id with no colon triggers migration.
+      const legacyRoot = [
+        {
+          id: 'a',
+          name: 'Legacy',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: ['no-colon-here'],
+        },
+      ]
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(legacyRoot)
+      const { result } = renderHook(() => useMules())
+      expect(result.current.mules[0].selectedBosses).toEqual([])
+    })
+
+    it('clears partySizes along with selectedBosses during migration', () => {
+      const legacyRoot = [
+        {
+          id: 'a',
+          name: 'Legacy',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: ['hard-lucid'],
+          partySizes: { lucid: 3 },
+        },
+      ]
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(legacyRoot)
+      const { result } = renderHook(() => useMules())
+      expect(result.current.mules[0].partySizes).toEqual({})
+    })
+
+    it('skips migration when schemaVersion: 2 is already present', () => {
+      // Even if a stray legacy-looking id slipped through, a payload already
+      // tagged v2 is trusted — the validator still prunes unknown keys but
+      // does not wipe the whole selection.
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Trusted',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
+      const { result } = renderHook(() => useMules())
+      expect(result.current.mules[0].selectedBosses).toEqual([HARD_LUCID])
+    })
+
+    it('persists as { schemaVersion, mules } shape after first load even with no data', () => {
+      const { result } = renderHook(() => useMules())
+      act(() => {
+        result.current.addMule()
+      })
+      const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
+      expect(saved.schemaVersion).toBe(2)
+      expect(Array.isArray(saved.mules)).toBe(true)
+    })
+
+    it('a fresh toggle after migration persists as a <uuid>:<tier> key', () => {
+      const legacyRoot = [
+        {
+          id: 'a',
+          name: 'Legacy',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: ['hard-lucid'],
+        },
+      ]
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(legacyRoot)
+      const { result } = renderHook(() => useMules())
+      act(() => {
+        result.current.updateMule('a', { selectedBosses: [HARD_WILL] })
+      })
+      const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
+      expect(saved.schemaVersion).toBe(2)
+      expect(saved.mules[0].selectedBosses).toEqual([HARD_WILL])
+    })
   })
 
   describe('saveMules', () => {
@@ -195,44 +333,50 @@ describe('useMules', () => {
   })
 
   describe('updateMule', () => {
-    it('prunes stale boss IDs on update', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid'],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+    it('prunes stale keys on update', () => {
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
       act(() => {
         result.current.updateMule('a', {
-          selectedBosses: ['hard-lucid', 'stale-boss-id'],
+          selectedBosses: [HARD_LUCID, 'stale:id'],
         })
       })
-      expect(result.current.mules[0].selectedBosses).toEqual(['hard-lucid'])
+      expect(result.current.mules[0].selectedBosses).toEqual([HARD_LUCID])
     })
 
     it('enforces one-per-family on update', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid'],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
       act(() => {
         result.current.updateMule('a', {
-          selectedBosses: ['normal-lucid', 'hard-lucid'],
+          selectedBosses: [NORMAL_LUCID, HARD_LUCID],
         })
       })
-      expect(result.current.mules[0].selectedBosses).toEqual(['hard-lucid'])
+      expect(result.current.mules[0].selectedBosses).toEqual([HARD_LUCID])
     })
   })
 
@@ -254,16 +398,19 @@ describe('useMules', () => {
 
   describe('deleteMule', () => {
     it('removes a mule by id', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: [],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
       act(() => {
         result.current.deleteMule('a')
@@ -274,23 +421,26 @@ describe('useMules', () => {
 
   describe('reorderMules', () => {
     it('reorders mules', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'A',
-          level: 1,
-          muleClass: 'A',
-          selectedBosses: [],
-        },
-        {
-          id: 'b',
-          name: 'B',
-          level: 2,
-          muleClass: 'B',
-          selectedBosses: [],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'A',
+            level: 1,
+            muleClass: 'A',
+            selectedBosses: [],
+          },
+          {
+            id: 'b',
+            name: 'B',
+            level: 2,
+            muleClass: 'B',
+            selectedBosses: [],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
       act(() => {
         result.current.reorderMules(0, 1)
@@ -301,44 +451,51 @@ describe('useMules', () => {
 
   describe('sessionStorage fallback read-back', () => {
     it('reads mules from sessionStorage when localStorage returns null', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Fallback',
-          level: 150,
-          muleClass: 'Paladin',
-          selectedBosses: ['hard-lucid'],
-        },
-      ]
-      sessionStorageStore['maplestory-mule-tracker-fallback'] =
-        JSON.stringify(mules)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Fallback',
+            level: 150,
+            muleClass: 'Paladin',
+            selectedBosses: [HARD_LUCID],
+            partySizes: {},
+          },
+        ],
+      }
+      sessionStorageStore['maplestory-mule-tracker-fallback'] = JSON.stringify(payload)
       const { result } = renderHook(() => useMules())
-      expect(result.current.mules).toEqual(mules)
+      expect(result.current.mules).toEqual(payload.mules)
     })
 
     it('prefers localStorage over sessionStorage when both exist', () => {
-      const localStorageMules = [
-        {
-          id: 'ls',
-          name: 'FromLocal',
-          level: 100,
-          muleClass: 'Hero',
-          selectedBosses: [],
-        },
-      ]
-      const sessionStorageMules = [
-        {
-          id: 'ss',
-          name: 'FromSession',
-          level: 200,
-          muleClass: 'Paladin',
-          selectedBosses: [],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] =
-        JSON.stringify(localStorageMules)
-      sessionStorageStore['maplestory-mule-tracker-fallback'] =
-        JSON.stringify(sessionStorageMules)
+      const localStorageMules = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'ls',
+            name: 'FromLocal',
+            level: 100,
+            muleClass: 'Hero',
+            selectedBosses: [],
+          },
+        ],
+      }
+      const sessionStorageMules = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'ss',
+            name: 'FromSession',
+            level: 200,
+            muleClass: 'Paladin',
+            selectedBosses: [],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(localStorageMules)
+      sessionStorageStore['maplestory-mule-tracker-fallback'] = JSON.stringify(sessionStorageMules)
       const { result } = renderHook(() => useMules())
       expect(result.current.mules[0].id).toBe('ls')
     })
@@ -366,26 +523,29 @@ describe('useMules', () => {
       })
       expect(localStorageStore['maplestory-mule-tracker']).toBeDefined()
       const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
-      expect(saved[0].name).toBe('Updated')
+      expect(saved.mules[0].name).toBe('Updated')
     })
   })
 
   describe('self-healing via useEffect', () => {
     it('self-heals cleaned data through useEffect, not loadMules', () => {
-      const mules = [
-        {
-          id: 'a',
-          name: 'Test',
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: ['hard-lucid', 'stale-boss-id'],
-        },
-      ]
-      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(mules)
+      const payload = {
+        schemaVersion: 2,
+        mules: [
+          {
+            id: 'a',
+            name: 'Test',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID, 'stale:id'],
+          },
+        ],
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
       renderHook(() => useMules())
 
       const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
-      expect(saved[0].selectedBosses).toEqual(['hard-lucid'])
+      expect(saved.mules[0].selectedBosses).toEqual([HARD_LUCID])
     })
   })
 
@@ -405,4 +565,3 @@ describe('useMules', () => {
     })
   })
 })
-
