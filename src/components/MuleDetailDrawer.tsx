@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,8 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
 
+  useEffect(() => { setConfirmDelete(false); }, [mule?.id]);
+
   function handleClose() {
     setConfirmDelete(false);
     onClose();
@@ -52,8 +54,6 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
     onClose();
   }
 
-  if (!mule) return null;
-
   return (
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
       <SheetContent
@@ -64,7 +64,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
         <SheetTitle className="sr-only">Mule Details</SheetTitle>
         <SheetDescription className="sr-only">Edit mule details and boss selection</SheetDescription>
 
-        <div className="relative">
+        {mule && <div className="relative">
           <div
             aria-hidden
             className="absolute inset-x-0 -top-px h-px"
@@ -190,7 +190,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
               />
             </div>
           </div>
-        </div>
+        </div>}
       </SheetContent>
     </Sheet>
   );

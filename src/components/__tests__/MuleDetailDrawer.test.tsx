@@ -93,6 +93,55 @@ describe('MuleDetailDrawer', () => {
     })
   })
 
+  it('resets delete confirmation when mule changes', async () => {
+    const muleA = { ...baseMule, id: 'mule-a', name: 'MuleA' }
+    const muleB = { ...baseMule, id: 'mule-b', name: 'MuleB' }
+    const { rerender } = renderDrawer({ mule: muleA })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    await waitFor(() => expect(screen.getByText('Delete?')).toBeTruthy())
+
+    rerender(
+      <MuleDetailDrawer
+        mule={muleB}
+        open={true}
+        onClose={vi.fn()}
+        onUpdate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(screen.queryByText('Delete?')).toBeNull())
+  })
+
+  it('renders a Sheet when open=true even if mule is null (so Base-UI can animate out)', () => {
+    render(
+      <MuleDetailDrawer mule={null} open={true} onClose={vi.fn()} onUpdate={vi.fn()} onDelete={vi.fn()} />,
+    )
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeTruthy()
+  })
+
+  it('sheet panel slides from full width (not a small fixed offset)', () => {
+    renderDrawer()
+    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
+    expect(panel.className).toContain('translate-x-full')
+    expect(panel.className).not.toContain('translate-x-[2.5rem]')
+  })
+
+  it('sheet panel transition duration is at least 300ms', () => {
+    renderDrawer()
+    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
+    expect(panel.className).toContain('duration-300')
+    expect(panel.className).not.toContain('duration-200')
+  })
+
+  it('sheet panel uses ease-out easing for a natural enter feel', () => {
+    renderDrawer()
+    const panel = document.querySelector('[data-slot="sheet-content"]') as HTMLElement
+    expect(panel.className).toContain('ease-out')
+    expect(panel.className).not.toContain('ease-in-out')
+  })
+
   it('renders abbreviated income by default', () => {
     renderDrawer({ mule: { ...baseMule, selectedBosses: ['hard-lucid'] } })
     expect(screen.getByText('504M')).toBeTruthy()
