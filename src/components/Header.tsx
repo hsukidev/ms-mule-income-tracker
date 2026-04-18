@@ -1,34 +1,58 @@
 import { Sun, Moon } from 'lucide-react'
-import { useTheme } from '@/context/ThemeProvider'
-import { Button } from '@/components/ui/button'
-import leafImg from '@/assets/logo.png'
+import { useTheme } from '../context/ThemeProvider'
 
 export function Header() {
   const { theme, toggleTheme } = useTheme()
-  const isDark = theme === 'dark'
-
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur-md supports-[backdrop-filter]:bg-background/50 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-      <div className="container mx-auto max-w-7xl flex items-center justify-between gap-6 px-4 sm:px-6 py-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <img src={leafImg} alt="" aria-hidden className="h-6 w-8" />
-          <div className="min-w-0">
-            <h1 className="font-display text-[1.55rem] leading-none font-black tracking-tight">
-              Mule<span className="text-[var(--accent-primary)]">.</span>Income
-            </h1>
+    <header
+      className="sticky top-0 z-50"
+      style={{
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg, var(--background))',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex h-14 items-center justify-between">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 7,
+                background: 'var(--accent-raw, var(--accent))',
+                display: 'grid',
+                placeItems: 'center',
+                color: 'var(--bg, var(--background))',
+                fontFamily: 'monospace',
+                fontWeight: 800,
+                fontSize: 15,
+              }}
+            >
+              M
+            </div>
+            <span
+              style={{
+                color: 'var(--text, var(--foreground))',
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                fontSize: 15,
+              }}
+            >
+              Mule
+              <span style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}>
+                .Income
+              </span>
+            </span>
           </div>
-        </div>
-
-        <div className="flex items-center gap-5">
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={toggleTheme}
-            aria-label="Toggle color scheme"
-            className="rounded-full border border-border/60 hover:border-[var(--accent-primary)]/70 hover:bg-[var(--accent-primary)]/5 hover:text-[var(--accent-primary)] transition-[color,background-color,border-color,box-shadow] hover:shadow-[0_0_20px_-6px_var(--accent-primary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+            style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {isDark ? <Sun size={18} aria-label="Sun" /> : <Moon size={18} aria-label="Moon" />}
-          </Button>
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
       </div>
     </header>

@@ -1,9 +1,10 @@
-import { DndContext, closestCenter, type DragEndEvent, type DragOverEvent, PointerSensor, useSensor } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragOverEvent, PointerSensor, useSensor } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback } from 'react';
 
 import { ThemeProvider } from './context/ThemeProvider';
+import { DensityProvider } from './context/DensityProvider';
 import { IncomeProvider } from './modules/IncomeProvider';
 import { useTotalIncome, useFormatPreference } from './modules/income-hooks';
 import { useMules } from './hooks/useMules';
@@ -217,9 +218,11 @@ function Stat({ label, value, accent, muted }: StatProps) {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark">
-      <IncomeProvider>
-        <AppContent />
-      </IncomeProvider>
+      <DensityProvider>
+        <IncomeProvider>
+          <AppContent />
+        </IncomeProvider>
+      </DensityProvider>
     </ThemeProvider>
   );
 }

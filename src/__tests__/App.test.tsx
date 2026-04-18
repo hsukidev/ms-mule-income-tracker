@@ -208,14 +208,11 @@ describe('App', () => {
 })
 
 describe('section entrance animations', () => {
-  it('Header has slide-up fade-in animation classes', () => {
+  it('Header renders with sticky positioning', () => {
     render(<App />)
     const header = screen.getByRole('banner')
-    expect(header.className).toContain('animate-in')
-    expect(header.className).toContain('fade-in')
-    expect(header.className).toContain('slide-in-from-bottom-4')
-    expect(header.className).toContain('duration-500')
-    expect(header.className).toContain('fill-mode-both')
+    expect(header.className).toContain('sticky')
+    expect(header.className).toContain('top-0')
   })
 
   it('income card has slide-up fade-in animation classes', () => {
