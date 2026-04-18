@@ -122,9 +122,6 @@ describe('sumSelectedKeys contentType filter', () => {
   })
 
   it('includes only tiers with contentType === "weekly"; daily/monthly contribute 0', () => {
-    // Fixture: a single fake family with a weekly "hard" tier and a monthly
-    // "extreme" tier. Both tiers are selected — only the weekly tier should
-    // sum into the total.
     const fakeBoss: Boss = {
       id: 'fixture-mixed-contenttype',
       name: 'Fixture Mixed',
