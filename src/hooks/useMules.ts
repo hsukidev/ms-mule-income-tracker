@@ -5,8 +5,25 @@ import { validateBossSelection } from '../data/bossSelection';
 
 const STORAGE_KEY = 'maplestory-mule-tracker';
 const FALLBACK_KEY = 'maplestory-mule-tracker-fallback';
+const CURRENT_SCHEMA_VERSION = 2;
 
-function validateMule(raw: unknown): Mule | null {
+const LEGACY_ID_PREFIX = /^(extreme|hard|chaos|normal|easy)-/;
+
+/** A stored id looks legacy if it matches <tier>-<family> or lacks a colon entirely. */
+function isLegacyId(id: string): boolean {
+  return LEGACY_ID_PREFIX.test(id) || !id.includes(':');
+}
+
+function readPartySizes(raw: unknown): Record<string, number> {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const out: Record<string, number> = {};
+  for (const [family, n] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof n === 'number' && Number.isFinite(n)) out[family] = n;
+  }
+  return out;
+}
+
+function validateMule(raw: unknown, opts: { wipeLegacy: boolean }): Mule | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const obj = raw as Record<string, unknown>;
   if (typeof obj.id !== 'string') return null;
@@ -14,18 +31,55 @@ function validateMule(raw: unknown): Mule | null {
   if (typeof obj.level !== 'number') return null;
   if (typeof obj.muleClass !== 'string') return null;
   if (!Array.isArray(obj.selectedBosses)) return null;
+
+  const rawSelected = obj.selectedBosses as string[];
+  const wipe = opts.wipeLegacy && rawSelected.some(isLegacyId);
+
   return {
     id: obj.id,
     name: obj.name,
     level: obj.level,
     muleClass: obj.muleClass,
-    selectedBosses: validateBossSelection(obj.selectedBosses as string[]),
+    selectedBosses: wipe ? [] : validateBossSelection(rawSelected),
+    partySizes: wipe ? {} : readPartySizes(obj.partySizes),
   };
+}
+
+/** The persisted root shape after slice 1B. */
+interface PersistedRoot {
+  schemaVersion: number;
+  mules: Mule[];
+}
+
+/**
+ * Parse a persisted payload into { mules, wipeLegacy }. Accepts either the
+ * legacy "top-level array" shape (triggers wipe-on-load) or the new
+ * { schemaVersion, mules } envelope.
+ */
+function parsePayload(raw: string): { mules: unknown[]; wipeLegacy: boolean } | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Pre-1B shape — root is bare array; always migrate.
+      return { mules: parsed, wipeLegacy: true };
+    }
+    if (typeof parsed === 'object' && parsed !== null) {
+      const root = parsed as Partial<PersistedRoot>;
+      if (Array.isArray(root.mules)) {
+        const wipeLegacy = root.schemaVersion !== CURRENT_SCHEMA_VERSION;
+        return { mules: root.mules, wipeLegacy };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export function useMules() {
   const saveMules = useCallback((mules: Mule[]): void => {
-    const serialized = JSON.stringify(mules);
+    const root: PersistedRoot = { schemaVersion: CURRENT_SCHEMA_VERSION, mules };
+    const serialized = JSON.stringify(root);
     try {
       localStorage.setItem(STORAGE_KEY, serialized);
     } catch {
@@ -43,18 +97,16 @@ export function useMules() {
       if (data === null) {
         data = sessionStorage.getItem(FALLBACK_KEY);
       }
-      if (data) {
-        const parsed: unknown = JSON.parse(data);
-        if (!Array.isArray(parsed)) {
-          return [];
-        }
-        const validated = parsed.map(validateMule);
-        const validMules = validated.filter((m): m is Mule => m !== null);
-        return validMules;
-      }
+      if (data === null) return [];
+      const payload = parsePayload(data);
+      if (!payload) return [];
+      const validated = payload.mules.map((m) =>
+        validateMule(m, { wipeLegacy: payload.wipeLegacy }),
+      );
+      return validated.filter((m): m is Mule => m !== null);
     } catch {
+      return [];
     }
-    return [];
   }
 
   const [mules, setMules] = useState<Mule[]>(loadMules);
@@ -70,6 +122,7 @@ export function useMules() {
       level: 0,
       muleClass: '',
       selectedBosses: [],
+      partySizes: {},
     };
     setMules((prev) => [newMule, ...prev]);
     return newMule.id;
@@ -82,9 +135,7 @@ export function useMules() {
           if (m.id !== id) return m;
           const merged = { ...m, ...updates };
           if (updates.selectedBosses) {
-            merged.selectedBosses = validateBossSelection(
-              updates.selectedBosses,
-            );
+            merged.selectedBosses = validateBossSelection(updates.selectedBosses);
           }
           return merged;
         }),
@@ -97,17 +148,14 @@ export function useMules() {
     setMules((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const reorderMules = useCallback(
-    (oldIndex: number, newIndex: number) => {
-      setMules((prev) => {
-        const result = Array.from(prev);
-        const [removed] = result.splice(oldIndex, 1);
-        result.splice(newIndex, 0, removed);
-        return result;
-      });
-    },
-    [],
-  );
+  const reorderMules = useCallback((oldIndex: number, newIndex: number) => {
+    setMules((prev) => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(oldIndex, 1);
+      result.splice(newIndex, 0, removed);
+      return result;
+    });
+  }, []);
 
   return { mules, addMule, updateMule, deleteMule, reorderMules };
 }

@@ -29,9 +29,15 @@ export interface Mule {
   level: number;
   muleClass: string;
   /**
-   * Slice 1A: still stores legacy string ids (e.g. "hard-lucid",
-   * "akechi-mitsuhide"). The native `<uuid>:<tier>` key migration
-   * lands in slice 1B.
+   * Slice 1B: native `<uuid>:<tier>` selection keys (e.g.
+   * "a4d1238d-…:extreme"). Use `makeKey`/`parseKey` from
+   * `src/data/bossSelection.ts` to construct / decode.
    */
   selectedBosses: string[];
+  /**
+   * Per-family party size (1..6). Absent or empty → default 1.
+   * Written fully in slice 2 (Matrix), but tracked on the type now so
+   * migration can zero it out when wiping legacy selections.
+   */
+  partySizes?: Record<string, number>;
 }
