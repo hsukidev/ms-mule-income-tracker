@@ -19,15 +19,14 @@ import { DensityToggle } from './components/DensityToggle';
 const dragBoundaryBaseStyle: React.CSSProperties = {
   borderRadius: '1rem',
   borderStyle: 'dashed',
-  borderWidth: 0,
+  borderWidth: '1.5px',
   borderColor: 'transparent',
+  padding: '0.75rem',
 };
 
 const dragBoundaryActiveStyle: React.CSSProperties = {
   ...dragBoundaryBaseStyle,
-  borderWidth: '1.5px',
   borderColor: 'color-mix(in hsl, var(--accent-primary) 45%, transparent)',
-  padding: '0.75rem',
 };
 
 function AppContent() {
@@ -115,7 +114,7 @@ function AppContent() {
             modifiers={[restrictToParentElement]}
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
-              <div style={isDragging ? dragBoundaryActiveStyle : dragBoundaryBaseStyle} className="transition-[border-color,border-width] duration-200" data-drag-boundary>
+              <div style={isDragging ? dragBoundaryActiveStyle : dragBoundaryBaseStyle} className="transition-[border-color] duration-200" data-drag-boundary>
                 <div
                   className="grid gap-4"
                   style={{ gridTemplateColumns: 'repeat(var(--roster-cols, 6), minmax(0, 1fr))' }}

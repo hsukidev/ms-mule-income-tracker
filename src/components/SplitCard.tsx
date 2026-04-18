@@ -8,7 +8,7 @@ interface SplitCardProps {
 
 export function SplitCard({ mules, onSliceClick }: SplitCardProps) {
   return (
-    <div data-testid="income-chart" className="panel" style={{ padding: 'var(--card-pad, 16px)' }}>
+    <div data-testid="income-chart" className="panel" style={{ padding: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 8 }}>
         <span style={{ color: 'var(--text, var(--foreground))', fontWeight: 500, fontSize: 14 }}>
           Income Split

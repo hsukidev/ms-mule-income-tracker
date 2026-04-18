@@ -136,7 +136,6 @@
   --roster-cols: 6;
   --sil-size: 72px;
   --mule-name-size: 14px;
-  --kpi-pad: 24px;
 }
 
 .dark {
@@ -198,14 +197,12 @@
   --roster-cols: 6;
   --sil-size: 72px;
   --mule-name-size: 14px;
-  --kpi-pad: 24px;
 }
 [data-density="compact"] {
   --card-pad: 12px;
   --roster-cols: 8;
   --sil-size: 56px;
   --mule-name-size: 13px;
-  --kpi-pad: 18px;
 }
 
 @layer base {

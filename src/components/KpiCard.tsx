@@ -14,7 +14,7 @@ export function KpiCard({ mules, onToggleFormat }: KpiCardProps) {
     <div
       data-testid="income-card"
       className="panel panel-glow relative overflow-hidden"
-      style={{ padding: 'var(--kpi-pad, 24px)' }}
+      style={{ padding: '24px' }}
     >
       <div className="eyebrow">
         <span className="dot" aria-hidden />

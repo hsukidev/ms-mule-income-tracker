@@ -385,7 +385,7 @@ describe('App DnD interactions', () => {
     const gridWrapper = container.querySelector('[data-drag-boundary]') as HTMLElement
     expect(gridWrapper).toBeTruthy()
 
-    expect(gridWrapper!.style.borderWidth).toBe('0px')
+    expect(gridWrapper!.style.borderColor).toBe('transparent')
 
     fireEvent.pointerDown(cardA, {
       pointerId: 1,
@@ -407,7 +407,7 @@ describe('App DnD interactions', () => {
     fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' })
 
     await waitFor(() => {
-      expect(gridWrapper!.style.borderWidth).toBe('0px')
+      expect(gridWrapper!.style.borderColor).toBe('transparent')
     })
   })
 
@@ -457,9 +457,11 @@ describe('App DnD interactions', () => {
     expect(props).not.toContain('all')
   })
 
-  it('grid wrapper padding changes instantly when isDragging toggles', async () => {
+  it('grid wrapper padding is stable across the drag cycle (no drop jitter)', async () => {
     const { container } = render(<App />)
     const boundary = container.querySelector('[data-drag-boundary]') as HTMLElement
+    const beforePadding = boundary.style.padding
+    expect(beforePadding).toBeTruthy()
 
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
     fireEvent.pointerDown(cardA, {
@@ -472,7 +474,8 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(boundary.style.padding).toBeTruthy()
+      // Drag is now active — padding must be identical to before.
+      expect(boundary.style.padding).toBe(beforePadding)
     })
 
     fireEvent.pointerUp(document, {
@@ -481,7 +484,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(boundary.style.padding).toBeFalsy()
+      expect(boundary.style.padding).toBe(beforePadding)
     })
   })
 
