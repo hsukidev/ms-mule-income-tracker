@@ -3,14 +3,10 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { Mule } from '../types'
 import { useMuleIncome } from '../modules/income-hooks'
-import placeholderPng from '../assets/placeholder.png'
+import { ClassSilhouette } from './ClassSilhouette'
 
 interface MuleCharacterCardProps {
   mule: Mule
@@ -19,123 +15,100 @@ interface MuleCharacterCardProps {
 }
 
 export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: mule.id })
-
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: mule.id })
   const { formatted: potentialIncome } = useMuleIncome(mule)
   const [isHovered, setIsHovered] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState(false)
 
+  const hasBosses = mule.selectedBosses.length > 0
   const extraTransitions = isDragging
-    ? 'box-shadow 180ms, border-color 180ms, filter 180ms'
-    : 'box-shadow 180ms, transform 180ms, border-color 180ms, filter 180ms'
+    ? 'box-shadow 180ms, border-color 180ms'
+    : 'box-shadow 180ms, transform 180ms, border-color 180ms'
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition: [transition, extraTransitions].filter(Boolean).join(', '),
-    filter: isDragging ? 'saturate(0.7) brightness(0.9)' : undefined,
+    opacity: isDragging ? 0.7 : 1,
   }
 
-  function stopPropagation(e: React.SyntheticEvent) {
-    e.stopPropagation()
-  }
-
-  function handleDeleteConfirm() {
-    onDelete(mule.id)
-    setPopoverOpen(false)
-  }
-
-  function handleDeleteCancel() {
-    setPopoverOpen(false)
-  }
-
-  const hasBosses = mule.selectedBosses.length > 0
+  function stopPropagation(e: React.SyntheticEvent) { e.stopPropagation() }
+  function handleDeleteConfirm() { onDelete(mule.id); setPopoverOpen(false) }
+  function handleDeleteCancel() { setPopoverOpen(false) }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       data-mule-card={mule.id}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className="group relative"
       {...attributes}
       {...listeners}
     >
       <div
         onClick={onClick}
-        className={[
-          'relative w-[200px] h-[300px] rounded-xl overflow-hidden cursor-pointer',
-          'border border-border bg-card',
-          'ring-1 ring-inset ring-white/[0.06]',
-          'transition-[transform,box-shadow,border-color] duration-200',
-'hover:-translate-y-0.5 hover:border-[var(--accent-primary)]/60',
-'hover:shadow-[0_18px_40px_-18px_var(--accent-primary),0_0_0_1px_color-mix(in_hsl,var(--accent-primary)_35%,transparent)]',
-        ].join(' ')}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="panel cursor-pointer"
+        style={{
+          padding: 'var(--card-pad, 16px)',
+          transform: isHovered && !isDragging ? 'translateY(-2px)' : undefined,
+          boxShadow: isHovered && !isDragging
+            ? '0 8px 32px -8px var(--accent-glow), 0 0 0 1px var(--border)'
+            : '0 0 0 1px var(--border)',
+          transition: 'transform 150ms, box-shadow 150ms',
+        }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onClick()
-          }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
         }}
       >
-        <div className="relative h-[62%] overflow-hidden">
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--card) 100%)',
-            }}
-          />
-          <img
-            src={placeholderPng}
-            alt={mule.name || 'Mule avatar'}
-            className="absolute inset-0 w-full h-full object-cover opacity-95 mix-blend-normal transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent, var(--card) 92%)' }}
-          />
-          {mule.level > 0 && (
-            <span className="absolute top-2 left-2 font-mono-nums text-[10px] tracking-wide px-1.5 py-0.5 rounded border border-border/60 bg-background/70 backdrop-blur-sm text-[var(--accent-numeric)]">
-              Lv.{mule.level}
-            </span>
-          )}
+        {mule.level > 0 && (
+          <div style={{
+            position: 'absolute', top: 8, left: 8,
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.1em',
+            color: 'var(--muted-raw, var(--muted-foreground))',
+            padding: '2px 6px', borderRadius: 4,
+            border: '1px solid var(--border)',
+            background: 'var(--surface-2, var(--surface-raised))',
+          }}>Lv.{mule.level}</div>
+        )}
+
+        <div style={{ display: 'grid', placeItems: 'center', padding: '16px 0 8px' }}>
+          <ClassSilhouette klass={mule.muleClass} size={72} />
         </div>
 
-        <div
-          aria-hidden
-          className="absolute left-3 right-3 h-px"
-          style={{
-            top: '62%',
-            background: 'linear-gradient(90deg, transparent, var(--accent-primary), transparent)',
-            opacity: 0.75,
-          }}
-        />
+        <div style={{ marginTop: 4 }}>
+          <div style={{
+            color: mule.name ? 'var(--text, var(--foreground))' : 'var(--muted-raw, var(--muted-foreground))',
+            fontWeight: 600,
+            fontSize: 'var(--mule-name-size, 14px)',
+            fontStyle: mule.name ? 'normal' : 'italic',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {mule.name || 'Unnamed'}
+          </div>
+          <div style={{
+            color: 'var(--muted-raw, var(--muted-foreground))',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+            letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2,
+          }}>
+            {mule.muleClass || 'No class'}
+          </div>
+        </div>
 
-        <div className="relative h-[38%] px-3 py-3 flex flex-col justify-between">
-          <div className="min-w-0">
-            <p className="font-display text-base font-bold leading-tight truncate">
-              {mule.name || <span className="text-muted-foreground italic font-normal">Unnamed</span>}
-            </p>
-            <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.22em] text-[var(--accent-secondary)] truncate">
-              {mule.muleClass || <span className="text-muted-foreground/70">no class</span>}
-            </p>
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="font-sans text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
-              weekly
-            </span>
-            <span className={[
-              'font-mono-nums text-sm',
-              hasBosses ? 'text-[var(--accent-numeric)]' : 'text-muted-foreground/60',
-            ].join(' ')}>
-              {potentialIncome}
-            </span>
-          </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)',
+        }}>
+          <span style={{
+            color: 'var(--muted-raw, var(--muted-foreground))',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.12em',
+          }}>WEEKLY</span>
+          <span style={{
+            color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
+          }}>{potentialIncome}</span>
         </div>
 
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -143,33 +116,29 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
             render={
               <button
                 aria-label="Delete mule"
-                className="absolute top-2 right-2 p-1.5 rounded-md text-red-200 hover:text-white bg-black/40 hover:bg-destructive/80 border border-white/10 backdrop-blur-sm"
                 style={{
+                  position: 'absolute', top: 8, right: 8,
+                  padding: '4px 6px', borderRadius: 4,
+                  background: 'var(--surface-2, var(--surface-raised))',
+                  border: '1px solid var(--border)',
+                  color: 'var(--muted-raw, var(--muted-foreground))',
                   opacity: isHovered || popoverOpen ? 1 : 0,
-                  transition: 'opacity 140ms, background-color 140ms, color 140ms',
+                  transition: 'opacity 140ms',
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center',
                 }}
                 onClick={stopPropagation}
                 onPointerDown={stopPropagation}
               />
             }
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 style={{ width: 14, height: 14 }} />
           </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-3"
-            side="bottom"
-            align="end"
-            onClick={stopPropagation}
-            onPointerDown={stopPropagation}
-          >
+          <PopoverContent className="w-auto p-3" side="bottom" align="end" onClick={stopPropagation} onPointerDown={stopPropagation}>
             <div className="flex items-center gap-2">
-              <span className="font-sans text-sm">Delete this mule?</span>
-              <Button size="sm" variant="destructive" onClick={handleDeleteConfirm}>
-                Yes
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDeleteCancel}>
-                Cancel
-              </Button>
+              <span className="text-sm">Delete this mule?</span>
+              <Button size="sm" variant="destructive" onClick={handleDeleteConfirm}>Yes</Button>
+              <Button size="sm" variant="outline" onClick={handleDeleteCancel}>Cancel</Button>
             </div>
           </PopoverContent>
         </Popover>

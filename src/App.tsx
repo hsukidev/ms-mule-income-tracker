@@ -163,7 +163,10 @@ function AppContent() {
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
               <div style={isDragging ? dragBoundaryStyle : {}} className="transition-[border-color,border-style,border-width,border-radius] duration-200" data-drag-boundary>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                <div
+                  className="grid gap-4"
+                  style={{ gridTemplateColumns: 'repeat(var(--roster-cols, 6), minmax(0, 1fr))' }}
+                >
                   {mules.map((mule) => (
                     <MuleCharacterCard
                       key={mule.id}
