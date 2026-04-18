@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/sheet';
 import type { Mule } from '../types';
 import { useMuleIncome } from '../modules/income-hooks';
-import { BossCheckboxList } from './BossCheckboxList';
+import { BossMatrix } from './BossMatrix';
+import { parseKey, toggleBoss } from '../data/bossSelection';
 import placeholderPng from '../assets/placeholder.png';
 
 interface MuleDetailDrawerProps {
@@ -59,7 +60,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="data-[side=right]:w-[640px] data-[side=right]:sm:max-w-[640px] overflow-y-auto p-0"
+        className="data-[side=right]:w-screen data-[side=right]:md:w-[560px] data-[side=right]:md:max-w-[560px] overflow-y-auto p-0"
         style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}
       >
         <SheetTitle className="sr-only">Mule Details</SheetTitle>
@@ -188,9 +189,31 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
             <div className="flex flex-col gap-3">
               <SectionHeading>Weekly Bosses</SectionHeading>
-              <BossCheckboxList
-                selectedBosses={mule.selectedBosses}
-                onChange={(selectedBosses) => onUpdate(mule.id, { selectedBosses })}
+              <BossMatrix
+                selectedKeys={mule.selectedBosses}
+                onToggleKey={(key) => {
+                  const parsed = parseKey(key);
+                  if (!parsed) return;
+                  onUpdate(mule.id, {
+                    selectedBosses: toggleBoss(
+                      mule.selectedBosses,
+                      parsed.bossId,
+                      parsed.tier,
+                    ),
+                  });
+                }}
+                partySizes={mule.partySizes ?? {}}
+                onChangePartySize={(family, n) => {
+                  // Clamp here so BossMatrix can stay a dumb view: party size
+                  // is always in [1, 6] by the time it hits storage.
+                  const clamped = Math.max(1, Math.min(6, n));
+                  onUpdate(mule.id, {
+                    partySizes: {
+                      ...(mule.partySizes ?? {}),
+                      [family]: clamped,
+                    },
+                  });
+                }}
               />
             </div>
           </div>
