@@ -65,7 +65,7 @@ describe('BossCheckboxList', () => {
     const searchInput = screen.getByPlaceholderText('Search bosses...')
     fireEvent.change(searchInput, { target: { value: 'zzzzzzz' } })
 
-    expect(screen.getByText('No bosses found')).toBeTruthy()
+    expect(screen.getByText('No bosses match that search.')).toBeTruthy()
   })
 
   it('displays family displayName without difficulty prefix', () => {

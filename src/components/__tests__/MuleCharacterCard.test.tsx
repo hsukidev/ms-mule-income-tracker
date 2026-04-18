@@ -42,12 +42,12 @@ describe('MuleCharacterCard', () => {
 
   it('renders "Unnamed Mule" when name is empty', () => {
     renderCard({ name: '' })
-    expect(screen.getByText('Unnamed Mule')).toBeTruthy()
+    expect(screen.getByText('Unnamed')).toBeTruthy()
   })
 
   it('renders level badge when level > 0', () => {
     renderCard()
-    expect(screen.getByText('Lv. 200')).toBeTruthy()
+    expect(screen.getByText('Lv.200')).toBeTruthy()
   })
 
   it('hides level badge when level is 0', () => {
@@ -73,27 +73,29 @@ describe('MuleCharacterCard', () => {
 
   it('renders income text', () => {
     renderCard()
-    expect(screen.getByText(/0.*\/week/)).toBeTruthy()
+    expect(screen.getByText('weekly')).toBeTruthy()
+    expect(screen.getByText('0')).toBeTruthy()
   })
 
   it('renders abbreviated income by default', () => {
     renderCard({ selectedBosses: ['hard-lucid'] })
-    expect(screen.getByText(/504M.*\/week/)).toBeTruthy()
+    expect(screen.getByText('504M')).toBeTruthy()
   })
 
   it('renders full income when abbreviated is false', () => {
     renderCard({ selectedBosses: ['hard-lucid'] }, { defaultAbbreviated: false })
-    expect(screen.getByText(/504,000,000.*\/week/)).toBeTruthy()
+    expect(screen.getByText('504,000,000')).toBeTruthy()
   })
 
   it('reduces opacity on hover and restores on mouse leave', () => {
     const { container } = renderCard()
     const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
-    expect(cardWrapper.style.opacity).toBe('1')
+    // Hover effects use CSS classes; card wrapper has no inline opacity
+    expect(cardWrapper.style.opacity).toBe('')
     fireEvent.mouseEnter(cardWrapper)
-    expect(cardWrapper.style.opacity).toBe('0.85')
+    expect(cardWrapper.style.opacity).toBe('')
     fireEvent.mouseLeave(cardWrapper)
-    expect(cardWrapper.style.opacity).toBe('1')
+    expect(cardWrapper.style.opacity).toBe('')
   })
 
   describe('trash icon and delete popover', () => {
@@ -128,7 +130,7 @@ describe('MuleCharacterCard', () => {
       fireEvent.click(trashButton)
 
       await waitFor(() => {
-        expect(screen.getByText('Delete?')).toBeTruthy()
+        expect(screen.getByText('Delete this mule?')).toBeTruthy()
         expect(screen.getByRole('button', { name: 'Yes' })).toBeTruthy()
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
       })

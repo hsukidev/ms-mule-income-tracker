@@ -115,7 +115,7 @@ describe('App', () => {
   it('Add Card appears as the last item in the grid', () => {
     seedMules(testMules)
     const { container } = render(<App />)
-    const grid = container.querySelector('.grid') as HTMLElement
+    const grid = container.querySelector('[data-drag-boundary] .grid') as HTMLElement
     const lastChild = grid.lastElementChild as HTMLElement
     expect(lastChild.hasAttribute('data-add-card')).toBe(true)
   })
@@ -297,12 +297,12 @@ describe('App DnD interactions', () => {
     })
   })
 
-  it('drag opacity (0.5) takes priority over hover opacity (0.85)', async () => {
+  it('applies filter during drag and restores on drag end', async () => {
     const { container } = render(<App />)
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
 
     fireEvent.mouseEnter(cardA)
-    expect(cardA.style.opacity).toBe('0.85')
+    expect(cardA.style.filter).toBeFalsy()
 
     fireEvent.pointerDown(cardA, {
       pointerId: 1, clientX: 100, clientY: 150,
@@ -314,7 +314,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(cardA.style.opacity).toBe('0.5')
+      expect(cardA.style.filter).toBe('saturate(0.7) brightness(0.9)')
     })
 
     fireEvent.pointerUp(document, {
@@ -323,7 +323,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(cardA.style.opacity).toBe('0.85')
+      expect(cardA.style.filter).toBeFalsy()
     })
   })
 
@@ -436,7 +436,7 @@ describe('App DnD interactions', () => {
     simulatePointerDrag(cardA, 100, 150, 320, 150)
 
     await waitFor(() => {
-      const grid = container.querySelector('.grid') as HTMLElement
+      const grid = container.querySelector('[data-drag-boundary] .grid') as HTMLElement
       const lastChild = grid.lastElementChild as HTMLElement
       expect(lastChild.hasAttribute('data-add-card')).toBe(true)
     })

@@ -22,17 +22,17 @@ const muleNoBosses: Mule = {
 describe('IncomePieChart', () => {
   it('shows empty state when no mules have bosses selected', () => {
     render(<IncomePieChart mules={[muleNoBosses]} />)
-    expect(screen.getByText('Add mules and select bosses to see the income breakdown')).toBeTruthy()
+    expect(screen.getByText('No crystals tallied yet')).toBeTruthy()
   })
 
   it('shows empty state when mules array is empty', () => {
     render(<IncomePieChart mules={[]} />)
-    expect(screen.getByText('Add mules and select bosses to see the income breakdown')).toBeTruthy()
+    expect(screen.getByText('No crystals tallied yet')).toBeTruthy()
   })
 
   it('does not show empty state message when mules have bosses', () => {
     render(<IncomePieChart mules={[muleWithBosses]} />)
-    expect(screen.queryByText('Add mules and select bosses to see the income breakdown')).toBeNull()
+    expect(screen.queryByText('No crystals tallied yet')).toBeNull()
   })
 
   it('fires onSliceClick when a pie slice is clicked', () => {

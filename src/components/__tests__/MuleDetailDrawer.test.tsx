@@ -95,7 +95,7 @@ describe('MuleDetailDrawer', () => {
 
   it('renders abbreviated income by default', () => {
     renderDrawer({ mule: { ...baseMule, selectedBosses: ['hard-lucid'] } })
-    expect(screen.getByText(/504M.*\/week/)).toBeTruthy()
+    expect(screen.getByText('504M')).toBeTruthy()
   })
 
   it('renders full income when abbreviated is false', () => {
@@ -103,6 +103,6 @@ describe('MuleDetailDrawer', () => {
       { mule: { ...baseMule, selectedBosses: ['hard-lucid'] } },
       { defaultAbbreviated: false },
     )
-    expect(screen.getByText(/504,000,000.*\/week/)).toBeTruthy()
+    expect(screen.getByText('504,000,000')).toBeTruthy()
   })
 })
