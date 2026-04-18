@@ -61,10 +61,10 @@ export function BossCheckboxList({ selectedBosses, onChange }: BossCheckboxListP
               </div>
               <div className="flex flex-col gap-0.5">
                 {family.bosses.map((boss) => {
-                  const checkboxId = `boss-${boss.id}`;
+                  const checkboxId = `boss-${boss.key}`;
                   return (
                     <Label
-                      key={boss.id}
+                      key={boss.key}
                       htmlFor={checkboxId}
                       className={[
                         'flex items-center gap-2.5 rounded-md px-2 py-1.5 cursor-pointer transition-colors text-[13px]',

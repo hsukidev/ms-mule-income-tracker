@@ -14,6 +14,15 @@ function isLegacyId(id: string): boolean {
   return LEGACY_ID_PREFIX.test(id) || !id.includes(':');
 }
 
+function readPartySizes(raw: unknown): Record<string, number> {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const out: Record<string, number> = {};
+  for (const [family, n] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof n === 'number' && Number.isFinite(n)) out[family] = n;
+  }
+  return out;
+}
+
 function validateMule(raw: unknown, opts: { wipeLegacy: boolean }): Mule | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const obj = raw as Record<string, unknown>;
@@ -24,28 +33,15 @@ function validateMule(raw: unknown, opts: { wipeLegacy: boolean }): Mule | null 
   if (!Array.isArray(obj.selectedBosses)) return null;
 
   const rawSelected = obj.selectedBosses as string[];
-  const hasLegacy = rawSelected.some(isLegacyId);
-  const selectedBosses =
-    opts.wipeLegacy && hasLegacy ? [] : validateBossSelection(rawSelected);
-
-  const rawPartySizes =
-    typeof obj.partySizes === 'object' && obj.partySizes !== null
-      ? (obj.partySizes as Record<string, unknown>)
-      : undefined;
-  const partySizes: Record<string, number> = {};
-  if (rawPartySizes && !(opts.wipeLegacy && hasLegacy)) {
-    for (const [family, n] of Object.entries(rawPartySizes)) {
-      if (typeof n === 'number' && Number.isFinite(n)) partySizes[family] = n;
-    }
-  }
+  const wipe = opts.wipeLegacy && rawSelected.some(isLegacyId);
 
   return {
     id: obj.id,
     name: obj.name,
     level: obj.level,
     muleClass: obj.muleClass,
-    selectedBosses,
-    partySizes,
+    selectedBosses: wipe ? [] : validateBossSelection(rawSelected),
+    partySizes: wipe ? {} : readPartySizes(obj.partySizes),
   };
 }
 

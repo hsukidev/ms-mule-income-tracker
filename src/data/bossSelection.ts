@@ -1,12 +1,10 @@
-import type { BossTier } from '../types';
+import type { Boss, BossDifficulty, BossTier } from '../types';
 import { bosses, getBossById, TIER_LESS_FAMILIES } from './bosses';
 import { formatMeso } from '../utils/meso';
 
 /**
- * Selection-key format (slice 1B): `<bossUuid>:<tier>`.
- *
- * Each mule's `selectedBosses` is an array of these keys. Use `makeKey` and
- * `parseKey` to construct / decode rather than string arithmetic.
+ * Selection key format: `<bossUuid>:<tier>`. Stored directly on
+ * `Mule.selectedBosses`. Use `makeKey` / `parseKey` to construct or decode.
  */
 
 /** Tier order used by the Matrix component (columns, easy → extreme). */
@@ -15,9 +13,9 @@ export const TIER_ORDER: BossTier[] = ['easy', 'normal', 'hard', 'chaos', 'extre
 const TIER_SET: ReadonlySet<BossTier> = new Set(TIER_ORDER);
 
 /**
- * Capitalized difficulty labels used by the pre-1A UI (renders "Hard Lucid",
- * difficulty pip colors, etc.). Distinct from the `BossDifficulty` *interface*
- * in `../types` that holds the `{ tier, crystalValue, contentType }` shape.
+ * Capitalized difficulty label for the pip colour / row name prefix. Distinct
+ * from the `BossDifficulty` *interface* in `../types` that holds the
+ * `{ tier, crystalValue, contentType }` shape.
  */
 export type BossDifficultyLabel = 'Extreme' | 'Chaos' | 'Hard' | 'Normal' | 'Easy';
 
@@ -29,13 +27,6 @@ const TIER_LABEL: Record<BossTier, BossDifficultyLabel> = {
   extreme: 'Extreme',
 };
 
-const DIFFICULTY_PREFIX = /^(Extreme|Chaos|Hard|Normal|Easy) /;
-
-export function getDifficulty(name: string): BossDifficultyLabel | null {
-  const m = name.match(DIFFICULTY_PREFIX);
-  return (m?.[1] as BossDifficultyLabel) ?? null;
-}
-
 /** Build a native selection key from a boss id and tier. */
 export function makeKey(bossId: string, tier: BossTier): string {
   return `${bossId}:${tier}`;
@@ -45,9 +36,9 @@ export function makeKey(bossId: string, tier: BossTier): string {
 export function parseKey(key: string): { bossId: string; tier: BossTier } | null {
   const colon = key.lastIndexOf(':');
   if (colon < 0) return null;
-  const bossId = key.slice(0, colon);
   const tierStr = key.slice(colon + 1);
   if (!TIER_SET.has(tierStr as BossTier)) return null;
+  const bossId = key.slice(0, colon);
   const boss = getBossById(bossId);
   if (!boss) return null;
   const tier = tierStr as BossTier;
@@ -55,31 +46,28 @@ export function parseKey(key: string): { bossId: string; tier: BossTier } | null
   return { bossId, tier };
 }
 
-/** Resolve a selection key to its boss + tier difficulty entry, or null. */
-function resolveKey(key: string) {
+function resolveKey(key: string): { boss: Boss; diff: BossDifficulty } | null {
   const parsed = parseKey(key);
   if (!parsed) return null;
   const boss = getBossById(parsed.bossId)!;
   const diff = boss.difficulty.find((d) => d.tier === parsed.tier)!;
-  return { boss, diff, tier: parsed.tier };
+  return { boss, diff };
 }
 
 /**
- * Row shape for both the existing BossCheckboxList (uses `id`, `name`,
- * `crystalValue`, `formattedValue`, `difficulty`, `selected`) and the future
- * Matrix (uses `bossId`, `tier`, `key`, `crystalValue`, `selected`).
+ * Row shape rendered by both the existing BossCheckboxList and the future
+ * Matrix component. Each row is one `(bossId, tier)` pair.
  */
 export interface FamilyRow {
   bossId: string;
   tier: BossTier;
+  /** Selection key = `makeKey(bossId, tier)`. Also used as React list key. */
   key: string;
-  /** Alias of `key` so existing CheckboxList code (boss.id) keeps working. */
-  id: string;
   /** Display label — "<Tier> <Family>" for tiered families, bare family name otherwise. */
   name: string;
   crystalValue: number;
   formattedValue: string;
-  /** Capitalized label for the pip color (null for tier-less families). */
+  /** Pip-colour label (null for tier-less families). */
   difficulty: BossDifficultyLabel | null;
   selected: boolean;
 }
@@ -95,23 +83,26 @@ function rowLabel(family: string, tier: BossTier, familyName: string): string {
 }
 
 export function validateBossSelection(keys: string[]): string[] {
-  const valid = keys.filter((k) => parseKey(k) !== null);
-  const familyWinners = new Map<string, string>();
-  for (const key of valid) {
-    const { bossId } = parseKey(key)!;
-    const current = familyWinners.get(bossId);
-    const currentValue = current ? resolveKey(current)!.diff.crystalValue : -Infinity;
-    const incoming = resolveKey(key)!.diff.crystalValue;
-    if (incoming > currentValue) familyWinners.set(bossId, key);
+  interface ResolvedKey { key: string; bossId: string; crystalValue: number }
+  const resolved: ResolvedKey[] = [];
+  for (const key of keys) {
+    const r = resolveKey(key);
+    if (r) resolved.push({ key, bossId: r.boss.id, crystalValue: r.diff.crystalValue });
   }
-  const winnerKeys = new Set(familyWinners.values());
-  return valid.filter((k) => winnerKeys.has(k));
+
+  // Pick the first-seen key with the highest crystalValue per family.
+  const winner = new Map<string, ResolvedKey>();
+  for (const r of resolved) {
+    const current = winner.get(r.bossId);
+    if (!current || r.crystalValue > current.crystalValue) winner.set(r.bossId, r);
+  }
+  const winnerKeys = new Set(Array.from(winner.values(), (w) => w.key));
+  return resolved.filter((r) => winnerKeys.has(r.key)).map((r) => r.key);
 }
 
 export function toggleBoss(keys: string[], bossId: string, tier: BossTier): string[] {
   const boss = getBossById(bossId);
-  if (!boss) return keys;
-  if (!boss.difficulty.some((d) => d.tier === tier)) return keys;
+  if (!boss || !boss.difficulty.some((d) => d.tier === tier)) return keys;
 
   const target = makeKey(bossId, tier);
   const existingKey = keys.find((k) => parseKey(k)?.bossId === bossId);
@@ -120,10 +111,15 @@ export function toggleBoss(keys: string[], bossId: string, tier: BossTier): stri
   return [...keys, target];
 }
 
-// Precomputed top crystalValue per family → sort comparator stays O(1) lookup.
+// Precomputed top crystalValue per family → comparator is O(1) per pair.
 const familyTopCrystal = new Map<string, number>(
   bosses.map((b) => [b.family, Math.max(...b.difficulty.map((d) => d.crystalValue))]),
 );
+
+// Sort once at module load; the order is stable across calls.
+const bossesByTopCrystalDesc = bosses
+  .slice()
+  .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!);
 
 export function getFamilies(
   keys: string[],
@@ -132,30 +128,26 @@ export function getFamilies(
 ): FamilyView[] {
   const selectedSet = new Set(keys);
 
-  const families: FamilyView[] = bosses
-    .slice()
-    .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!)
-    .map((boss) => ({
-      family: boss.family,
-      displayName: boss.name,
-      bosses: boss.difficulty
-        .slice()
-        .sort((a, b) => b.crystalValue - a.crystalValue)
-        .map((diff): FamilyRow => {
-          const key = makeKey(boss.id, diff.tier);
-          return {
-            bossId: boss.id,
-            tier: diff.tier,
-            key,
-            id: key,
-            name: rowLabel(boss.family, diff.tier, boss.name),
-            crystalValue: diff.crystalValue,
-            formattedValue: formatMeso(diff.crystalValue, abbreviated),
-            difficulty: TIER_LESS_FAMILIES.has(boss.family) ? null : TIER_LABEL[diff.tier],
-            selected: selectedSet.has(key),
-          };
-        }),
-    }));
+  const families: FamilyView[] = bossesByTopCrystalDesc.map((boss) => ({
+    family: boss.family,
+    displayName: boss.name,
+    bosses: boss.difficulty
+      .slice()
+      .sort((a, b) => b.crystalValue - a.crystalValue)
+      .map((diff): FamilyRow => {
+        const key = makeKey(boss.id, diff.tier);
+        return {
+          bossId: boss.id,
+          tier: diff.tier,
+          key,
+          name: rowLabel(boss.family, diff.tier, boss.name),
+          crystalValue: diff.crystalValue,
+          formattedValue: formatMeso(diff.crystalValue, abbreviated),
+          difficulty: TIER_LESS_FAMILIES.has(boss.family) ? null : TIER_LABEL[diff.tier],
+          selected: selectedSet.has(key),
+        };
+      }),
+  }));
 
   if (!search) return families;
 
