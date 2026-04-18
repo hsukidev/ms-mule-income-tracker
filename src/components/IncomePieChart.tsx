@@ -56,10 +56,7 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
             }}
           />
           <p className="font-display italic text-sm text-muted-foreground">
-            No crystals tallied yet
-          </p>
-          <p className="font-sans text-xs text-muted-foreground/70">
-            Add a mule and pick its bosses to light the ledger.
+            No bosses tallied yet
           </p>
         </div>
       </div>

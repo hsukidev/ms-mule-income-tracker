@@ -4,7 +4,6 @@ export type BossContentType = 'daily' | 'weekly' | 'monthly';
 export interface BossDifficulty {
   tier: BossTier;
   crystalValue: number;
-  contentType: BossContentType;
 }
 
 export interface Boss {
@@ -14,6 +13,8 @@ export interface Boss {
   name: string;
   /** Family slug, unchanged from the pre-1A dataset. */
   family: string;
+  /** Cadence for the whole family — one boss = one cadence. */
+  contentType: BossContentType;
   /** One entry per difficulty tier offered for this family. */
   difficulty: BossDifficulty[];
 }

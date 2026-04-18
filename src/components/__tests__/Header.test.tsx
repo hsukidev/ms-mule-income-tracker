@@ -15,6 +15,12 @@ describe('Header (shadcn/ThemeProvider)', () => {
     expect(toggleBtn).toBeTruthy()
   })
 
+  it('theme toggle button has pointer cursor on hover', () => {
+    render(<Header />, { defaultTheme: 'dark' })
+    const toggleBtn = screen.getByLabelText('Switch to light mode')
+    expect(toggleBtn.className).toContain('cursor-pointer')
+  })
+
   it('shows correct aria-label for dark mode (Switch to light mode)', () => {
     render(<Header />, { defaultTheme: 'dark' })
     expect(screen.getByLabelText('Switch to light mode')).toBeTruthy()

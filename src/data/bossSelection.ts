@@ -15,7 +15,7 @@ const TIER_SET: ReadonlySet<BossTier> = new Set(TIER_ORDER);
 /**
  * Capitalized difficulty label for the pip colour / row name prefix. Distinct
  * from the `BossDifficulty` *interface* in `../types` that holds the
- * `{ tier, crystalValue, contentType }` shape.
+ * `{ tier, crystalValue }` shape.
  */
 export type BossDifficultyLabel = 'Extreme' | 'Chaos' | 'Hard' | 'Normal' | 'Easy';
 

@@ -35,12 +35,10 @@ describe('bosses data (Matrix schema)', () => {
     expect(kalos.name).toBe('Kalos the Guardian');
   });
 
-  it('every difficulty entry is seeded with contentType "weekly"', () => {
+  it('every boss is seeded with contentType "weekly"', () => {
+    const expected: BossContentType = 'weekly';
     for (const boss of bosses) {
-      for (const d of boss.difficulty) {
-        const expected: BossContentType = 'weekly';
-        expect(d.contentType).toBe(expected);
-      }
+      expect(boss.contentType).toBe(expected);
     }
   });
 
@@ -59,7 +57,7 @@ describe('bosses data (Matrix schema)', () => {
       expect(boss, `family ${family} should exist`).toBeDefined();
       expect(boss.difficulty).toHaveLength(1);
       expect(boss.difficulty[0].tier).toBe('normal');
-      expect(boss.difficulty[0].contentType).toBe('weekly');
+      expect(boss.contentType).toBe('weekly');
     }
   });
 

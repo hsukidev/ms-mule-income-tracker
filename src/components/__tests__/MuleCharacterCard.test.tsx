@@ -79,7 +79,8 @@ describe('MuleCharacterCard', () => {
   it('renders income text', () => {
     renderCard()
     expect(screen.getByText(/weekly/i)).toBeTruthy()
-    expect(screen.getByText('0')).toBeTruthy()
+    // Two value spans render (mobile-only abbreviated + md+ toggle-aware); both read "0" when no bosses.
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
   })
 
   it('stacks the WEEKLY label and meso value vertically on mobile, horizontally on md+', () => {
@@ -90,9 +91,29 @@ describe('MuleCharacterCard', () => {
     expect(row.className).toContain('md:flex-row')
   })
 
+  it('always stacks WEEKLY + meso value when the value is unabbreviated (prevents overflow)', () => {
+    renderCard({ selectedBosses: [HARD_LUCID] }, { defaultAbbreviated: false })
+    const weeklyEl = screen.getByText(/weekly/i)
+    const row = weeklyEl.parentElement!
+    expect(row.className).toContain('flex-col')
+    expect(row.className).not.toContain('md:flex-row')
+  })
+
+  it('always renders an abbreviated mobile value even when unabbreviated is enabled', () => {
+    renderCard({ selectedBosses: [HARD_LUCID] }, { defaultAbbreviated: false })
+    // Full number is what md+ screens show (respects the toggle).
+    const full = screen.getByText('504,000,000')
+    expect(full.className).toContain('hidden')
+    expect(full.className).toContain('md:inline')
+    // Abbreviated version is always present for mobile.
+    const abbr = screen.getByText('504M')
+    expect(abbr.className).toContain('md:hidden')
+  })
+
   it('renders abbreviated income by default', () => {
     renderCard({ selectedBosses: [HARD_LUCID] })
-    expect(screen.getByText('504M')).toBeTruthy()
+    // Both the mobile-always-abbreviated span and the md+ toggle-aware span render "504M".
+    expect(screen.getAllByText('504M').length).toBeGreaterThan(0)
   })
 
   it('renders full income when abbreviated is false', () => {

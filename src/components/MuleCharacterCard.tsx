@@ -5,7 +5,8 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { Mule } from '../types'
-import { useMuleIncome } from '../modules/income-hooks'
+import { useMuleIncome, useFormatPreference } from '../modules/income-hooks'
+import { formatMeso } from '../utils/meso'
 import { ClassSilhouette } from './ClassSilhouette'
 
 interface MuleCharacterCardProps {
@@ -16,7 +17,9 @@ interface MuleCharacterCardProps {
 
 export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: mule.id })
-  const { formatted: potentialIncome } = useMuleIncome(mule)
+  const { raw: rawIncome, formatted: potentialIncome } = useMuleIncome(mule)
+  const { abbreviated } = useFormatPreference()
+  const abbreviatedIncome = formatMeso(rawIncome, true)
   const [isHovered, setIsHovered] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState(false)
 
@@ -98,17 +101,31 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
         </div>
 
         <div
-          className="flex flex-col items-start gap-0.5 md:flex-row md:items-center md:justify-between md:gap-0"
+          className={
+            abbreviated
+              ? 'flex flex-col items-start gap-0.5 md:flex-row md:items-center md:justify-between md:gap-0'
+              : 'flex flex-col items-start gap-0.5'
+          }
           style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}
         >
           <span style={{
             color: 'var(--muted-raw, var(--muted-foreground))',
             fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.12em',
           }}>WEEKLY</span>
-          <span style={{
-            color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
-            fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
-          }}>{potentialIncome}</span>
+          <span
+            className="md:hidden"
+            style={{
+              color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
+            }}
+          >{abbreviatedIncome}</span>
+          <span
+            className="hidden md:inline"
+            style={{
+              color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
+              fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
+            }}
+          >{potentialIncome}</span>
         </div>
 
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>

@@ -121,45 +121,50 @@ describe('sumSelectedKeys contentType filter', () => {
     vi.restoreAllMocks()
   })
 
-  it('includes only tiers with contentType === "weekly"; daily/monthly contribute 0', () => {
-    const fakeBoss: Boss = {
-      id: 'fixture-mixed-contenttype',
-      name: 'Fixture Mixed',
-      family: 'fixture-mixed',
-      difficulty: [
-        { tier: 'hard', crystalValue: 1_000_000, contentType: 'weekly' },
-        { tier: 'extreme', crystalValue: 9_999_999, contentType: 'monthly' },
-      ],
+  function mockBosses(...bosses: Boss[]) {
+    const byId = new Map(bosses.map((b) => [b.id, b]))
+    vi.spyOn(bossesModule, 'getBossById').mockImplementation((id) => byId.get(id))
+  }
+
+  it('includes only keys from bosses with contentType === "weekly"; monthly bosses contribute 0', () => {
+    const weeklyBoss: Boss = {
+      id: 'fixture-weekly',
+      name: 'Fixture Weekly',
+      family: 'fixture-weekly',
+      contentType: 'weekly',
+      difficulty: [{ tier: 'hard', crystalValue: 1_000_000 }],
     }
+    const monthlyBoss: Boss = {
+      id: 'fixture-monthly',
+      name: 'Fixture Monthly',
+      family: 'fixture-monthly',
+      contentType: 'monthly',
+      difficulty: [{ tier: 'extreme', crystalValue: 9_999_999 }],
+    }
+    mockBosses(weeklyBoss, monthlyBoss)
 
-    vi.spyOn(bossesModule, 'getBossById').mockImplementation((id) =>
-      id === fakeBoss.id ? fakeBoss : undefined,
-    )
-
-    const weeklyKey = makeKey(fakeBoss.id, 'hard')
-    const monthlyKey = makeKey(fakeBoss.id, 'extreme')
-
-    expect(sumSelectedKeys([weeklyKey, monthlyKey])).toBe(1_000_000)
+    const keys = [makeKey(weeklyBoss.id, 'hard'), makeKey(monthlyBoss.id, 'extreme')]
+    expect(sumSelectedKeys(keys)).toBe(1_000_000)
   })
 
-  it('drops daily tiers from the sum', () => {
-    const fakeBoss: Boss = {
+  it('drops daily bosses from the sum', () => {
+    const dailyBoss: Boss = {
       id: 'fixture-daily',
       name: 'Fixture Daily',
       family: 'fixture-daily',
-      difficulty: [
-        { tier: 'normal', crystalValue: 42, contentType: 'daily' },
-        { tier: 'hard', crystalValue: 100, contentType: 'weekly' },
-      ],
+      contentType: 'daily',
+      difficulty: [{ tier: 'normal', crystalValue: 42 }],
     }
+    const weeklyBoss: Boss = {
+      id: 'fixture-weekly-b',
+      name: 'Fixture Weekly B',
+      family: 'fixture-weekly-b',
+      contentType: 'weekly',
+      difficulty: [{ tier: 'hard', crystalValue: 100 }],
+    }
+    mockBosses(dailyBoss, weeklyBoss)
 
-    vi.spyOn(bossesModule, 'getBossById').mockImplementation((id) =>
-      id === fakeBoss.id ? fakeBoss : undefined,
-    )
-
-    const dailyKey = makeKey(fakeBoss.id, 'normal')
-    const weeklyKey = makeKey(fakeBoss.id, 'hard')
-
-    expect(sumSelectedKeys([dailyKey, weeklyKey])).toBe(100)
+    const keys = [makeKey(dailyBoss.id, 'normal'), makeKey(weeklyBoss.id, 'hard')]
+    expect(sumSelectedKeys(keys)).toBe(100)
   })
 })

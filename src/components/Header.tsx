@@ -47,7 +47,7 @@ export function Header() {
           </div>
           <button
             onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors cursor-pointer"
             style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
