@@ -18,6 +18,7 @@ describe('ThemeProvider', () => {
   beforeEach(() => {
     localStorage.clear()
     document.documentElement.classList.remove('dark')
+    document.body.classList.remove('light')
   })
 
   it('provides default dark theme when no localStorage and no preference', () => {
@@ -106,6 +107,35 @@ describe('ThemeProvider', () => {
     fireEvent.click(screen.getByTestId('set-light'))
     expect(screen.getByTestId('theme-value').textContent).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
+  })
+
+  it('adds body.light class when theme is light', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <ThemeConsumer />
+      </ThemeProvider>
+    )
+    expect(document.body.classList.contains('light')).toBe(true)
+  })
+
+  it('does not have body.light class when theme is dark', () => {
+    render(
+      <ThemeProvider defaultTheme="dark">
+        <ThemeConsumer />
+      </ThemeProvider>
+    )
+    expect(document.body.classList.contains('light')).toBe(false)
+  })
+
+  it('removes body.light class when switching back to dark', () => {
+    render(
+      <ThemeProvider defaultTheme="light">
+        <ThemeConsumer />
+      </ThemeProvider>
+    )
+    expect(document.body.classList.contains('light')).toBe(true)
+    fireEvent.click(screen.getByTestId('set-dark'))
+    expect(document.body.classList.contains('light')).toBe(false)
   })
 
   it('throws if useTheme is used outside ThemeProvider', () => {
