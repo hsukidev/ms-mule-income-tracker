@@ -7,12 +7,8 @@ import { makeKey, TIER_ORDER } from '../../data/bossSelection'
 const LUCID = bosses.find((b) => b.family === 'lucid')!.id
 const HARD_LUCID = makeKey(LUCID, 'hard')
 const NORMAL_LUCID = makeKey(LUCID, 'normal')
-const EASY_LUCID = makeKey(LUCID, 'easy')
 
 const BLACK_MAGE = bosses.find((b) => b.family === 'black-mage')!.id
-const HARD_BLACK_MAGE = makeKey(BLACK_MAGE, 'hard')
-const EXTREME_BLACK_MAGE = makeKey(BLACK_MAGE, 'extreme')
-
 const AKECHI = bosses.find((b) => b.family === 'akechi-mitsuhide')!.id
 
 function renderMatrix(
@@ -171,13 +167,6 @@ describe('BossMatrix', () => {
       const hardCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
       fireEvent.click(hardCell)
       expect(onToggleKey).toHaveBeenCalledWith(HARD_LUCID)
-    })
-
-    it('unused variables are silenced by consuming EASY/EXTREME refs', () => {
-      // Defensive: ensure test file imports don't go unused.
-      expect(EASY_LUCID.endsWith(':easy')).toBe(true)
-      expect(EXTREME_BLACK_MAGE.endsWith(':extreme')).toBe(true)
-      expect(HARD_BLACK_MAGE.endsWith(':hard')).toBe(true)
     })
   })
 })

@@ -1,14 +1,12 @@
-import type { BossTier } from '../types';
-import { bosses } from '../data/bosses';
-import { makeKey, parseKey, TIER_ORDER } from '../data/bossSelection';
+import type { Boss, BossDifficulty, BossTier } from '../types';
+import {
+  bossesByTopCrystalDesc,
+  makeKey,
+  parseKey,
+  TIER_ORDER,
+} from '../data/bossSelection';
 import { formatMeso } from '../utils/meso';
 
-/**
- * Pip colour per lowercase tier. Relocated from the now-deleted
- * `BossCheckboxList`; keyed by lowercase `BossTier` so the Matrix can
- * colour its header pips without round-tripping through the capitalized
- * `BossDifficultyLabel`.
- */
 const TIER_COLOR: Record<BossTier, string> = {
   easy: '#6fb878',
   normal: '#8fb3d9',
@@ -25,18 +23,18 @@ const TIER_HEADER_LABEL: Record<BossTier, string> = {
   extreme: 'Extreme',
 };
 
+// Precompute tier → BossDifficulty lookup per family once at module load.
+const tierByBossId = new Map<string, Map<BossTier, BossDifficulty>>(
+  bossesByTopCrystalDesc.map((b): [string, Map<BossTier, BossDifficulty>] => [
+    b.id,
+    new Map(b.difficulty.map((d) => [d.tier, d])),
+  ]),
+);
+
 interface BossMatrixProps {
   selectedKeys: string[];
   onToggleKey: (key: string) => void;
 }
-
-// Sort families once at module load — top-tier crystalValue descending.
-const familyTopCrystal = new Map<string, number>(
-  bosses.map((b) => [b.id, Math.max(...b.difficulty.map((d) => d.crystalValue))]),
-);
-const sortedBosses = bosses
-  .slice()
-  .sort((a, b) => familyTopCrystal.get(b.id)! - familyTopCrystal.get(a.id)!);
 
 function TierHeader({ tier }: { tier: BossTier }) {
   return (
@@ -59,9 +57,75 @@ function TierHeader({ tier }: { tier: BossTier }) {
   );
 }
 
+function FamilyRow({
+  boss,
+  selectedTier,
+  onToggleKey,
+}: {
+  boss: Boss;
+  selectedTier: BossTier | undefined;
+  onToggleKey: (key: string) => void;
+}) {
+  const tierMap = tierByBossId.get(boss.id)!;
+  return (
+    <div
+      role="row"
+      className="grid border-b border-border/40 last:border-b-0"
+      style={{ gridTemplateColumns: '1.6fr repeat(5, 1fr)' }}
+    >
+      <div
+        role="rowheader"
+        className="px-3 py-2 font-display text-sm font-semibold truncate"
+      >
+        {boss.name}
+      </div>
+      {TIER_ORDER.map((tier) => {
+        const diff = tierMap.get(tier);
+        if (!diff) {
+          return (
+            <div
+              key={tier}
+              role="cell"
+              data-testid={`matrix-cell-${boss.id}-${tier}`}
+              aria-disabled="true"
+              className="px-2 py-2 flex items-center justify-center font-mono-nums text-[11px] text-[var(--muted-raw,var(--muted-foreground))]"
+              style={{ cursor: 'default', opacity: 0.3 }}
+            >
+              —
+            </div>
+          );
+        }
+
+        const isSelected = selectedTier === tier;
+        const isDim = selectedTier !== undefined && !isSelected;
+        const key = makeKey(boss.id, tier);
+
+        return (
+          <button
+            type="button"
+            key={tier}
+            role="cell"
+            data-testid={`matrix-cell-${boss.id}-${tier}`}
+            data-state={isSelected ? 'on' : 'off'}
+            data-dim={isDim ? 'true' : undefined}
+            onClick={() => onToggleKey(key)}
+            className={[
+              'px-2 py-2 flex items-center justify-center font-mono-nums text-[11px] tabular-nums cursor-pointer transition-colors border-l border-border/30',
+              isSelected
+                ? 'bg-[var(--accent-soft)] ring-1 ring-inset ring-[var(--accent)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--text,var(--foreground))]',
+            ].join(' ')}
+            style={isDim ? { opacity: 0.35 } : undefined}
+          >
+            {formatMeso(diff.crystalValue, true)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function BossMatrix({ selectedKeys, onToggleKey }: BossMatrixProps) {
-  const selectedSet = new Set(selectedKeys);
-  // bossId → selected tier for that family (undefined means nothing selected).
   const selectedTierByBoss = new Map<string, BossTier>();
   for (const key of selectedKeys) {
     const parsed = parseKey(key);
@@ -98,69 +162,14 @@ export function BossMatrix({ selectedKeys, onToggleKey }: BossMatrixProps) {
           ))}
         </div>
 
-        {sortedBosses.map((boss) => {
-          const selectedTier = selectedTierByBoss.get(boss.id);
-          const tierMap = new Map(boss.difficulty.map((d) => [d.tier, d]));
-          return (
-            <div
-              key={boss.id}
-              role="row"
-              className="grid border-b border-border/40 last:border-b-0"
-              style={{ gridTemplateColumns: '1.6fr repeat(5, 1fr)' }}
-            >
-              <div
-                role="rowheader"
-                className="px-3 py-2 font-display text-sm font-semibold truncate"
-              >
-                {boss.name}
-              </div>
-              {TIER_ORDER.map((tier) => {
-                const diff = tierMap.get(tier);
-                if (!diff) {
-                  return (
-                    <div
-                      key={tier}
-                      role="cell"
-                      data-testid={`matrix-cell-${boss.id}-${tier}`}
-                      aria-disabled="true"
-                      className="px-2 py-2 flex items-center justify-center font-mono-nums text-[11px] text-[var(--muted-raw,var(--muted-foreground))]"
-                      style={{ cursor: 'default', opacity: 0.3 }}
-                    >
-                      —
-                    </div>
-                  );
-                }
-
-                const key = makeKey(boss.id, tier);
-                const isSelected = selectedSet.has(key);
-                const isDim = selectedTier !== undefined && !isSelected;
-
-                const classes = [
-                  'px-2 py-2 flex items-center justify-center font-mono-nums text-[11px] tabular-nums cursor-pointer transition-colors border-l border-border/30',
-                  isSelected
-                    ? 'bg-[var(--accent-soft)] ring-1 ring-inset ring-[var(--accent)] text-[var(--accent)] font-semibold'
-                    : 'text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--text,var(--foreground))]',
-                ].join(' ');
-
-                return (
-                  <button
-                    type="button"
-                    key={tier}
-                    role="cell"
-                    data-testid={`matrix-cell-${boss.id}-${tier}`}
-                    data-state={isSelected ? 'on' : 'off'}
-                    data-dim={isDim ? 'true' : undefined}
-                    onClick={() => onToggleKey(key)}
-                    className={classes}
-                    style={isDim ? { opacity: 0.35 } : undefined}
-                  >
-                    {formatMeso(diff.crystalValue, true)}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
+        {bossesByTopCrystalDesc.map((boss) => (
+          <FamilyRow
+            key={boss.id}
+            boss={boss}
+            selectedTier={selectedTierByBoss.get(boss.id)}
+            onToggleKey={onToggleKey}
+          />
+        ))}
       </div>
 
       <p className="font-display italic text-xs text-[var(--muted-raw,var(--muted-foreground))]">

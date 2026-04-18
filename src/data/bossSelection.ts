@@ -116,8 +116,11 @@ const familyTopCrystal = new Map<string, number>(
   bosses.map((b) => [b.family, Math.max(...b.difficulty.map((d) => d.crystalValue))]),
 );
 
-// Sort once at module load; the order is stable across calls.
-const bossesByTopCrystalDesc = bosses
+/**
+ * Bosses sorted by top-tier crystalValue descending. Stable across calls —
+ * both `getFamilies` and the BossMatrix component depend on this order.
+ */
+export const bossesByTopCrystalDesc: readonly Boss[] = bosses
   .slice()
   .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!);
 
