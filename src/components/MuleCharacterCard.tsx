@@ -26,11 +26,13 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
   const [isHovered, setIsHovered] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState(false)
 
+  const extraTransitions = isDragging
+    ? 'box-shadow 180ms, border-color 180ms, filter 180ms'
+    : 'box-shadow 180ms, transform 180ms, border-color 180ms, filter 180ms'
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: [transition, 'box-shadow 180ms, transform 180ms, border-color 180ms, filter 180ms']
-      .filter(Boolean)
-      .join(', '),
+    transition: [transition, extraTransitions].filter(Boolean).join(', '),
     filter: isDragging ? 'saturate(0.7) brightness(0.9)' : undefined,
   }
 

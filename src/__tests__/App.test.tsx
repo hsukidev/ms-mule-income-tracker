@@ -244,6 +244,59 @@ describe('App DnD interactions', () => {
     })
   })
 
+  it('non-dragged cards retain transform transition during active drag', async () => {
+    const { container } = render(<App />)
+    const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
+    const cardB = container.querySelector('[data-mule-card="mule-b"]') as HTMLElement
+
+    fireEvent.pointerDown(cardA, {
+      pointerId: 1, clientX: 100, clientY: 150,
+      button: 0, isPrimary: true, bubbles: true,
+    })
+    fireEvent.pointerMove(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+
+    await waitFor(() => {
+      expect(cardA.style.transition).not.toMatch(/transform\s+\d/)
+    })
+
+    const transitionB = cardB.style.transition
+    const transformParts = transitionB.split(',').filter((p: string) => p.trim().startsWith('transform'))
+    expect(transformParts.length).toBeGreaterThan(0)
+
+    fireEvent.pointerUp(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+  })
+
+  it('dragged card has no transform transition during active drag', async () => {
+    const { container } = render(<App />)
+    const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
+
+    fireEvent.pointerDown(cardA, {
+      pointerId: 1, clientX: 100, clientY: 150,
+      button: 0, isPrimary: true, bubbles: true,
+    })
+    fireEvent.pointerMove(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+
+    await waitFor(() => {
+      const transition = cardA.style.transition
+      const transformParts = transition.split(',').filter((p: string) => p.trim().startsWith('transform'))
+      expect(transformParts.length).toBe(0)
+    })
+
+    fireEvent.pointerUp(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+  })
+
   it('drag opacity (0.5) takes priority over hover opacity (0.85)', async () => {
     const { container } = render(<App />)
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
@@ -280,7 +333,7 @@ describe('App DnD interactions', () => {
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
     expect(cardA).toBeTruthy()
 
-    const gridWrapper = container.querySelector('.grid')?.parentElement as HTMLElement
+    const gridWrapper = container.querySelector('[data-drag-boundary]') as HTMLElement
     expect(gridWrapper).toBeTruthy()
 
     expect(gridWrapper!.style.borderStyle).toBeFalsy()
@@ -309,12 +362,71 @@ describe('App DnD interactions', () => {
     })
   })
 
+  it('grid wrapper transition does not include padding or all', async () => {
+    const { container } = render(<App />)
+    const boundary = container.querySelector('[data-drag-boundary]') as HTMLElement
+
+    expect(boundary.className).not.toContain('transition-all')
+
+    const parts = boundary.className.split(/\s+/)
+    const transitionClass = parts.find((p: string) => p.startsWith('transition-['))
+    expect(transitionClass).toBeTruthy()
+    const props = transitionClass!.replace('transition-[', '').replace(']', '').split(',')
+    expect(props).not.toContain('padding')
+    expect(props).not.toContain('all')
+  })
+
+  it('grid wrapper padding changes instantly when isDragging toggles', async () => {
+    const { container } = render(<App />)
+    const boundary = container.querySelector('[data-drag-boundary]') as HTMLElement
+
+    const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
+    fireEvent.pointerDown(cardA, {
+      pointerId: 1, clientX: 100, clientY: 150,
+      button: 0, isPrimary: true, bubbles: true,
+    })
+    fireEvent.pointerMove(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+
+    await waitFor(() => {
+      expect(boundary.style.padding).toBeTruthy()
+    })
+
+    fireEvent.pointerUp(document, {
+      pointerId: 1, clientX: 110, clientY: 150,
+      isPrimary: true, bubbles: true,
+    })
+
+    await waitFor(() => {
+      expect(boundary.style.padding).toBeFalsy()
+    })
+  })
+
   it('Add Card is not included in DnD sortable items', () => {
     const { container } = render(<App />)
     const addCard = container.querySelector('[data-add-card]') as HTMLElement
     expect(addCard).toBeTruthy()
     // Add Card should not have dnd-kit sortable attributes
     expect(addCard.closest('[data-mule-card]')).toBeNull()
+  })
+
+  it('mule order updates during drag-over before pointer is released', async () => {
+    const { container } = render(<App />)
+    const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
+
+    fireEvent.pointerDown(cardA, { pointerId: 1, clientX: 100, clientY: 150, button: 0, isPrimary: true, bubbles: true })
+    fireEvent.pointerMove(document, { pointerId: 1, clientX: 110, clientY: 150, isPrimary: true, bubbles: true })
+    fireEvent.pointerMove(document, { pointerId: 1, clientX: 320, clientY: 150, isPrimary: true, bubbles: true })
+
+    await waitFor(() => {
+      const cards = container.querySelectorAll('[data-mule-card]')
+      const order = Array.from(cards).map((c) => c.getAttribute('data-mule-card'))
+      expect(order).toEqual(['mule-b', 'mule-a', 'mule-c'])
+    })
+
+    fireEvent.pointerUp(document, { pointerId: 1, clientX: 320, clientY: 150, isPrimary: true, bubbles: true })
   })
 
   it('dragging cards does not change Add Card position (stays last)', async () => {

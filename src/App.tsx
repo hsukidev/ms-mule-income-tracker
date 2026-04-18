@@ -1,4 +1,4 @@
-import { DndContext, closestCenter, type DragEndEvent, PointerSensor, useSensor } from '@dnd-kit/core';
+import { DndContext, closestCenter, type DragEndEvent, type DragOverEvent, PointerSensor, useSensor } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback } from 'react';
@@ -37,10 +37,9 @@ function AppContent() {
     setIsDragging(true);
   }, []);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
       const { active, over } = event;
-      setIsDragging(false);
       if (over && active.id !== over.id) {
         const oldIndex = mules.findIndex((m) => m.id === active.id);
         const newIndex = mules.findIndex((m) => m.id === over.id);
@@ -49,6 +48,10 @@ function AppContent() {
     },
     [mules, reorderMules],
   );
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   const handleDragCancel = useCallback(() => {
     setIsDragging(false);
@@ -151,13 +154,14 @@ function AppContent() {
           <DndContext
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
             sensors={sensors}
             modifiers={[restrictToParentElement]}
           >
             <SortableContext items={mules.map((m) => m.id)} strategy={rectSortingStrategy}>
-              <div style={isDragging ? dragBoundaryStyle : {}} className="transition-all duration-200">
+              <div style={isDragging ? dragBoundaryStyle : {}} className="transition-[border-color,border-style,border-width,border-radius] duration-200" data-drag-boundary>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                   {mules.map((mule) => (
                     <MuleCharacterCard
