@@ -79,23 +79,23 @@ describe('MuleCharacterCard', () => {
 
   it('renders income text', () => {
     renderCard()
-    expect(screen.getByText(/weekly/i)).toBeTruthy()
+    expect(screen.getByText(/income/i)).toBeTruthy()
     // Two value spans render (mobile-only abbreviated + md+ toggle-aware); both read "0" when no bosses.
     expect(screen.getAllByText('0').length).toBeGreaterThan(0)
   })
 
-  it('stacks the WEEKLY label and meso value vertically on mobile, horizontally on md+', () => {
+  it('stacks the INCOME label and meso value vertically on mobile, horizontally on md+', () => {
     renderCard()
-    const weeklyEl = screen.getByText(/weekly/i)
-    const row = weeklyEl.parentElement!
+    const labelEl = screen.getByText(/income/i)
+    const row = labelEl.parentElement!
     expect(row.className).toContain('flex-col')
     expect(row.className).toContain('md:flex-row')
   })
 
-  it('always stacks WEEKLY + meso value when the value is unabbreviated (prevents overflow)', () => {
+  it('always stacks INCOME + meso value when the value is unabbreviated (prevents overflow)', () => {
     renderCard({ selectedBosses: [HARD_LUCID] }, { defaultAbbreviated: false })
-    const weeklyEl = screen.getByText(/weekly/i)
-    const row = weeklyEl.parentElement!
+    const labelEl = screen.getByText(/income/i)
+    const row = labelEl.parentElement!
     expect(row.className).toContain('flex-col')
     expect(row.className).not.toContain('md:flex-row')
   })

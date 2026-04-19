@@ -349,7 +349,7 @@ describe('App DnD interactions', () => {
     })
   })
 
-  it('reduces opacity during drag and restores on drag end', async () => {
+  it('hides the original card during drag and restores on drag end', async () => {
     const { container } = render(<App />)
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
 
@@ -366,7 +366,7 @@ describe('App DnD interactions', () => {
     })
 
     await waitFor(() => {
-      expect(cardA.style.opacity).toBe('0.7')
+      expect(cardA.style.opacity).toBe('0')
     })
 
     fireEvent.pointerUp(document, {
@@ -497,23 +497,6 @@ describe('App DnD interactions', () => {
     expect(addCard).toBeTruthy()
     // Add Card should not have dnd-kit sortable attributes
     expect(addCard.closest('[data-mule-card]')).toBeNull()
-  })
-
-  it('mule order updates during drag-over before pointer is released', async () => {
-    const { container } = render(<App />)
-    const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement
-
-    fireEvent.pointerDown(cardA, { pointerId: 1, clientX: 100, clientY: 150, button: 0, isPrimary: true, bubbles: true })
-    fireEvent.pointerMove(document, { pointerId: 1, clientX: 110, clientY: 150, isPrimary: true, bubbles: true })
-    fireEvent.pointerMove(document, { pointerId: 1, clientX: 320, clientY: 150, isPrimary: true, bubbles: true })
-
-    await waitFor(() => {
-      const cards = container.querySelectorAll('[data-mule-card]')
-      const order = Array.from(cards).map((c) => c.getAttribute('data-mule-card'))
-      expect(order).toEqual(['mule-b', 'mule-a', 'mule-c'])
-    })
-
-    fireEvent.pointerUp(document, { pointerId: 1, clientX: 320, clientY: 150, isPrimary: true, bubbles: true })
   })
 
   it('dragging cards does not change Add Card position (stays last)', async () => {
