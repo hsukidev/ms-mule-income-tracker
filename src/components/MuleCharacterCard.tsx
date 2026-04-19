@@ -20,6 +20,9 @@ const MuleCardInner = memo(function MuleCardInner({ mule }: { mule: Mule }) {
   const { abbreviated } = useFormatPreference()
   const abbreviatedIncome = formatMeso(rawIncome, true)
   const hasBosses = mule.selectedBosses.length > 0
+  const incomeColor = mule.active && hasBosses
+    ? 'var(--accent-raw, var(--accent))'
+    : 'var(--dim, var(--surface-dim))'
 
   return (
     <>
@@ -77,14 +80,14 @@ const MuleCardInner = memo(function MuleCardInner({ mule }: { mule: Mule }) {
         <span
           className="md:hidden"
           style={{
-            color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
+            color: incomeColor,
             fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
           }}
         >{abbreviatedIncome}</span>
         <span
           className="hidden md:inline"
           style={{
-            color: hasBosses ? 'var(--accent-raw, var(--accent))' : 'var(--dim, var(--surface-dim))',
+            color: incomeColor,
             fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600,
           }}
         >{potentialIncome}</span>
@@ -121,7 +124,7 @@ export function MuleCharacterCard({ mule, onClick, onDelete }: MuleCharacterCard
     : {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: 1,
+        opacity: mule.active ? 1 : 0.55,
       }
 
   function stopPropagation(e: React.SyntheticEvent) { e.stopPropagation() }
