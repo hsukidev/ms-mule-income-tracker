@@ -7,16 +7,17 @@ const OPTIONS: ReadonlyArray<{ value: 'comfy' | 'compact'; label: string }> = [
 
 export function DensityToggle() {
   const { density, setDensity } = useDensity()
+  const next = density === 'comfy' ? 'compact' : 'comfy'
+  const toggle = () => setDensity(next)
   return (
     <div
-      role="radiogroup"
-      aria-label="Card density"
       data-testid="density-toggle"
+      data-density={density}
       style={{
         display: 'inline-flex',
         border: '1px solid var(--border)',
         borderRadius: 8,
-        padding: 2,
+        padding: 4,
         background: 'var(--surface-2, var(--surface-raised))',
       }}
     >
@@ -26,9 +27,9 @@ export function DensityToggle() {
           <button
             key={opt.value}
             type="button"
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => setDensity(opt.value)}
+            aria-label={`Switch to ${next} density`}
+            aria-pressed={isActive}
+            onClick={toggle}
             style={{
               padding: '4px 10px',
               borderRadius: 6,

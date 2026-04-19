@@ -9,22 +9,35 @@ describe('DensityToggle', () => {
     document.documentElement.removeAttribute('data-density')
   })
 
-  it('renders two options: COMFY and COMPACT', () => {
+  it('renders two labels: COMFY and COMPACT', () => {
     render(<DensityProvider><DensityToggle /></DensityProvider>)
-    expect(screen.getByRole('radio', { name: /comfy/i })).toBeTruthy()
-    expect(screen.getByRole('radio', { name: /compact/i })).toBeTruthy()
+    expect(screen.getByText('COMFY')).toBeTruthy()
+    expect(screen.getByText('COMPACT')).toBeTruthy()
   })
 
-  it('marks the current density as checked', () => {
+  it('marks the current density on the toggle container', () => {
     render(<DensityProvider><DensityToggle /></DensityProvider>)
-    const comfy = screen.getByRole('radio', { name: /comfy/i })
-    expect(comfy.getAttribute('aria-checked')).toBe('true')
+    const toggle = screen.getByTestId('density-toggle')
+    expect(toggle.getAttribute('data-density')).toBe('comfy')
   })
 
-  it('switches density when other option is clicked', () => {
+  it('flips density when the currently-active label is clicked', () => {
     render(<DensityProvider><DensityToggle /></DensityProvider>)
-    fireEvent.click(screen.getByRole('radio', { name: /compact/i }))
+    // Starts on comfy; clicking COMFY should flip to compact.
+    fireEvent.click(screen.getByText('COMFY'))
     expect(document.documentElement.getAttribute('data-density')).toBe('compact')
-    expect(screen.getByRole('radio', { name: /compact/i }).getAttribute('aria-checked')).toBe('true')
+  })
+
+  it('flips density when the inactive label is clicked', () => {
+    render(<DensityProvider><DensityToggle /></DensityProvider>)
+    fireEvent.click(screen.getByText('COMPACT'))
+    expect(document.documentElement.getAttribute('data-density')).toBe('compact')
+  })
+
+  it('flips back on a second click', () => {
+    render(<DensityProvider><DensityToggle /></DensityProvider>)
+    fireEvent.click(screen.getByText('COMPACT'))
+    fireEvent.click(screen.getByText('COMPACT'))
+    expect(document.documentElement.getAttribute('data-density')).toBe('comfy')
   })
 })
