@@ -165,6 +165,22 @@ export const bossesByTopCrystalDesc: readonly Boss[] = bosses
   .slice()
   .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!);
 
+/**
+ * Filter a boss list by a case-insensitive substring match against both the
+ * display name and the family slug. An empty query returns the list
+ * unchanged so callers can feed a search box value directly.
+ */
+export function filterBySearch(
+  list: readonly Boss[],
+  query: string,
+): readonly Boss[] {
+  if (!query) return list;
+  const q = query.toLowerCase();
+  return list.filter(
+    (b) => b.name.toLowerCase().includes(q) || b.family.toLowerCase().includes(q),
+  );
+}
+
 export function getFamilies(
   keys: string[],
   search: string,
