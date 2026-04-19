@@ -28,7 +28,7 @@ export function AddCard({ onClick }: AddCardProps) {
         display: 'grid',
         placeItems: 'center',
         transition: 'border-color 150ms, background 150ms',
-        minHeight: 160,
+        minHeight: 260,
       }}
     >
       <div style={{ display: 'grid', placeItems: 'center', gap: 10 }}>

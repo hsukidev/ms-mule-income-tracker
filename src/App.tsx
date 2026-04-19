@@ -1,14 +1,25 @@
-import { DndContext, closestCenter, type DragOverEvent, PointerSensor, useSensor } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  defaultDropAnimationSideEffects,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DropAnimation,
+  PointerSensor,
+  useSensor,
+} from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 import { ThemeProvider } from './context/ThemeProvider';
 import { DensityProvider } from './context/DensityProvider';
 import { IncomeProvider } from './modules/IncomeProvider';
 import { useFormatPreference } from './modules/income-hooks';
 import { useMules } from './hooks/useMules';
-import { MuleCharacterCard } from './components/MuleCharacterCard';
+import { MuleCharacterCard, MuleCharacterCardOverlay } from './components/MuleCharacterCard';
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { AddCard } from './components/AddCard';
 import { Header } from './components/Header';
@@ -29,22 +40,33 @@ const dragBoundaryActiveStyle: React.CSSProperties = {
   borderColor: 'color-mix(in hsl, var(--accent-primary) 45%, transparent)',
 };
 
+const dropAnimation: DropAnimation = {
+  duration: 220,
+  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0' } },
+  }),
+};
+
 function AppContent() {
   const { mules, addMule, updateMule, deleteMule, reorderMules } = useMules();
   const { toggle: toggleAbbreviated } = useFormatPreference();
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [activeMuleId, setActiveMuleId] = useState<string | null>(null);
 
   const selectedMule = mules.find((m) => m.id === selectedMuleId) ?? null;
+  const activeMule = activeMuleId ? (mules.find((m) => m.id === activeMuleId) ?? null) : null;
+  const isDragging = activeMuleId !== null;
 
-  const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 5 } })];
+  const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 0 } })];
 
-  const handleDragStart = useCallback(() => {
-    setIsDragging(true);
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveMuleId(String(event.active.id));
   }, []);
 
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveMuleId(null);
       const { active, over } = event;
       if (over && active.id !== over.id) {
         const oldIndex = mules.findIndex((m) => m.id === active.id);
@@ -55,12 +77,8 @@ function AppContent() {
     [mules, reorderMules],
   );
 
-  const handleDragEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
   const handleDragCancel = useCallback(() => {
-    setIsDragging(false);
+    setActiveMuleId(null);
   }, []);
 
   function handleAddMule() {
@@ -107,7 +125,6 @@ function AppContent() {
           <DndContext
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
             sensors={sensors}
@@ -131,6 +148,12 @@ function AppContent() {
                 </div>
               </div>
             </SortableContext>
+            {createPortal(
+              <DragOverlay dropAnimation={dropAnimation}>
+                {activeMule ? <MuleCharacterCardOverlay mule={activeMule} /> : null}
+              </DragOverlay>,
+              document.body,
+            )}
           </DndContext>
         </section>
       </main>

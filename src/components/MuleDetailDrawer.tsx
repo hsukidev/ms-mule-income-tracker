@@ -28,7 +28,7 @@ import {
   isPresetActive,
   removePreset,
 } from '../data/bossPresets';
-import placeholderPng from '../assets/placeholder.png';
+import blankCharacterPng from '../assets/blank-character.png';
 
 const PRESET_KEYS: readonly PresetKey[] = ['CRA', 'CTENE'];
 
@@ -123,14 +123,9 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
           <div className="relative p-8 flex items-start gap-5 border-b border-border/50">
             <div className="relative h-[132px] w-[132px] rounded-lg overflow-hidden border border-border/60 bg-surface-raised shrink-0">
               <img
-                src={placeholderPng}
+                src={blankCharacterPng}
                 alt={mule.name || 'Mule avatar'}
-                className="w-full h-full object-cover"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-0"
-                style={{ background: 'linear-gradient(180deg, transparent 55%, var(--card) 100%)' }}
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="min-w-0 flex-1">

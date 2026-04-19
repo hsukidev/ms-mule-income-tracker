@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { arrayMove } from '@dnd-kit/sortable';
 import { v4 as uuidv4 } from 'uuid';
 import type { BossTier, Mule } from '../types';
 import { getBossById } from '../data/bosses';
@@ -190,12 +191,7 @@ export function useMules() {
   }, []);
 
   const reorderMules = useCallback((oldIndex: number, newIndex: number) => {
-    setMules((prev) => {
-      const result = Array.from(prev);
-      const [removed] = result.splice(oldIndex, 1);
-      result.splice(newIndex, 0, removed);
-      return result;
-    });
+    setMules((prev) => arrayMove(prev, oldIndex, newIndex));
   }, []);
 
   return { mules, addMule, updateMule, deleteMule, reorderMules };
