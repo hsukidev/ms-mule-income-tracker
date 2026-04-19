@@ -122,8 +122,8 @@ describe('MuleCharacterCard', () => {
     expect(screen.getByText('504,000,000')).toBeTruthy()
   })
 
-  it('keeps card opacity at 1 when not dragging', () => {
-    const { container } = renderCard()
+  it('keeps an active mule card at opacity 1 when not dragging', () => {
+    const { container } = renderCard({ active: true })
     const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
     // Opacity stays at 1 regardless of hover; only drop during active drag.
     expect(cardWrapper.style.opacity).toBe('1')
@@ -131,6 +131,40 @@ describe('MuleCharacterCard', () => {
     expect(cardWrapper.style.opacity).toBe('1')
     fireEvent.mouseLeave(cardWrapper)
     expect(cardWrapper.style.opacity).toBe('1')
+  })
+
+  it('renders an inactive mule card at 0.55 opacity', () => {
+    const { container } = renderCard({ active: false })
+    const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
+    expect(cardWrapper.style.opacity).toBe('0.55')
+  })
+
+  it('keeps an inactive mule card at 0.55 opacity on hover', () => {
+    const { container } = renderCard({ active: false })
+    const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement
+    const panel = cardWrapper.querySelector('.panel') as HTMLElement
+    expect(cardWrapper.style.opacity).toBe('0.55')
+    fireEvent.mouseEnter(panel)
+    expect(cardWrapper.style.opacity).toBe('0.55')
+    fireEvent.mouseLeave(panel)
+    expect(cardWrapper.style.opacity).toBe('0.55')
+  })
+
+  it('renders inactive mule income line in the dim color even when bosses are selected', () => {
+    renderCard({ active: false, selectedBosses: [HARD_LUCID] })
+    const incomeSpans = screen.getAllByText('504M')
+    for (const span of incomeSpans) {
+      expect(span.style.color).not.toContain('accent')
+      expect(span.style.color).toContain('dim')
+    }
+  })
+
+  it('renders active mule income line in the accent color when bosses are selected', () => {
+    renderCard({ active: true, selectedBosses: [HARD_LUCID] })
+    const incomeSpans = screen.getAllByText('504M')
+    for (const span of incomeSpans) {
+      expect(span.style.color).toContain('accent')
+    }
   })
 
   describe('trash icon and delete popover', () => {
