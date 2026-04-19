@@ -16,6 +16,9 @@ const NORMAL_LUCID = makeKey(LUCID, 'normal', 'weekly')
 
 const VELLUM_BOSS = bosses.find((b) => b.family === 'vellum')!
 const CRIMSON_QUEEN_BOSS = bosses.find((b) => b.family === 'crimson-queen')!
+const BLACK_MAGE_BOSS = bosses.find((b) => b.family === 'black-mage')!
+const HORNTAIL_BOSS = bosses.find((b) => b.family === 'horntail')!
+const MORI_BOSS = bosses.find((b) => b.family === 'mori-ranmaru')!
 
 const baseMule: Mule = {
   id: 'test-mule-1',
@@ -371,6 +374,99 @@ describe('MuleDetailDrawer', () => {
       renderDrawer()
       expect(getSearchInput().value).toBe('')
       expect(screen.getAllByRole('rowheader')).toHaveLength(bosses.length)
+    })
+  })
+
+  describe('MatrixToolbar + Cadence Filter integration', () => {
+    function getSearchInput() {
+      return screen.getByPlaceholderText('Search bosses\u2026') as HTMLInputElement
+    }
+
+    it('renders the MatrixToolbar above the fused BossSearch', () => {
+      renderDrawer()
+      const toolbar = document.querySelector('.d-c-toggle') as HTMLElement
+      expect(toolbar).toBeTruthy()
+      const search = document.querySelector('.d-search') as HTMLElement
+      expect(search).toBeTruthy()
+      // Toolbar must appear before the search bar in document order.
+      const position = toolbar.compareDocumentPosition(search)
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('defaults the cadence filter to All (All button has .on)', () => {
+      renderDrawer()
+      const allBtn = screen.getByRole('button', { name: /^all$/i })
+      expect(allBtn.classList.contains('on')).toBe(true)
+    })
+
+    it('clicking Weekly hides daily-only families (Horntail, Mori Ranmaru)', () => {
+      renderDrawer()
+      const weeklyBtn = screen.getByRole('button', { name: /^weekly$/i })
+      fireEvent.click(weeklyBtn)
+      const rowHeaderText = screen.getAllByRole('rowheader').map((r) => r.textContent ?? '')
+      expect(rowHeaderText.some((t) => t.includes(HORNTAIL_BOSS.name))).toBe(false)
+      expect(rowHeaderText.some((t) => t.includes(MORI_BOSS.name))).toBe(false)
+      // Weekly-only family (Black Mage) still visible.
+      expect(rowHeaderText.some((t) => t.includes(BLACK_MAGE_BOSS.name))).toBe(true)
+      // Mixed family (Vellum: daily + weekly) still visible.
+      expect(rowHeaderText.some((t) => t.includes(VELLUM_BOSS.name))).toBe(true)
+    })
+
+    it('clicking Daily hides weekly-only families (Black Mage)', () => {
+      renderDrawer()
+      const dailyBtn = screen.getByRole('button', { name: /^daily$/i })
+      fireEvent.click(dailyBtn)
+      const rowHeaderText = screen.getAllByRole('rowheader').map((r) => r.textContent ?? '')
+      expect(rowHeaderText.some((t) => t.includes(BLACK_MAGE_BOSS.name))).toBe(false)
+      // Daily-only families still visible.
+      expect(rowHeaderText.some((t) => t.includes(HORNTAIL_BOSS.name))).toBe(true)
+      // Mixed family (Vellum) still visible.
+      expect(rowHeaderText.some((t) => t.includes(VELLUM_BOSS.name))).toBe(true)
+    })
+
+    it('clicking All after a filter restores every family', () => {
+      renderDrawer()
+      fireEvent.click(screen.getByRole('button', { name: /^weekly$/i }))
+      fireEvent.click(screen.getByRole('button', { name: /^all$/i }))
+      expect(screen.getAllByRole('rowheader')).toHaveLength(bosses.length)
+    })
+
+    it('cadence filter composes with the search box', () => {
+      renderDrawer()
+      // Weekly filter + "vell" search → only Vellum remains.
+      fireEvent.click(screen.getByRole('button', { name: /^weekly$/i }))
+      fireEvent.change(getSearchInput(), { target: { value: 'vell' } })
+      const rowHeaders = screen.getAllByRole('rowheader')
+      expect(rowHeaders).toHaveLength(1)
+      expect(rowHeaders[0].textContent).toContain(VELLUM_BOSS.name)
+    })
+
+    it('resets the cadence filter to All when the drawer opens for a different mule', () => {
+      const muleA = { ...baseMule, id: 'mule-a', name: 'MuleA' }
+      const muleB = { ...baseMule, id: 'mule-b', name: 'MuleB' }
+      const { rerender } = renderDrawer({ mule: muleA })
+
+      fireEvent.click(screen.getByRole('button', { name: /^weekly$/i }))
+      expect(
+        screen.getByRole('button', { name: /^weekly$/i }).classList.contains('on'),
+      ).toBe(true)
+
+      rerender(
+        <MuleDetailDrawer
+          mule={muleB}
+          open={true}
+          onClose={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      )
+
+      expect(
+        screen.getByRole('button', { name: /^all$/i }).classList.contains('on'),
+      ).toBe(true)
+      expect(
+        screen.getByRole('button', { name: /^weekly$/i }).classList.contains('on'),
+      ).toBe(false)
     })
   })
 })

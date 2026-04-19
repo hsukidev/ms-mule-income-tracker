@@ -166,6 +166,27 @@ export const bossesByTopCrystalDesc: readonly Boss[] = bosses
   .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!);
 
 /**
+ * Return the difficulty entry with the highest crystalValue for this boss.
+ * Used by the Matrix Toolbar preset row (and similar headline lookups) where
+ * "hardest" means "biggest numeric reward", irrespective of tier name or
+ * cadence — e.g. Vellum's weekly chaos beats its daily normal.
+ */
+export function hardestDifficulty(boss: Boss): BossDifficulty {
+  return boss.difficulty.reduce((best, d) =>
+    d.crystalValue > best.crystalValue ? d : best,
+  );
+}
+
+/**
+ * Convenience predicate: the set of cadences this boss offers across its
+ * difficulty entries. A mixed family (e.g. Vellum) returns both; an
+ * all-weekly family (e.g. Black Mage) returns just `{weekly}`.
+ */
+export function cadencesForBoss(boss: Boss): Set<BossCadence> {
+  return new Set(boss.difficulty.map((d) => d.cadence));
+}
+
+/**
  * Filter a boss list by a case-insensitive substring match against both the
  * display name and the family slug. An empty query returns the list
  * unchanged so callers can feed a search box value directly.

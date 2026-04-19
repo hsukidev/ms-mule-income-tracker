@@ -6,6 +6,8 @@ import {
   makeKey,
   parseKey,
   TIER_ORDER,
+  hardestDifficulty,
+  cadencesForBoss,
 } from '../bossSelection'
 import { bosses, getBossById } from '../bosses'
 import type { BossTier } from '../../types'
@@ -474,5 +476,53 @@ describe('cross-reference sanity', () => {
       tier: 'normal',
       cadence: 'weekly',
     })
+  })
+})
+
+describe('hardestDifficulty', () => {
+  it('returns the entry with the max crystalValue (Lucid → Hard)', () => {
+    const lucid = getBossById(LUCID)!
+    const entry = hardestDifficulty(lucid)
+    expect(entry.tier).toBe('hard')
+    expect(entry.crystalValue).toBe(
+      Math.max(...lucid.difficulty.map((d) => d.crystalValue)),
+    )
+  })
+
+  it('picks the weekly chaos tier for Vellum over the daily normal tier', () => {
+    const vellum = getBossById(VELLUM)!
+    const entry = hardestDifficulty(vellum)
+    expect(entry.tier).toBe('chaos')
+    expect(entry.cadence).toBe('weekly')
+  })
+
+  it('picks Extreme Black Mage (all weekly) as hardest', () => {
+    const bm = getBossById(BLACK_MAGE)!
+    const entry = hardestDifficulty(bm)
+    expect(entry.tier).toBe('extreme')
+  })
+
+  it('picks the Hard daily tier for Mori Ranmaru (all daily)', () => {
+    const mori = bosses.find((b) => b.family === 'mori-ranmaru')!
+    const entry = hardestDifficulty(mori)
+    expect(entry.tier).toBe('hard')
+    expect(entry.cadence).toBe('daily')
+  })
+})
+
+describe('cadencesForBoss', () => {
+  it('returns {weekly} for an all-weekly family (Black Mage)', () => {
+    const bm = getBossById(BLACK_MAGE)!
+    expect(cadencesForBoss(bm)).toEqual(new Set(['weekly']))
+  })
+
+  it('returns {daily} for an all-daily family (Horntail)', () => {
+    const horntail = getBossById(HORNTAIL)!
+    expect(cadencesForBoss(horntail)).toEqual(new Set(['daily']))
+  })
+
+  it('returns {daily, weekly} for a mixed family (Vellum)', () => {
+    const vellum = getBossById(VELLUM)!
+    expect(cadencesForBoss(vellum)).toEqual(new Set(['daily', 'weekly']))
   })
 })
