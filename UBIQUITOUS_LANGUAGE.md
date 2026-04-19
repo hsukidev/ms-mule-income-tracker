@@ -57,6 +57,10 @@
 | Term | Definition | Aliases to avoid |
 |------|-----------|-----------------|
 | **Weekly Reset** | The point at which boss entry slots refresh, allowing bosses to be defeated again | Reset, weekly reset time |
+| **Reset Anchor** | The fixed absolute instant targeted by every **Weekly Reset** — Thursday 00:00 UTC (GMS Reboot convention) | Reset time, server reset |
+| **Reset Countdown** | The header widget that displays the duration remaining until the next **Reset Anchor**, ticking every second | Reset timer, countdown clock |
+| **Live Countdown Format** | The `{D}D HH:MM:SS` desktop render of **Reset Countdown** with zero-padded hours (e.g. `0D 14:32:07`) | Digital clock format |
+| **Smart Countdown Format** | The threshold-based mobile render of **Reset Countdown** (≥24h → `2D 14H`, ≥1h → `4H 12M`, <1h → `37M`, <1m → `<1M`) | Adaptive format, responsive format |
 | **Entry Slot** | A single boss opportunity per **Weekly Reset** — only one **Boss Difficulty** per **Boss Family** can be used per week | Boss entry, boss attempt |
 
 ## Party Content
@@ -90,6 +94,9 @@
 - Exactly one **Theme** and one **Density** are active at any time; both persist to localStorage
 - The **Chart Palette** is a property of the active **Theme** — slice colors recolor when the **Theme** changes
 - The **Density Toggle** mutates the active **Density**, which drives CSS variables that resize the **Roster**, **Character Card** padding, and **Class Silhouette**
+- The **Reset Countdown** targets the next **Reset Anchor** after `Date.now()`; the countdown value updates once per second from a single `setInterval`
+- The **Reset Countdown** uses the **Live Countdown Format** at the `sm` breakpoint and above, and the **Smart Countdown Format** below it
+- At **Reset Anchor** crossover the **Reset Countdown** silently rolls over to the next week — no flash, no announcement
 
 ## Example dialogue
 
@@ -101,6 +108,10 @@
 > **Domain expert:** "No, each **Theme** has its own palette. **Dark-Amber** uses warm amber + cool blues; **Cozy-Pastel** uses softer terracotta + sage. When the **Theme** changes, the donut slices recolor instantly because **Split Card** reads `--c1` through `--c5` at render time."
 > **Dev:** "And when I drag a **Character Card**, is the **Add Card** also draggable?"
 > **Domain expert:** "No — the **Add Card** is explicitly excluded from the sortable items. Only **Character Cards** participate in reorder, and they're confined by the **Drag Boundary**."
+> **Dev:** "The **Reset Countdown** in the header — is that tracking the user's local Thursday or UTC Thursday?"
+> **Domain expert:** "The **Reset Anchor** is always Thursday 00:00 UTC. The **Reset Countdown** just shows `target − Date.now()` as a duration, so the user sees the same remaining time regardless of timezone. It's a duration, not a wall-clock target."
+> **Dev:** "So at the `sm` breakpoint and above it's `0D 14:32:07` ticking every second?"
+> **Domain expert:** "Right — that's the **Live Countdown Format**. Below `sm` we switch to the **Smart Countdown Format** so a narrow header doesn't have a seven-character number dancing around next to a tight logo."
 
 ## Flagged ambiguities
 
@@ -114,3 +125,5 @@
 - "Entry" and "slot" were used interchangeably. Canonical term: **Entry Slot**. Not yet in code (future enhancement for daily/weekly distinction).
 - "Preset" and "template" were used interchangeably. Canonical term: **Mule Preset**. Not yet in code (future enhancement).
 - "Drawer", "side drawer", "detail panel", and "modal" were all used to describe the right-side editing panel. Canonical term: **Drawer**.
+- "Current day" and "today" were considered for a day-of-week label in the header but dropped from scope; avoid reintroducing either term in **Reset Countdown** copy. The **Reset Anchor** is always expressed as a duration, never as a day name.
+- "Reset" alone is ambiguous — could mean **Weekly Reset** (the event), **Reset Anchor** (the instant), or **Reset Countdown** (the widget). In code and prose, pick the specific term.
