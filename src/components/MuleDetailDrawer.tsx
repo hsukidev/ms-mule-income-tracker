@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { MatrixToolbar, type CadenceFilter } from './MatrixToolbar';
 import type { Boss } from '../types';
 import {
   bossesByTopCrystalDesc,
+  countWeeklySelections,
   filterBySearch,
   parseKey,
   toggleBoss,
@@ -57,6 +58,11 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const visibleBosses = filterBySearch(
     filterByCadence(bossesByTopCrystalDesc, filter),
     search,
+  );
+
+  const weeklyCount = useMemo(
+    () => countWeeklySelections(mule?.selectedBosses ?? []),
+    [mule?.selectedBosses],
   );
 
   function handleClose() {
@@ -218,8 +224,8 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                 onFilterChange={setFilter}
                 activePresets={EMPTY_PRESETS}
                 onTogglePreset={() => {}}
-                weeklyCount={0}
-                onReset={() => {}}
+                weeklyCount={weeklyCount}
+                onReset={() => onUpdate(mule.id, { selectedBosses: [] })}
               />
               <div className="mt-2">
                 <BossSearch fused value={search} onChange={setSearch} />

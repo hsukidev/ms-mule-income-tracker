@@ -469,4 +469,76 @@ describe('MuleDetailDrawer', () => {
       ).toBe(false)
     })
   })
+
+  describe('Weekly Count + Matrix Reset integration', () => {
+    function getSearchInput() {
+      return screen.getByPlaceholderText('Search bosses\u2026') as HTMLInputElement
+    }
+
+    it('renders the weekly count reflecting mule.selectedBosses', () => {
+      // Two weekly selections: Hard Lucid + Normal Lucid would collide on same
+      // boss — use two different families instead.
+      const WILL_BOSS = bosses.find((b) => b.family === 'will')!
+      const HARD_WILL = makeKey(WILL_BOSS.id, 'hard', 'weekly')
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID, HARD_WILL] },
+      })
+      const count = screen.getByLabelText(/weekly boss selections/i)
+      expect(count.textContent).toBe('2/14')
+    })
+
+    it('renders 0/14 when there are no selections', () => {
+      renderDrawer()
+      const count = screen.getByLabelText(/weekly boss selections/i)
+      expect(count.textContent).toBe('0/14')
+    })
+
+    it('clicking Reset calls onUpdate with { selectedBosses: [] }', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
+        onUpdate,
+      })
+      fireEvent.click(screen.getByRole('button', { name: /^reset$/i }))
+      expect(onUpdate).toHaveBeenCalledWith('test-mule-1', { selectedBosses: [] })
+    })
+
+    it('Reset leaves the Cadence Filter selection intact', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
+        onUpdate,
+      })
+      fireEvent.click(screen.getByRole('button', { name: /^weekly$/i }))
+      fireEvent.click(screen.getByRole('button', { name: /^reset$/i }))
+      expect(
+        screen.getByRole('button', { name: /^weekly$/i }).classList.contains('on'),
+      ).toBe(true)
+    })
+
+    it('Reset leaves the Boss Search query intact', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
+        onUpdate,
+      })
+      fireEvent.change(getSearchInput(), { target: { value: 'vell' } })
+      expect(getSearchInput().value).toBe('vell')
+      fireEvent.click(screen.getByRole('button', { name: /^reset$/i }))
+      expect(getSearchInput().value).toBe('vell')
+    })
+
+    it('Reset onUpdate payload does not include filter/search/presets keys', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
+        onUpdate,
+      })
+      fireEvent.click(screen.getByRole('button', { name: /^reset$/i }))
+      // Only selectedBosses should be updated — verify the payload shape.
+      expect(onUpdate).toHaveBeenCalledTimes(1)
+      const [, updates] = onUpdate.mock.calls[0]
+      expect(Object.keys(updates)).toEqual(['selectedBosses'])
+    })
+  })
 })
