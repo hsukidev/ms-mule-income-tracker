@@ -1,10 +1,13 @@
+import type { BossTier } from '../types';
 import { getBossByFamily } from './bosses';
 import { hardestDifficulty, makeKey, parseKey, toggleBoss } from './bossSelection';
 
 /**
  * Boss Preset shortcuts for the Matrix Toolbar. Each preset is a fixed list
- * of boss families; clicking a preset pill swaps in (or drops) the
- * Hardest-Tier selection key for every family in the list.
+ * of boss family entries; clicking a preset pill swaps in (or drops) one
+ * selection key per entry. A bare family slug resolves to the Hardest-Tier
+ * key; an `{ family, tier }` entry pins a specific tier (e.g. CTENE's Hard
+ * Lotus, chosen over the Extreme tier most mules can't clear).
  *
  * Overlap-persistent by design: CRA ∩ CTENE share Vellum / Crimson Queen /
  * Papulatus / Magnus. Toggling one preset off leaves those four families
@@ -14,6 +17,12 @@ import { hardestDifficulty, makeKey, parseKey, toggleBoss } from './bossSelectio
  */
 
 export type PresetKey = 'CRA' | 'CTENE';
+
+/**
+ * A preset entry is either a family slug (resolves to the hardest tier) or
+ * an `{ family, tier }` object that pins a specific tier for that family.
+ */
+export type PresetFamily = string | { family: string; tier: BossTier };
 
 export const PRESET_FAMILIES = {
   CRA: [
@@ -38,25 +47,58 @@ export const PRESET_FAMILIES = {
     'lucid',
     'guardian-angel-slime',
     'damien',
-    'lotus',
+    { family: 'lotus', tier: 'hard' },
     'vellum',
     'crimson-queen',
     'papulatus',
     'magnus',
   ],
-} as const satisfies Record<PresetKey, readonly string[]>;
+} as const satisfies Record<PresetKey, readonly PresetFamily[]>;
+
+/** Unwrap a preset entry to `{ family, tier? }`. */
+function entryInfo(entry: PresetFamily): { family: string; tier?: BossTier } {
+  return typeof entry === 'string' ? { family: entry } : entry;
+}
 
 /**
- * Swap each family's Hardest-Tier selection key into `keys`, using
- * `toggleBoss` semantics so any prior same-cadence sibling on that boss is
- * replaced (and opposite-cadence selections are preserved).
+ * Selection key for a preset entry — uses the explicit tier if the entry
+ * specifies one, else falls back to the hardest tier. Returns null if the
+ * family is unknown or the pinned tier isn't offered by the boss.
  */
-export function applyPreset(keys: string[], families: readonly string[]): string[] {
+export function presetEntryKey(entry: PresetFamily): string | null {
+  const { family, tier } = entryInfo(entry);
+  const boss = getBossByFamily(family);
+  if (!boss) return null;
+  const diff = tier
+    ? boss.difficulty.find((d) => d.tier === tier)
+    : hardestDifficulty(boss);
+  if (!diff) return null;
+  return makeKey(boss.id, diff.tier, diff.cadence);
+}
+
+/** Family slug for a preset entry (unwraps the `{ family, tier }` form). */
+export function presetEntryFamily(entry: PresetFamily): string {
+  return entryInfo(entry).family;
+}
+
+/**
+ * Swap each entry's target selection key into `keys`, using `toggleBoss`
+ * semantics so any prior same-cadence sibling on that boss is replaced (and
+ * opposite-cadence selections are preserved).
+ */
+export function applyPreset(
+  keys: string[],
+  families: readonly PresetFamily[],
+): string[] {
   let next = keys;
-  for (const family of families) {
+  for (const entry of families) {
+    const { family, tier } = entryInfo(entry);
     const boss = getBossByFamily(family);
     if (!boss) continue;
-    const diff = hardestDifficulty(boss);
+    const diff = tier
+      ? boss.difficulty.find((d) => d.tier === tier)
+      : hardestDifficulty(boss);
+    if (!diff) continue;
     const target = makeKey(boss.id, diff.tier, diff.cadence);
     if (next.includes(target)) continue; // idempotent
     next = toggleBoss(next, boss.id, diff.tier);
@@ -66,12 +108,17 @@ export function applyPreset(keys: string[], families: readonly string[]): string
 
 /**
  * Drop every key whose bossId resolves to a family in `families`. Malformed
- * keys (unparseable) pass through untouched.
+ * keys (unparseable) pass through untouched. Tier overrides on entries are
+ * ignored here — removal is family-wide, matching the "Ctrl-click the pill
+ * to clear the whole preset" gesture.
  */
-export function removePreset(keys: string[], families: readonly string[]): string[] {
+export function removePreset(
+  keys: string[],
+  families: readonly PresetFamily[],
+): string[] {
   const dropFamilyIds = new Set<string>();
-  for (const family of families) {
-    const boss = getBossByFamily(family);
+  for (const entry of families) {
+    const boss = getBossByFamily(entryInfo(entry).family);
     if (boss) dropFamilyIds.add(boss.id);
   }
   return keys.filter((k) => {
@@ -82,17 +129,16 @@ export function removePreset(keys: string[], families: readonly string[]): strin
 }
 
 /**
- * Active iff every family in the preset has its Hardest-Tier key present
- * in `keys`. Mirrors the visual: pill highlights iff the selection state
- * fully matches what `applyPreset` would have produced.
+ * Active iff every preset entry has its resolved key present in `keys`.
+ * Mirrors the visual: pill highlights iff the selection state fully matches
+ * what `applyPreset` would have produced.
  */
 export function isPresetActive(preset: PresetKey, keys: string[]): boolean {
   const keySet = new Set(keys);
-  for (const family of PRESET_FAMILIES[preset]) {
-    const boss = getBossByFamily(family);
-    if (!boss) return false;
-    const diff = hardestDifficulty(boss);
-    if (!keySet.has(makeKey(boss.id, diff.tier, diff.cadence))) return false;
+  for (const entry of PRESET_FAMILIES[preset]) {
+    const target = presetEntryKey(entry);
+    if (!target) return false;
+    if (!keySet.has(target)) return false;
   }
   return true;
 }

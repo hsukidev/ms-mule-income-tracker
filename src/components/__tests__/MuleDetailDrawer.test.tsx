@@ -5,7 +5,11 @@ import { MuleDetailDrawer } from '../MuleDetailDrawer'
 import type { Mule } from '../../types'
 import { bosses, getBossByFamily } from '../../data/bosses'
 import { hardestDifficulty, makeKey } from '../../data/bossSelection'
-import { PRESET_FAMILIES } from '../../data/bossPresets'
+import {
+  PRESET_FAMILIES,
+  presetEntryFamily,
+  presetEntryKey,
+} from '../../data/bossPresets'
 import { formatMeso } from '../../utils/meso'
 
 const LUCID_BOSS = bosses.find((b) => b.family === 'lucid')!
@@ -552,7 +556,7 @@ describe('MuleDetailDrawer', () => {
     }
 
     const CRA_KEYS = PRESET_FAMILIES.CRA.map(hardestKey)
-    const CTENE_KEYS = PRESET_FAMILIES.CTENE.map(hardestKey)
+    const CTENE_KEYS = PRESET_FAMILIES.CTENE.map((entry) => presetEntryKey(entry)!)
 
     it('renders CRA and CTENE preset pills in the toolbar', () => {
       renderDrawer()
@@ -637,9 +641,11 @@ describe('MuleDetailDrawer', () => {
       fireEvent.click(screen.getByRole('button', { name: /^cra$/i }))
       const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] }
       const craSet: ReadonlySet<string> = new Set(PRESET_FAMILIES.CRA)
-      const cteneOnlyFamilies = PRESET_FAMILIES.CTENE.filter((f) => !craSet.has(f))
-      for (const f of cteneOnlyFamilies) {
-        expect(update.selectedBosses).toContain(hardestKey(f))
+      const cteneOnlyEntries = PRESET_FAMILIES.CTENE.filter(
+        (entry) => !craSet.has(presetEntryFamily(entry)),
+      )
+      for (const entry of cteneOnlyEntries) {
+        expect(update.selectedBosses).toContain(presetEntryKey(entry)!)
       }
       for (const f of PRESET_FAMILIES.CRA) {
         expect(update.selectedBosses).not.toContain(hardestKey(f))

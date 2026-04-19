@@ -322,12 +322,13 @@
    * overlaps the matrix below by 1px so they share a single border line. */
   .d-search {
     display: flex; align-items: center; gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
     border-radius: 8px;
     padding: 8px 11px;
     color: var(--muted-foreground);
   }
+  .dark .d-search { background: var(--surface); }
   .d-search input {
     flex: 1; background: transparent; border: none; outline: none;
     color: var(--foreground); font-family: inherit; font-size: 13px;
@@ -335,8 +336,7 @@
   .d-search input::placeholder { color: var(--muted-foreground); }
   .d-search-fused {
     border-radius: 10px 10px 0 0;
-    border-bottom-color: var(--surface-2);
-    margin-bottom: -1px;
+    border-bottom-color: var(--border);
     position: relative;
     z-index: 1;
   }
@@ -350,11 +350,12 @@
    * on the right for later slices (preset toggles, weekly count, reset). */
   .d-c-toggle {
     display: flex;
-    background: var(--surface-2);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
   }
+  .dark .d-c-toggle { background: var(--surface-2); }
   .d-c-toggle button {
     background: transparent; border: none;
     border-right: 1px solid var(--border);
@@ -372,9 +373,10 @@
     color: var(--accent);
   }
   .d-c-toggle button:hover:not(.on) {
-    background: var(--surface);
+    background: var(--surface-2);
     color: var(--foreground);
   }
+  .dark .d-c-toggle button:hover:not(.on) { background: var(--surface); }
 
   .d-toolbar-sep {
     width: 1px;
@@ -392,7 +394,7 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.06em;
-    padding: 4px 8px;
+    padding: 4px 8px 4px 0;
     cursor: pointer;
     transition: color 0.1s;
   }

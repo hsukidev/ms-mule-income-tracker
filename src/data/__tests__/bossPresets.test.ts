@@ -4,6 +4,9 @@ import {
   applyPreset,
   removePreset,
   isPresetActive,
+  presetEntryKey,
+  presetEntryFamily,
+  type PresetFamily,
 } from '../bossPresets'
 import { bosses, getBossByFamily } from '../bosses'
 import {
@@ -25,7 +28,7 @@ const CRA_FAMILIES = [
   'zakum',
 ] as const
 
-const CTENE_FAMILIES = [
+const CTENE_FAMILIES: readonly PresetFamily[] = [
   'akechi-mitsuhide',
   'princess-no',
   'darknell',
@@ -35,12 +38,12 @@ const CTENE_FAMILIES = [
   'lucid',
   'guardian-angel-slime',
   'damien',
-  'lotus',
+  { family: 'lotus', tier: 'hard' },
   'vellum',
   'crimson-queen',
   'papulatus',
   'magnus',
-] as const
+]
 
 const CTENE_OVERLAP = ['vellum', 'crimson-queen', 'papulatus', 'magnus'] as const
 
@@ -49,6 +52,11 @@ function hardestKey(family: string): string {
   const boss = getBossByFamily(family)!
   const diff = hardestDifficulty(boss)
   return makeKey(boss.id, diff.tier, diff.cadence)
+}
+
+/** Resolved selection key for a preset entry (respects tier overrides). */
+function entryKey(entry: PresetFamily): string {
+  return presetEntryKey(entry)!
 }
 
 describe('PRESET_FAMILIES membership', () => {
@@ -67,14 +75,17 @@ describe('PRESET_FAMILIES membership', () => {
   })
 
   it('every CTENE family resolves to a known boss', () => {
-    for (const f of PRESET_FAMILIES.CTENE) {
-      expect(bosses.find((b) => b.family === f)).toBeDefined()
+    for (const entry of PRESET_FAMILIES.CTENE) {
+      const family = presetEntryFamily(entry)
+      expect(bosses.find((b) => b.family === family)).toBeDefined()
     }
   })
 
   it('CRA ∩ CTENE shares Vellum, Crimson Queen, Papulatus, Magnus', () => {
     const craSet: ReadonlySet<string> = new Set(PRESET_FAMILIES.CRA)
-    const overlap = PRESET_FAMILIES.CTENE.filter((f) => craSet.has(f))
+    const overlap = PRESET_FAMILIES.CTENE.map(presetEntryFamily).filter((f) =>
+      craSet.has(f),
+    )
     expect(new Set(overlap)).toEqual(new Set(CTENE_OVERLAP))
   })
 })
@@ -122,13 +133,22 @@ describe('applyPreset', () => {
     for (const f of CTENE_OVERLAP) {
       expect(withBoth).toContain(hardestKey(f))
     }
-    // All CRA and all CTENE hardest keys present.
+    // All CRA and all CTENE resolved keys present.
     for (const f of PRESET_FAMILIES.CRA) {
       expect(withBoth).toContain(hardestKey(f))
     }
-    for (const f of PRESET_FAMILIES.CTENE) {
-      expect(withBoth).toContain(hardestKey(f))
+    for (const entry of PRESET_FAMILIES.CTENE) {
+      expect(withBoth).toContain(entryKey(entry))
     }
+  })
+
+  it('selects Hard Lotus (not Extreme) for the CTENE preset', () => {
+    const result = applyPreset([], PRESET_FAMILIES.CTENE)
+    const lotus = getBossByFamily('lotus')!
+    const hardLotus = makeKey(lotus.id, 'hard', 'weekly')
+    const extremeLotus = makeKey(lotus.id, 'extreme', 'weekly')
+    expect(result).toContain(hardLotus)
+    expect(result).not.toContain(extremeLotus)
   })
 })
 
@@ -170,9 +190,9 @@ describe('removePreset', () => {
     const afterCraRemoved = removePreset(withBoth, PRESET_FAMILIES.CRA)
     // Non-overlap CTENE families survive.
     const craSet: ReadonlySet<string> = new Set(CRA_FAMILIES)
-    for (const f of PRESET_FAMILIES.CTENE) {
-      if (craSet.has(f)) continue
-      expect(afterCraRemoved).toContain(hardestKey(f))
+    for (const entry of PRESET_FAMILIES.CTENE) {
+      if (craSet.has(presetEntryFamily(entry))) continue
+      expect(afterCraRemoved).toContain(entryKey(entry))
     }
     // Overlap dropped (not re-added by this helper).
     for (const f of CTENE_OVERLAP) {
@@ -198,7 +218,7 @@ describe('isPresetActive', () => {
     expect(isPresetActive('CTENE', [])).toBe(false)
   })
 
-  it('returns true iff every preset family has its hardest-tier key present', () => {
+  it('returns true iff every preset entry has its resolved key present', () => {
     const withCra = applyPreset([], PRESET_FAMILIES.CRA)
     expect(isPresetActive('CRA', withCra)).toBe(true)
     expect(isPresetActive('CTENE', withCra)).toBe(false)
@@ -224,7 +244,7 @@ describe('isPresetActive', () => {
     expect(isPresetActive('CRA', downgraded)).toBe(false)
   })
 
-  it('returns true for CTENE iff all 14 hardest-tier keys are present', () => {
+  it('returns true for CTENE iff all 14 resolved keys are present', () => {
     const withCtene = applyPreset([], PRESET_FAMILIES.CTENE)
     expect(isPresetActive('CTENE', withCtene)).toBe(true)
   })

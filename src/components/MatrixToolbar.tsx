@@ -84,7 +84,7 @@ export function MatrixToolbar({
             </button>
           ))}
         </div>
-        <span className="d-toolbar-sep" aria-hidden />
+        <span className="d-toolbar-sep" aria-hidden style={{ margin: '0 8px' }} />
         <div className="d-c-toggle" role="group" aria-label="Boss presets">
           {PRESETS.map((preset) => (
             <button
@@ -110,11 +110,12 @@ export function MatrixToolbar({
         >
           {weeklyCount}/{WEEKLY_CRYSTAL_CAP}
         </span>
-        <span className="d-toolbar-sep" aria-hidden />
+        <span className="d-toolbar-sep" aria-hidden style={{ margin: '0 8px' }} />
         <button
           type="button"
           onClick={onReset}
           className="d-toolbar-reset"
+          style={{ opacity: 0.6 }}
         >
           Reset
         </button>
