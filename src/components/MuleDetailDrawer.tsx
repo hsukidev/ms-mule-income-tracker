@@ -13,6 +13,8 @@ import type { Mule } from '../types';
 import { useMuleIncome } from '../modules/income-hooks';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
+import { MatrixToolbar, type CadenceFilter } from './MatrixToolbar';
+import type { Boss } from '../types';
 import {
   bossesByTopCrystalDesc,
   filterBySearch,
@@ -20,6 +22,17 @@ import {
   toggleBoss,
 } from '../data/bossSelection';
 import placeholderPng from '../assets/placeholder.png';
+
+const EMPTY_PRESETS: ReadonlySet<'CRA' | 'CTENE'> = new Set();
+
+function filterByCadence(
+  list: readonly Boss[],
+  filter: CadenceFilter,
+): readonly Boss[] {
+  if (filter === 'All') return list;
+  const cadence = filter === 'Weekly' ? 'weekly' : 'daily';
+  return list.filter((b) => b.difficulty.some((d) => d.cadence === cadence));
+}
 
 interface MuleDetailDrawerProps {
   mule: Mule | null;
@@ -32,14 +45,19 @@ interface MuleDetailDrawerProps {
 export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: MuleDetailDrawerProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<CadenceFilter>('All');
   const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
 
   useEffect(() => {
     setConfirmDelete(false);
     setSearch('');
+    setFilter('All');
   }, [mule?.id]);
 
-  const visibleBosses = filterBySearch(bossesByTopCrystalDesc, search);
+  const visibleBosses = filterBySearch(
+    filterByCadence(bossesByTopCrystalDesc, filter),
+    search,
+  );
 
   function handleClose() {
     setConfirmDelete(false);
@@ -195,35 +213,45 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
             </div>
 
             <div>
-              <BossSearch fused value={search} onChange={setSearch} />
-              <BossMatrix
-                bosses={visibleBosses}
-                fusedTop
-                selectedKeys={mule.selectedBosses}
-                onToggleKey={(key) => {
-                  const parsed = parseKey(key);
-                  if (!parsed) return;
-                  onUpdate(mule.id, {
-                    selectedBosses: toggleBoss(
-                      mule.selectedBosses,
-                      parsed.bossId,
-                      parsed.tier,
-                    ),
-                  });
-                }}
-                partySizes={mule.partySizes ?? {}}
-                onChangePartySize={(family, n) => {
-                  // Clamp here so BossMatrix can stay a dumb view: party size
-                  // is always in [1, 6] by the time it hits storage.
-                  const clamped = Math.max(1, Math.min(6, n));
-                  onUpdate(mule.id, {
-                    partySizes: {
-                      ...(mule.partySizes ?? {}),
-                      [family]: clamped,
-                    },
-                  });
-                }}
+              <MatrixToolbar
+                filter={filter}
+                onFilterChange={setFilter}
+                activePresets={EMPTY_PRESETS}
+                onTogglePreset={() => {}}
+                weeklyCount={0}
+                onReset={() => {}}
               />
+              <div className="mt-2">
+                <BossSearch fused value={search} onChange={setSearch} />
+                <BossMatrix
+                  bosses={visibleBosses}
+                  fusedTop
+                  selectedKeys={mule.selectedBosses}
+                  onToggleKey={(key) => {
+                    const parsed = parseKey(key);
+                    if (!parsed) return;
+                    onUpdate(mule.id, {
+                      selectedBosses: toggleBoss(
+                        mule.selectedBosses,
+                        parsed.bossId,
+                        parsed.tier,
+                      ),
+                    });
+                  }}
+                  partySizes={mule.partySizes ?? {}}
+                  onChangePartySize={(family, n) => {
+                    // Clamp here so BossMatrix can stay a dumb view: party size
+                    // is always in [1, 6] by the time it hits storage.
+                    const clamped = Math.max(1, Math.min(6, n));
+                    onUpdate(mule.id, {
+                      partySizes: {
+                        ...(mule.partySizes ?? {}),
+                        [family]: clamped,
+                      },
+                    });
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>}
