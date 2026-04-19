@@ -153,20 +153,41 @@ Right-side shadcn `Sheet`. Full viewport below `md`, 640px at `md+`. Surface: `v
 
 Header: 132×132 avatar (placeholder PNG), bottom-fades into card color. Beside it: display-serif name, `Lv.NN` accent-numeric + mono-spaced class label + weekly-income badge (`--surface-2` background, tiny eyebrow + mono number + italic "mesos"). Top-right: ghost-icon **Trash** (morphs into inline "Delete? Yes / Cancel" confirm bar, destructive-tinted) and, on mobile, a **Close** icon.
 
-Form: name input (full row), then class + level (two-column). All inputs use `bg-input/40`, `border-border/60`, and `focus-visible:border-[var(--accent-raw)]` / `ring-[var(--ring)]`.
+Form: name input (full row), then class + level (two-column). All inputs use `bg-[var(--surface-2)]`, `border-border/60`, a soft `focus-visible:border-[var(--accent-raw)]/60` and a 1px `focus-visible:ring-[var(--ring)]/20` (thin, low-tone ring — the shadcn default 3px/50% ring is explicitly overridden here).
 
-Below: `Bosses` section-heading (10px uppercase muted + 1px `linear-gradient(accent → transparent)` rule) wrapping the matrix.
+Below the form sits the boss section in three stacked parts — **MatrixToolbar**, **BossSearch** (fused), **BossMatrix** — with no visible "Bosses" heading; the toolbar carries the section's controls. Party-size clamping (1..6) happens in the drawer wrapper; `BossMatrix` stays a dumb view.
 
-Party-size clamping (1..6) happens in the drawer wrapper; `BossMatrix` stays a dumb view.
+### [MatrixToolbar](src/components/MatrixToolbar.tsx)
+Row above the matrix. Flex-between layout, left group = filter + preset toggles, right group = weekly count + reset.
+
+- **Segmented pill** (`.d-c-toggle`) — `--surface` background, 1px border, rounded-8, overflow-hidden; inner buttons are 10px mono with `0.06em` tracking and 5×10 padding. Active pill uses `--accent-soft` fill + `--accent` text; hover (non-active) promotes to `--surface-2` + `--foreground`. Used twice: `All / Weekly / Daily` cadence filter and `CRA / CTENE` preset pills.
+- **Cadence icons** (Weekly/Daily only) — inline 10×10 line-drawn SVG calendar / clock; the `All` pill is text-only.
+- **Divider** (`.d-toolbar-sep`) — 1px × 18px `--border` bar with `margin: 0 8px` applied inline, flex-shrink-0. Used between filter and presets, and between weekly count and reset.
+- **Weekly count** — mono 11px, reads `{weeklyCount}/14` (Weekly Crystal Cap reference, not enforced). Color swings to `--accent` when `weeklyCount > 0`, else stays muted.
+- **Reset** (`.d-toolbar-reset`) — transparent button, muted mono text at 60% opacity (matches the "drag to reorder" mute tone). Asymmetric padding `4px 8px 4px 0` pulls it flush to the divider. Hover rotates the color to `#e05040`.
+
+### [BossSearch](src/components/BossSearch.tsx)
+Single-line filter input above the matrix. 13px, `--surface-2` background, 1px `color-mix(border, 60%, transparent)` border, 8×11 padding, 13px Lucide `Search` icon prefix, placeholder `"Search bosses…"` in muted tone.
+
+In the drawer this is rendered with `fused=true` — `.d-search-fused` squares the bottom corners, re-enables a solid `--border` bottom edge, and promotes `z-index: 1` so the seam sits on top of the matrix's top border, giving the search bar and matrix header a single shared hairline.
+
+### Boss Presets — [src/data/bossPresets.ts](src/data/bossPresets.ts)
+One-click bulk-selection behind the toolbar's `CRA` / `CTENE` pills. A preset entry is a union — either a family slug (resolves to the Hardest-Tier key via `hardestDifficulty`) or `{ family, tier }` to pin a specific tier.
+
+- **CRA (10 families)** — `cygnus · pink-bean · vellum · crimson-queen · von-bon · pierre · papulatus · hilla · magnus · zakum`. All resolve to their hardest tier.
+- **CTENE (14 families)** — `akechi-mitsuhide · princess-no · darknell · verus-hilla · gloom · will · lucid · guardian-angel-slime · damien · {lotus, hard} · vellum · crimson-queen · papulatus · magnus`. Lotus is pinned to **Hard** (the weekly that most mules can realistically clear) instead of the Extreme default.
+- **Overlap** — CRA ∩ CTENE shares Vellum / Crimson Queen / Papulatus / Magnus. Toggling one preset off drops those four; they return as soon as the other preset is re-applied. The drawer uses `isPresetActive` to pick between `applyPreset` and `removePreset` per pill.
+
+`applyPreset` uses `toggleBoss` semantics (same-cadence siblings get swapped, opposite-cadence selections are preserved); `removePreset` drops every key whose bossId matches a family in the list regardless of tier.
 
 ### [BossMatrix](src/components/BossMatrix.tsx)
-A `role="table"` grid, `grid-template-columns: 140px repeat(5, 1fr)`, rounded-[10px] with `--surface` body and `--surface-2` headers/row-headers.
+A `role="table"` grid, `grid-template-columns: 140px repeat(5, 1fr)`, rounded-[10px] with `--surface` body and `--surface-2` headers/row-headers. When passed `fusedTop`, the wrapper squares its top corners and drops its top border so the fused `BossSearch` above shares the seam; the default prop leaves the `rounded-[10px]` treatment intact.
 
-- **Header row** (sticky, z-10): "Boss Family" label + five tier headers. Each tier header is a centered stack: 18×3px colored pip + uppercase mono label.
+- **Header row** (sticky, z-10): "Bosses" label + five tier headers. Each tier header is a centered stack: 18×3px colored pip + uppercase mono label.
 - **Tier pip colors** (hardcoded — these encode tier semantics, not theme): easy `#6fb878` green · normal `#8fb3d9` blue · hard `#d98a3a` orange · chaos `#c94f8f` magenta · extreme `#e8533a` red.
-- **Row header** (per boss family): display-font name + `PartyStepper` (`− / N / +`, 20px tall, bordered, mono). Solo-only families (no weekly tier) render the literal text "Solo" in place of the stepper. Stepper is disabled at bounds so out-of-range callbacks never fire.
-- **Cells**: mono 11px tabular. Unsupported tier → dashed `—` at 0.3 opacity, non-interactive. Selected → `bg-[var(--accent-soft)] text-[var(--accent)] font-semibold`. Populated-but-dimmed (another tier of the **same cadence** on this family is selected) → 0.35 opacity. Daily cells append a `x 7` superscript at 60% opacity; weekly cells divide by party size.
-- Caption (italic) sits below the grid in the drawer's section.
+- **Row header** (per boss family): `--surface-2` background, display-font name + `PartyStepper` (`− / N / +`, 20px tall, bordered, mono). Solo-only families (no weekly tier) render the literal text "Solo" in place of the stepper. Stepper is disabled at bounds so out-of-range callbacks never fire.
+- **Cells**: mono 11px tabular. Unsupported tier → dashed `—` at 0.3 opacity, non-interactive. Selected → `bg-[var(--accent-soft)] text-[var(--accent)] font-semibold`. Populated-but-dimmed (another tier of the **same cadence** on this family is selected) → 0.35 opacity. Default hover lifts to `--surface-2` + `--foreground`. Daily cells append a `x 7` superscript at 60% opacity; weekly cells divide by party size.
+- Optional `bosses` prop swaps the default Hardest-Crystal-first ordering for a pre-filtered list (used by the drawer for search + cadence filter).
 
 ### [DensityToggle](src/components/DensityToggle.tsx)
 Inline two-button segmented control — `--surface-2` background, 1px border, 4px inner padding, 6px rounded pills. Active pill uses `--accent-soft` fill + `--accent-raw` text. Labels "COMFY" / "COMPACT" in 10px mono with `0.14em` tracking.
