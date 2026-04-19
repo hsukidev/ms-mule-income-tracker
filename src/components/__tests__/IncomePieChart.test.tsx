@@ -4,6 +4,7 @@ import { IncomePieChart, describeArc, formatCompact } from '../IncomePieChart'
 import type { Mule } from '../../types'
 import { bosses } from '../../data/bosses'
 import { makeKey } from '../../data/bossSelection'
+import { MULE_PALETTE } from '../../utils/muleColor'
 
 const HILLA = bosses.find((b) => b.family === 'hilla')!.id
 // Normal Hilla is a daily tier (slice 2, per the PRD daily classification).
@@ -23,6 +24,41 @@ const muleNoBosses: Mule = {
   level: 150,
   muleClass: 'Paladin',
   selectedBosses: [],
+}
+
+/**
+ * Build a mule whose id is meaningful and who has at least one boss so it
+ * shows up in the pie.
+ */
+function makeMule(id: string, overrides: Partial<Mule> = {}): Mule {
+  return {
+    id,
+    name: id,
+    level: 200,
+    muleClass: 'Hero',
+    selectedBosses: [NORMAL_HILLA],
+    ...overrides,
+  }
+}
+
+/**
+ * Read the ChartContainer's inlined `<style>` block and return a map from
+ * mule id → CSS color token. The ChartContainer emits `--color-<id>: <token>`
+ * for every entry in `chartConfig`, which our IncomePieChart keys by mule id.
+ * That makes the style text a clean, test-stable view of the name↔color
+ * pairing the legend and tooltip both derive from.
+ */
+function readMuleColors(container: HTMLElement): Record<string, string> {
+  const styleEl = container.querySelector('style')
+  const css = styleEl?.textContent ?? ''
+  const map: Record<string, string> = {}
+  // Match `--color-<id>: <value>;` — ids come from mule uuids / test ids.
+  const re = /--color-([^:\s]+):\s*([^;]+);/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(css)) !== null) {
+    map[m[1]] = m[2].trim()
+  }
+  return map
 }
 
 describe('IncomePieChart', () => {
@@ -82,5 +118,116 @@ describe('IncomePieChart', () => {
       fireEvent.click(paths[0])
       expect(onSliceClick).toHaveBeenCalledWith('mule-1')
     }
+  })
+
+  describe('per-mule stable slice colors', () => {
+    it('keeps each mule\'s slice color unchanged when the roster is reordered', () => {
+      const mules = [makeMule('A'), makeMule('B'), makeMule('C')]
+
+      const first = render(<IncomePieChart mules={mules} />)
+      const before = readMuleColors(first.container)
+      first.unmount()
+
+      const reordered = [mules[2], mules[0], mules[1]] // C, A, B
+      const second = render(<IncomePieChart mules={reordered} />)
+      const after = readMuleColors(second.container)
+
+      expect(after.A).toBe(before.A)
+      expect(after.B).toBe(before.B)
+      expect(after.C).toBe(before.C)
+    })
+
+    it('does not change existing slice colors when a new mule is prepended', () => {
+      const existing = [makeMule('A'), makeMule('B'), makeMule('C')]
+
+      const first = render(<IncomePieChart mules={existing} />)
+      const before = readMuleColors(first.container)
+      first.unmount()
+
+      const withNew = [makeMule('NEW'), ...existing]
+      const second = render(<IncomePieChart mules={withNew} />)
+      const after = readMuleColors(second.container)
+
+      expect(after.A).toBe(before.A)
+      expect(after.B).toBe(before.B)
+      expect(after.C).toBe(before.C)
+      // And the new mule has a defined color as well.
+      expect(after.NEW).toBeDefined()
+    })
+
+    it('does not change existing slice colors when an unrelated mule is removed', () => {
+      const mules = [makeMule('A'), makeMule('B'), makeMule('C')]
+
+      const first = render(<IncomePieChart mules={mules} />)
+      const before = readMuleColors(first.container)
+      first.unmount()
+
+      // Drop B from the middle.
+      const shrunken = [mules[0], mules[2]]
+      const second = render(<IncomePieChart mules={shrunken} />)
+      const after = readMuleColors(second.container)
+
+      expect(after.A).toBe(before.A)
+      expect(after.C).toBe(before.C)
+    })
+
+    it('keeps name↔color pairing intact so legend/tooltip stay correct after reorder', () => {
+      const mules = [makeMule('alpha'), makeMule('bravo'), makeMule('charlie')]
+
+      const first = render(<IncomePieChart mules={mules} />)
+      const before = readMuleColors(first.container)
+      first.unmount()
+
+      // Rotate: [bravo, charlie, alpha]
+      const rotated = [mules[1], mules[2], mules[0]]
+      const second = render(<IncomePieChart mules={rotated} />)
+      const after = readMuleColors(second.container)
+
+      // The legend derives entries from chartConfig keyed by mule id, so a
+      // stable per-id color automatically keeps each name paired with the
+      // same color after any reorder.
+      for (const id of ['alpha', 'bravo', 'charlie']) {
+        expect(after[id]).toBe(before[id])
+      }
+    })
+
+    it('with more mules than palette slots, color mapping is stable across reorders', () => {
+      const N = MULE_PALETTE.length + 3
+      const mules = Array.from({ length: N }, (_, i) => makeMule(`mule-${i}`))
+
+      const first = render(<IncomePieChart mules={mules} />)
+      const before = readMuleColors(first.container)
+      first.unmount()
+
+      // Every mule has a defined color.
+      for (let i = 0; i < N; i++) {
+        expect(before[`mule-${i}`]).toBeDefined()
+      }
+      // Collisions exist (pigeonhole), and two colliding mules share a color.
+      const values = Object.values(before)
+      const unique = new Set(values)
+      expect(unique.size).toBeLessThan(values.length)
+
+      // Reorder — reverse the whole roster, which moves every mule past
+      // whichever sibling it may be color-sharing with.
+      const reversed = [...mules].reverse()
+      const second = render(<IncomePieChart mules={reversed} />)
+      const after = readMuleColors(second.container)
+
+      // Each mule keeps its color.
+      for (let i = 0; i < N; i++) {
+        expect(after[`mule-${i}`]).toBe(before[`mule-${i}`])
+      }
+
+      // And any two mules that shared a color before still share one after,
+      // and any two that differed still differ.
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const sharedBefore = before[`mule-${i}`] === before[`mule-${j}`]
+          const sharedAfter = after[`mule-${i}`] === after[`mule-${j}`]
+          expect(sharedAfter).toBe(sharedBefore)
+        }
+      }
+    })
   })
 })
