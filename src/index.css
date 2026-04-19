@@ -383,4 +383,20 @@
     margin: 0 4px;
     flex-shrink: 0;
   }
+
+  /* Matrix Reset — flat muted text button; hovers to the destructive red. */
+  .d-toolbar-reset {
+    background: transparent;
+    border: none;
+    color: var(--muted-foreground);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: color 0.1s;
+  }
+  .d-toolbar-reset:hover {
+    color: #e05040;
+  }
 }

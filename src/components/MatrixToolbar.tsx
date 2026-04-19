@@ -8,11 +8,14 @@ interface MatrixToolbarProps {
   activePresets: ReadonlySet<PresetKey>;
   /** Slice 4+: unused here. Declared now so the API is stable. */
   onTogglePreset: (preset: PresetKey) => void;
-  /** Slice 4+: unused here. Declared now so the API is stable. */
+  /** Count of `weekly`-cadence selections; displayed as `{weeklyCount}/14`. */
   weeklyCount: number;
-  /** Slice 4+: unused here. Declared now so the API is stable. */
+  /** Invoked when the Matrix Reset button is clicked. */
   onReset: () => void;
 }
+
+/** Weekly Crystal Cap reference — displayed, not enforced. */
+const WEEKLY_CRYSTAL_CAP = 14;
 
 function CadenceIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -55,7 +58,14 @@ const CADENCES: ReadonlyArray<{ value: CadenceFilter; icon: React.ReactNode }> =
   },
 ];
 
-export function MatrixToolbar({ filter, onFilterChange }: MatrixToolbarProps) {
+export function MatrixToolbar({
+  filter,
+  onFilterChange,
+  weeklyCount,
+  onReset,
+}: MatrixToolbarProps) {
+  const countColor =
+    weeklyCount > 0 ? 'var(--accent)' : 'var(--muted-foreground)';
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="d-c-toggle" role="group" aria-label="Cadence filter">
@@ -71,9 +81,27 @@ export function MatrixToolbar({ filter, onFilterChange }: MatrixToolbarProps) {
           </button>
         ))}
       </div>
-      {/* Right-side slot reserved for preset toggles, count, and reset in
-          later slices — intentionally empty in this slice. */}
-      <div aria-hidden />
+      <div className="flex items-center">
+        <span
+          aria-label="Weekly boss selections"
+          className="font-mono-nums"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
+            color: countColor,
+          }}
+        >
+          {weeklyCount}/{WEEKLY_CRYSTAL_CAP}
+        </span>
+        <span className="d-toolbar-sep" aria-hidden />
+        <button
+          type="button"
+          onClick={onReset}
+          className="d-toolbar-reset"
+        >
+          Reset
+        </button>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   TIER_ORDER,
   hardestDifficulty,
   cadencesForBoss,
+  countWeeklySelections,
 } from '../bossSelection'
 import { bosses, getBossById } from '../bosses'
 import type { BossTier } from '../../types'
@@ -524,5 +525,63 @@ describe('cadencesForBoss', () => {
   it('returns {daily, weekly} for a mixed family (Vellum)', () => {
     const vellum = getBossById(VELLUM)!
     expect(cadencesForBoss(vellum)).toEqual(new Set(['daily', 'weekly']))
+  })
+})
+
+describe('countWeeklySelections', () => {
+  it('returns 0 for an empty array', () => {
+    expect(countWeeklySelections([])).toBe(0)
+  })
+
+  it('returns 0 when only daily selections are present', () => {
+    // Horntail is all-daily; Normal Vellum is daily.
+    const keys = [key(HORNTAIL, 'chaos'), key(VELLUM, 'normal')]
+    expect(countWeeklySelections(keys)).toBe(0)
+  })
+
+  it('counts weekly selections only, ignoring daily siblings', () => {
+    const keys = [
+      key(LUCID, 'hard'),      // weekly
+      key(WILL, 'hard'),       // weekly
+      key(VELLUM, 'normal'),   // daily
+      key(HORNTAIL, 'chaos'),  // daily
+    ]
+    expect(countWeeklySelections(keys)).toBe(2)
+  })
+
+  it('counts every weekly key when all are weekly', () => {
+    const keys = [
+      key(LUCID, 'hard'),
+      key(WILL, 'hard'),
+      key(LOTUS, 'hard'),
+      key(DAMIEN, 'hard'),
+    ]
+    expect(countWeeklySelections(keys)).toBe(4)
+  })
+
+  it('ignores malformed keys that parseKey rejects', () => {
+    const keys = [
+      key(LUCID, 'hard'),        // weekly, valid
+      'not-a-real-key',          // invalid
+      `${LUCID}:mythic:weekly`,  // invalid tier
+    ]
+    expect(countWeeklySelections(keys)).toBe(1)
+  })
+
+  it('can exceed 14 (no clamp)', () => {
+    // 16 distinct weekly selections — synthesized from every weekly difficulty
+    // entry we can find until we have 16.
+    const weeklyKeys: string[] = []
+    for (const b of bosses) {
+      for (const d of b.difficulty) {
+        if (d.cadence === 'weekly') {
+          weeklyKeys.push(makeKey(b.id, d.tier, 'weekly'))
+          if (weeklyKeys.length === 16) break
+        }
+      }
+      if (weeklyKeys.length === 16) break
+    }
+    expect(weeklyKeys.length).toBe(16)
+    expect(countWeeklySelections(weeklyKeys)).toBe(16)
   })
 })

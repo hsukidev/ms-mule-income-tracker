@@ -187,6 +187,20 @@ export function cadencesForBoss(boss: Boss): Set<BossCadence> {
 }
 
 /**
+ * Count the `weekly`-cadence selections inside `keys`. Malformed or stale keys
+ * are ignored (via `parseKey`). No clamp: callers that show `X/14` against the
+ * Weekly Crystal Cap display the raw count even when `X > 14`.
+ */
+export function countWeeklySelections(keys: string[]): number {
+  let count = 0;
+  for (const key of keys) {
+    const parsed = parseKey(key);
+    if (parsed?.cadence === 'weekly') count++;
+  }
+  return count;
+}
+
+/**
  * Filter a boss list by a case-insensitive substring match against both the
  * display name and the family slug. An empty query returns the list
  * unchanged so callers can feed a search box value directly.
