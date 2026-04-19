@@ -14,6 +14,9 @@ const LUCID_HARD_VALUE = LUCID_BOSS.difficulty.find((d) => d.tier === 'hard')!.c
 const HARD_LUCID = makeKey(LUCID, 'hard', 'weekly')
 const NORMAL_LUCID = makeKey(LUCID, 'normal', 'weekly')
 
+const VELLUM_BOSS = bosses.find((b) => b.family === 'vellum')!
+const CRIMSON_QUEEN_BOSS = bosses.find((b) => b.family === 'crimson-queen')!
+
 const baseMule: Mule = {
   id: 'test-mule-1',
   name: 'TestMule',
@@ -299,6 +302,75 @@ describe('MuleDetailDrawer', () => {
           }
         }
       }
+    })
+  })
+
+  describe('BossSearch integration', () => {
+    function getSearchInput() {
+      return screen.getByPlaceholderText('Search bosses\u2026') as HTMLInputElement
+    }
+
+    it('renders a fused BossSearch directly above the BossMatrix', () => {
+      renderDrawer()
+      const search = document.querySelector('.d-search') as HTMLElement
+      expect(search).toBeTruthy()
+      expect(search.classList.contains('d-search-fused')).toBe(true)
+      // Matrix must be the next element sibling so there is no gap or seam
+      // between the search bar and the matrix wrapper.
+      const matrix = search.nextElementSibling as HTMLElement | null
+      expect(matrix).toBeTruthy()
+      expect(matrix?.getAttribute('role')).toBe('table')
+    })
+
+    it('narrows visible family rows by substring match (vell → Vellum only)', () => {
+      renderDrawer()
+      fireEvent.change(getSearchInput(), { target: { value: 'vell' } })
+      const rowHeaders = screen.getAllByRole('rowheader')
+      expect(rowHeaders).toHaveLength(1)
+      expect(rowHeaders[0].textContent).toContain(VELLUM_BOSS.name)
+    })
+
+    it('matches via family slug (cri → Crimson Queen)', () => {
+      renderDrawer()
+      fireEvent.change(getSearchInput(), { target: { value: 'cri' } })
+      const rowHeaders = screen.getAllByRole('rowheader')
+      expect(rowHeaders.some((r) => r.textContent?.includes(CRIMSON_QUEEN_BOSS.name))).toBe(true)
+    })
+
+    it('matches case-insensitively (VELL matches Vellum)', () => {
+      renderDrawer()
+      fireEvent.change(getSearchInput(), { target: { value: 'VELL' } })
+      const rowHeaders = screen.getAllByRole('rowheader')
+      expect(rowHeaders).toHaveLength(1)
+      expect(rowHeaders[0].textContent).toContain(VELLUM_BOSS.name)
+    })
+
+    it('clears the query when the drawer opens for a different mule', async () => {
+      const muleA = { ...baseMule, id: 'mule-a', name: 'MuleA' }
+      const muleB = { ...baseMule, id: 'mule-b', name: 'MuleB' }
+      const { rerender } = renderDrawer({ mule: muleA })
+
+      fireEvent.change(getSearchInput(), { target: { value: 'vell' } })
+      expect(getSearchInput().value).toBe('vell')
+
+      rerender(
+        <MuleDetailDrawer
+          mule={muleB}
+          open={true}
+          onClose={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      )
+
+      await waitFor(() => expect(getSearchInput().value).toBe(''))
+      expect(screen.getAllByRole('rowheader').length).toBeGreaterThan(1)
+    })
+
+    it('empty query shows every family (no filtering)', () => {
+      renderDrawer()
+      expect(getSearchInput().value).toBe('')
+      expect(screen.getAllByRole('rowheader')).toHaveLength(bosses.length)
     })
   })
 })

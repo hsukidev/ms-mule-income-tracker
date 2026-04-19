@@ -12,7 +12,13 @@ import {
 import type { Mule } from '../types';
 import { useMuleIncome } from '../modules/income-hooks';
 import { BossMatrix } from './BossMatrix';
-import { parseKey, toggleBoss } from '../data/bossSelection';
+import { BossSearch } from './BossSearch';
+import {
+  bossesByTopCrystalDesc,
+  filterBySearch,
+  parseKey,
+  toggleBoss,
+} from '../data/bossSelection';
 import placeholderPng from '../assets/placeholder.png';
 
 interface MuleDetailDrawerProps {
@@ -25,9 +31,15 @@ interface MuleDetailDrawerProps {
 
 export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: MuleDetailDrawerProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [search, setSearch] = useState('');
   const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
 
-  useEffect(() => { setConfirmDelete(false); }, [mule?.id]);
+  useEffect(() => {
+    setConfirmDelete(false);
+    setSearch('');
+  }, [mule?.id]);
+
+  const visibleBosses = filterBySearch(bossesByTopCrystalDesc, search);
 
   function handleClose() {
     setConfirmDelete(false);
@@ -182,8 +194,11 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div>
+              <BossSearch fused value={search} onChange={setSearch} />
               <BossMatrix
+                bosses={visibleBosses}
+                fusedTop
                 selectedKeys={mule.selectedBosses}
                 onToggleKey={(key) => {
                   const parsed = parseKey(key);

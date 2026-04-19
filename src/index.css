@@ -316,4 +316,33 @@
     border-radius: 2px;
     background: var(--accent-raw, var(--accent));
   }
+
+  /* Boss Search — pairs with BossMatrix when `fused` is passed. The fused
+   * variant squares its bottom corners, tints the seam to --surface-2, and
+   * overlaps the matrix below by 1px so they share a single border line. */
+  .d-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 11px;
+    color: var(--muted-foreground);
+  }
+  .d-search input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--foreground); font-family: inherit; font-size: 13px;
+  }
+  .d-search input::placeholder { color: var(--muted-foreground); }
+  .d-search-fused {
+    border-radius: 10px 10px 0 0;
+    border-bottom-color: var(--surface-2);
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 1;
+  }
+  .d-matrix-fused {
+    border-top: none;
+    border-radius: 0 0 10px 10px !important;
+    margin-top: 0 !important;
+  }
 }
