@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
-import { useState, useCallback, useDeferredValue, useMemo } from 'react';
+import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { ThemeProvider } from './context/ThemeProvider';
@@ -19,6 +19,7 @@ import { DensityProvider } from './context/DensityProvider';
 import { IncomeProvider } from './modules/IncomeProvider';
 import { useFormatPreference } from './modules/income-hooks';
 import { useMules } from './hooks/useMules';
+import { useBulkDragPaint } from './hooks/useBulkDragPaint';
 import { MuleCharacterCard, MuleCharacterCardOverlay } from './components/MuleCharacterCard';
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { AddCard } from './components/AddCard';
@@ -129,6 +130,42 @@ function AppContent() {
     });
   }, []);
 
+  // Exact-state setter used by the drag-paint hook. Returning `prev` when
+  // the value already matches keeps React from scheduling a re-render on
+  // every move frame that brushes an already-correct card.
+  const setSelected = useCallback((id: string, shouldBeSelected: boolean) => {
+    setToDelete((prev) => {
+      if (prev.has(id) === shouldBeSelected) return prev;
+      const next = new Set(prev);
+      if (shouldBeSelected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  // Live refs for the drag-paint hook: mule order feeds range math, and
+  // `isSelected` drives the Original Snapshot. Routing through refs lets
+  // the hook read current values across multi-frame gestures without
+  // recreating its callbacks on every toggle.
+  const orderRef = useRef<string[]>([]);
+  useEffect(() => {
+    orderRef.current = mules.map((m) => m.id);
+  }, [mules]);
+
+  const toDeleteRef = useRef(toDelete);
+  useEffect(() => {
+    toDeleteRef.current = toDelete;
+  }, [toDelete]);
+
+  const isSelected = useCallback((id: string) => toDeleteRef.current.has(id), []);
+
+  const dragPaintHandlers = useBulkDragPaint({
+    enabled: bulkMode,
+    orderRef,
+    isSelected,
+    setSelected,
+  });
+
   const handleBulkDelete = useCallback(() => {
     if (toDelete.size === 0) return;
     deleteMules([...toDelete]);
@@ -167,7 +204,13 @@ function AppContent() {
             modifiers={[restrictToParentElement]}
           >
             <SortableContext items={muleIds} strategy={rectSortingStrategy} disabled={bulkMode}>
-              <div style={isDragging ? dragBoundaryActiveStyle : dragBoundaryBaseStyle} className="transition-[border-color] duration-200" data-drag-boundary data-bulk-mode={bulkMode ? 'true' : 'false'}>
+              <div
+                style={isDragging ? dragBoundaryActiveStyle : dragBoundaryBaseStyle}
+                className="transition-[border-color] duration-200"
+                data-drag-boundary
+                data-bulk-mode={bulkMode ? 'true' : 'false'}
+                {...dragPaintHandlers}
+              >
                 <div
                   className="grid gap-4"
                   style={{
