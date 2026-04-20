@@ -129,6 +129,28 @@
 | **Auto-Fullformat-On-Zero Rule** | The UX rule that when **Total Weekly Income**'s **Raw Income** is zero, **Format Preference** flips to full formatting so the **KPI Card** bignum reads `0` rather than `0B` | Zero-flip rule, zero auto-toggle |
 | **Active-Flag Filter** | The aggregation rule inside `Income.of(sources[])` that excludes any **Income Source** with `active === false`, while `active === true` or `active === undefined` remain included | Active exclusion, inactive filter |
 
+## Persistence Pipeline
+
+| Term | Definition | Aliases to avoid |
+|------|-----------|-----------------|
+| **Mule Store** | The persistence facade exposing `load` / `save` / `flush`, owning JSON (de)serialization, the v1→v4 **Schema Lineage**, debouncing, and the **Storage Fallback Ladder**; realized by `createMuleStore(port?)` | Store, persistence module, mule persistence |
+| **Storage Port** | The two-method outbound seam (`read(): string \| null`, `write(data: string): void`) the **Mule Store** delegates to for raw string storage; substitutable in tests by an in-memory fake | Storage adapter, storage interface |
+| **Default Storage Port** | The **Storage Port** implementation bound to `window.localStorage` as **Primary Storage** and `window.sessionStorage` as **Fallback Storage**; used when `createMuleStore` is called with no port | Browser port, window storage port |
+| **Primary Storage** | `window.localStorage` — the first-choice backend read and written by the **Default Storage Port** | Main storage |
+| **Fallback Storage** | `window.sessionStorage` — the second-choice backend the **Default Storage Port** falls through to when **Primary Storage** throws | Secondary storage |
+| **Storage Fallback Ladder** | The read+write protocol of the **Default Storage Port**: try **Primary Storage** first; on throw, try **Fallback Storage**; on a second throw, swallow the error so React state remains the source of truth | Fallback chain, storage cascade |
+| **Persisted Root** | The single JSON object written to storage, shape `{ schemaVersion: 4, mules: Mule[] }`; the **Mule Store** serializes to and parses from this envelope | Storage envelope, root object |
+| **Schema Version** | The integer tag at `PersistedRoot.schemaVersion` identifying the on-disk shape; currently `4` | Data version, storage version |
+| **Schema Lineage** | The v1→v4 sequence of persisted shapes: v1 bare array, v2 `<uuid>:<tier>` keys, v3 missing-active, v4 current (`<uuid>:<tier>:<cadence>` keys + **Active Flag**) | Migration chain, version history |
+| **Mule Migration** | The pure synchronous transformation `(raw: string \| null) => Mule[]` that parses a **Persisted Root**, dispatches on **Schema Version** via **Load Mode**, and returns a validated **Mule** array; realized by `muleMigrate` | Migrate, persist upgrade |
+| **Load Mode** | The three-valued enum (`'wipe' \| 'upgradeV2' \| 'asIs'`) chosen by the **Persisted Root** parser: `wipe` for legacy/corrupt/unknown, `upgradeV2` for the v2 key-shape upgrade, `asIs` for v3+ | Mode, migration mode |
+| **Wipe** | A **Load Mode** producing an empty **Mule** array on unrecognizable, corrupt, or absent input; fail-safe default | Blank load, reset load |
+| **Upgrade V2** | A **Load Mode** that resolves each v2 **Slate Key** (`<uuid>:<tier>`) to a v4 **Slate Key** (`<uuid>:<tier>:<cadence>`) by looking up the **Boss Cadence** in the catalog; unresolvable entries drop silently | V2→V4 upgrade, key upgrade |
+| **As-Is Load** | A **Load Mode** that trusts the **Persisted Root** shape and applies only the **Active Default**; used for v3 and v4 | Identity load, passthrough load |
+| **Active Default** | The back-compat rule applied during **Mule Migration** that sets `active: true` when a persisted **Mule** lacks an **Active Flag**, preserving pre-v4 **Mules'** contribution to **Total Weekly Income** | Active back-compat, missing-active default |
+| **Storage Debounce** | The 200ms window over which `store.save(mules)` bursts are coalesced into a single `port.write` call | Save debounce, write debounce |
+| **Flush** | The `store.flush()` forced synchronous write of any pending debounced state; invoked on `pagehide` and `beforeunload` to survive tab close | Force save, drain save |
+
 ## Bulk Delete
 
 | Term | Definition | Aliases to avoid |
@@ -209,6 +231,15 @@
 - `useIncome` memoizes the returned **Income** — callers do not wrap in their own `useMemo`
 - The **KPI Card**'s bignum pairs `useIncome(mules)` with `useAutoFullFormatOnZero(total.raw)`; the **Auto-Fullformat-On-Zero Rule** is extracted from the old inline `useEffect` and is the only caller of `useAutoFullFormatOnZero`
 - **Split Card** slices use `Income.of(mule, false).raw` directly — chart math bypasses **Format Preference** because charts need numbers, not strings
+- The **Mule Store** is the only module that reads or writes `Mule.selectedBosses` from storage; `useMules` consumes `store.load()` as its `useState` initializer and calls `store.save(mules)` inside a `useEffect` on every mutation
+- `store.save(mules)` coalesces bursts over the **Storage Debounce**; `store.flush()` writes immediately regardless of pending debounce state
+- `useMules` registers `store.flush` on `pagehide` and `beforeunload` and calls `store.flush()` in the effect cleanup so tab close never loses pending writes
+- The **Storage Port** is the only outbound seam — tests construct `createMuleStore(fakePort)` and drive every **Load Mode** branch (v1 **Wipe**, v2 **Upgrade V2**, v3/v4 **As-Is Load**, corrupt JSON **Wipe**, unknown **Schema Version** **Wipe**) by reading fixture JSON through the fake
+- The **Default Storage Port** engages the **Storage Fallback Ladder** on both read and write — `localStorage.getItem` throw falls through to `sessionStorage.getItem`; `localStorage.setItem` throw falls through to `sessionStorage.setItem`; both throwing is swallowed so React state remains the in-process source of truth
+- **Mule Migration** is synchronous and pure — `muleMigrate(raw)` has no React, no `window`, no timers; it is the unit-testable core the **Mule Store** wraps with I/O and lifecycle
+- The **Active Default** is applied inside **Mule Migration**, not in the React hook — any **Mule** missing an **Active Flag** on load becomes an **Active Mule**, preserving its **Potential Income** contribution under the new **Active-Flag Filter** semantics
+- **Upgrade V2** resolves each v2 **Slate Key** through the **Boss Cadence** catalog to produce a v4 **Slate Key**; unresolvable entries drop silently per the same invariant that governs `MuleBossSlate.from`
+- The public React API of `useMules` does not change across the **Mule Store** extraction — `{ mules, addMule, updateMule, deleteMule, deleteMules, reorderMules }` remains the contract for every consumer component
 
 ## Example dialogue
 
@@ -258,6 +289,16 @@
 > **Domain expert:** "In **useAutoFullFormatOnZero**, a named hook. The **KPI Card** calls `useAutoFullFormatOnZero(total.raw)` right after `useIncome(mules)`. That's the whole **Auto-Fullformat-On-Zero Rule** — one hook, one effect, one test."
 > **Dev:** "If I use **Income** from a chart — say a donut slice — do I need a provider?"
 > **Domain expert:** "Not for the math. Call `Income.of(mule, false).raw` directly; it's a pure static factory. The **Income Provider** only exists for React-side **Format Preference** plumbing. Charts skip formatting entirely."
+> **Dev:** "Where does the v2-to-v4 key upgrade happen now — still inside `useMules`?"
+> **Domain expert:** "No — it moved. **Mule Migration** owns the whole **Schema Lineage**. `muleMigrate(raw)` is pure: it reads the **Persisted Root**, picks a **Load Mode** off the **Schema Version**, runs **Upgrade V2** or **As-Is Load** or **Wipe**, applies the **Active Default**, and returns `Mule[]`. `useMules` never sees a **Load Mode** enum."
+> **Dev:** "So if the v2 upgrade can't resolve a **Slate Key's** **Boss Cadence**, it crashes?"
+> **Domain expert:** "It drops the key silently — same contract as `MuleBossSlate.from`. Fail-safe everywhere on the load path. The worst that happens is a **Mule** comes back with fewer selected bosses than it had on disk; we never surface a parse error to the user."
+> **Dev:** "What's `createMuleStore(port?)` for? I thought persistence just talked to localStorage directly."
+> **Domain expert:** "The **Storage Port** is how the **Mule Store** decouples from the browser. The **Default Storage Port** is `localStorage` plus `sessionStorage` as the fallback — that's the **Storage Fallback Ladder**. In tests you pass an in-memory fake port and you can exercise every **Load Mode** without JSDOM. Future cloud-sync would be another **Storage Port** implementation."
+> **Dev:** "So `store.save(mules)` writes every render?"
+> **Domain expert:** "No — `save` coalesces through the **Storage Debounce**, 200ms. Ten rapid setState calls produce one `port.write`. If the user closes the tab mid-debounce we still get the last state because the `pagehide` listener calls `store.flush()`, which drains any pending write immediately."
+> **Dev:** "And `useMules`'s shape changes for consumers?"
+> **Domain expert:** "Zero change. Every consumer — `App`, `KpiCard`, `Roster`, `Drawer` — still destructures `{ mules, addMule, updateMule, deleteMule, deleteMules, reorderMules }`. The refactor is internal: the hook became a CRUD facade over the **Mule Store**. All the **Schema Version** literals, debounce refs, and storage keys moved out of the hook file."
 
 ## Flagged ambiguities
 
@@ -290,3 +331,10 @@
 - "Toggle" is now overloaded across subsystems — `slate.toggle(key)` mutates a **Boss Slate**, while `useIncome().toggle()` flips **Format Preference**. Qualify in prose: **Slate Toggle** vs **Format Toggle** when both could be meant.
 - "Income" was historically split across `sumSelectedKeys`, `computeMuleIncome`, `computeTotalIncome`, `useFormatPreference`, `useMuleIncome`, `useTotalIncome`, and `IncomeContext`. Canonical shape going forward: one module, one value class (**Income**), one hook (**useIncome**), one provider (**Income Provider**), one named effect (**useAutoFullFormatOnZero**). Prefer **Income**, **Raw Income**, **Formatted Income**, **Format Preference** over the pre-collapse function names.
 - "Format" is polysemous — **Format Preference** is the global abbreviated/full toggle; `formatMeso` is a pure formatter function internal to the income module. Never write "format" unqualified in income-module prose.
+- "Storage" is polysemous — qualify as **Primary Storage** (`localStorage`), **Fallback Storage** (`sessionStorage`), or **Storage Port** (the seam interface). "Storage" unqualified is acceptable only when referring to the general concept of persistence, never to a specific backend.
+- "Load" is polysemous — distinguish `store.load()` (the one-shot read returning `Mule[]`) from **Load Mode** (the three-value enum inside **Mule Migration**). A call site says "load" when it means the former, "**Load Mode**" when it means the enum.
+- "Flush" (`store.flush()`) is the **Mule Store**'s forced synchronous write. It shares no semantics with the React scheduler's "flush" — do not conflate. Qualify as "**Flush**" or "`store.flush()`" in prose when ambiguity could arise.
+- "Migrate" / `muleMigrate` is a pure function call returning `Mule[]` — never a phased ceremony. An invalid **Persisted Root** is handled in-flight by **Wipe**; there is no "post-migrate validation" step. Do not reintroduce a verb that implies sequencing beyond a single function call.
+- "Debounce" in this repo is the **Storage Debounce** — a fixed 200ms window over `store.save`. It is orthogonal to `useDebouncedValue` or any component-level input debouncing; when both could be meant, qualify as **Storage Debounce**.
+- "Persistence" was previously an ambient concern inside `useMules`. It now has an owner — the **Mule Store** — and a seam — the **Storage Port**. Prefer the module names over "persistence layer" / "storage layer" when describing the responsibility boundary.
+- "Schema" is polysemous — **Schema Version** is the integer tag on the **Persisted Root**; **Schema Lineage** is the v1→v4 sequence. Do not write "schema" alone; pick the specific term.
