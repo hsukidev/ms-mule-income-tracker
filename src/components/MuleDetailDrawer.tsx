@@ -94,7 +94,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const commitLevel = useCallback(() => {
     if (!mule) return;
     if (draftLevel === '') {
-      setDraftLevel(String(mule.level));
+      if (mule.level !== 0) onUpdate(mule.id, { level: 0 });
       return;
     }
     const clamped = Math.min(300, Math.max(1, Number(draftLevel)));

@@ -463,3 +463,37 @@
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.5; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Custom scrollbars — slim, warm-tinted to match the amber/terracotta theme.
+ * Webkit: thin thumb using accent-raw, fading track. Firefox: scrollbar-color
+ * shorthand. Both themes handled via CSS variables so dark/light auto-follow.
+ * ────────────────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+:root {
+  --scrollbar-thumb: var(--dim, #c9b896);
+}
+.dark {
+  --scrollbar-thumb: var(--muted-raw, var(--muted-foreground));
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  transition: background 150ms;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-raw, var(--accent));
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

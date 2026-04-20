@@ -97,13 +97,13 @@ describe('MuleDetailDrawer', () => {
       })
     })
 
-    it('filters case-sensitively — lowercase substring does not match', async () => {
+    it('filters case-insensitively — lowercase substring matches', async () => {
       renderDrawer()
       const input = screen.getByLabelText('Class') as HTMLInputElement
       fireEvent.focus(input)
       fireEvent.change(input, { target: { value: 'bish' } })
       await waitFor(() => {
-        expect(screen.queryByRole('option', { name: 'Bishop' })).toBeNull()
+        expect(screen.queryByRole('option', { name: 'Bishop' })).toBeTruthy()
       })
     })
 
@@ -180,13 +180,13 @@ describe('MuleDetailDrawer', () => {
       expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { level: 1 })
     })
 
-    it('reverts empty input to the prior level on blur and does not commit', () => {
+    it('clears the level to 0 on blur when input is emptied', () => {
       const { props } = renderDrawer()
       const input = screen.getByLabelText('Level') as HTMLInputElement
       fireEvent.change(input, { target: { value: '' } })
       fireEvent.blur(input)
-      expect(input.value).toBe('200')
-      expect(props.onUpdate).not.toHaveBeenCalled()
+      expect(input.value).toBe('')
+      expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { level: 0 })
     })
   })
 
