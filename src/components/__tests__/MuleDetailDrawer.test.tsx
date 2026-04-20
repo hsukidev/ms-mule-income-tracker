@@ -317,7 +317,7 @@ describe('MuleDetailDrawer', () => {
       expect(screen.queryByPlaceholderText('Search bosses...')).toBeNull()
     })
 
-    it('clicking a tier cell calls onUpdate with toggleBoss result', () => {
+    it('clicking a tier cell calls onUpdate with slate.toggle(key).keys', () => {
       const onUpdate = vi.fn()
       renderDrawer({ onUpdate })
       const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
@@ -351,6 +351,37 @@ describe('MuleDetailDrawer', () => {
       expect(onUpdate).toHaveBeenCalledWith('test-mule-1', {
         selectedBosses: [],
       })
+    })
+
+    it('Tier Swap: clicking a different tier of the same (bossId, weekly) bucket replaces the prior key one-for-one', () => {
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [NORMAL_LUCID] },
+        onUpdate,
+      })
+      const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      fireEvent.click(hardLucidCell)
+      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] }
+      // One key in, one key out — no doubling up on the weekly bucket.
+      expect(update.selectedBosses).toEqual([HARD_LUCID])
+    })
+
+    it('cross-cadence coexist: selecting a daily tier on a boss that already has a weekly selection keeps both keys', () => {
+      // Pick a mixed-cadence family (Vellum). Chaos Vellum is weekly; Normal
+      // Vellum is daily — the slate must carry both keys simultaneously.
+      const CHAOS_VELLUM_WEEKLY = makeKey(VELLUM_BOSS.id, 'chaos', 'weekly')
+      const NORMAL_VELLUM_DAILY = makeKey(VELLUM_BOSS.id, 'normal', 'daily')
+      const onUpdate = vi.fn()
+      renderDrawer({
+        mule: { ...baseMule, selectedBosses: [CHAOS_VELLUM_WEEKLY] },
+        onUpdate,
+      })
+      const normalVellum = screen.getByTestId(`matrix-cell-${VELLUM_BOSS.id}-normal`)
+      fireEvent.click(normalVellum)
+      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] }
+      expect(new Set(update.selectedBosses)).toEqual(
+        new Set([CHAOS_VELLUM_WEEKLY, NORMAL_VELLUM_DAILY]),
+      )
     })
   })
 
@@ -494,6 +525,16 @@ describe('MuleDetailDrawer', () => {
       renderDrawer()
       expect(getSearchInput().value).toBe('')
       expect(screen.getAllByRole('rowheader')).toHaveLength(bosses.length)
+    })
+
+    it('narrowing the search filter preserves the `selected` flag on the surviving row', () => {
+      // Hard Lucid is selected. Filter down to just Lucid — the surviving
+      // Slate Row must keep its `selected: true` state after the search.
+      renderDrawer({ mule: { ...baseMule, selectedBosses: [HARD_LUCID] } })
+      fireEvent.change(getSearchInput(), { target: { value: 'lucid' } })
+      expect(screen.getAllByRole('rowheader')).toHaveLength(1)
+      const hardLucidCell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      expect(hardLucidCell.getAttribute('data-state')).toBe('on')
     })
   })
 
@@ -881,6 +922,52 @@ describe('MuleDetailDrawer', () => {
       fireEvent.click(screen.getByRole('button', { name: /^ctene$/i }))
       const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] }
       expect(update.selectedBosses).toContain(HARD_HORNTAIL)
+    })
+
+    it('applying CRA then CTENE leaves CRA∩CTENE shared families selected (overlap survives the swap)', () => {
+      // Replay the user flow end-to-end: each click's payload becomes the
+      // next render's `selectedBosses`. After CRA → CTENE, the CRA∩CTENE
+      // overlap (Vellum / Crimson Queen / Papulatus / Magnus / Princess No)
+      // stays selected because CTENE's apply step re-adds them.
+      const craFamilies: ReadonlySet<string> = new Set(PRESET_FAMILIES.CRA)
+      const cteneFamilies: ReadonlySet<string> = new Set(
+        PRESET_FAMILIES.CTENE.map(presetEntryFamily),
+      )
+      const overlap = [...craFamilies].filter((f) => cteneFamilies.has(f))
+
+      let selectedBosses: string[] = []
+      const onUpdate = vi.fn((_id: string, upd: { selectedBosses?: string[] }) => {
+        if (upd.selectedBosses !== undefined) selectedBosses = upd.selectedBosses
+      })
+      const { rerender } = renderDrawer({
+        mule: { ...baseMule, selectedBosses },
+        onUpdate,
+      })
+      function renderWith(keys: string[]) {
+        rerender(
+          <MuleDetailDrawer
+            mule={{ ...baseMule, selectedBosses: keys }}
+            open={true}
+            onClose={vi.fn()}
+            onUpdate={onUpdate}
+            onDelete={vi.fn()}
+          />,
+        )
+      }
+
+      fireEvent.click(screen.getByRole('button', { name: /^cra$/i }))
+      renderWith(selectedBosses)
+      for (const f of overlap) {
+        expect(selectedBosses).toContain(hardestKey(f))
+      }
+      fireEvent.click(screen.getByRole('button', { name: /^ctene$/i }))
+      renderWith(selectedBosses)
+      // Each overlap family's CTENE-resolved key survives the swap.
+      for (const entry of PRESET_FAMILIES.CTENE) {
+        const family = presetEntryFamily(entry)
+        if (!craFamilies.has(family)) continue
+        expect(selectedBosses).toContain(presetEntryKey(entry)!)
+      }
     })
 
     it('the union state is unreachable via the pill-click flow (no sequence produces two active pills)', () => {
