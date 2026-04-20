@@ -236,9 +236,19 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
                     border: '1px solid var(--border)',
                     color: 'var(--muted-raw, var(--muted-foreground))',
                     opacity: isHovered || popoverOpen ? 1 : 0,
-                    transition: 'opacity 140ms',
+                    transition: 'opacity 140ms, color 140ms, border-color 140ms, background 140ms',
                     cursor: 'pointer',
                     display: 'flex', alignItems: 'center',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = DESTRUCTIVE
+                    e.currentTarget.style.borderColor = destructiveAlpha(40)
+                    e.currentTarget.style.background = destructiveAlpha(10)
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--muted-raw, var(--muted-foreground))'
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.background = 'var(--surface-2, var(--surface-raised))'
                   }}
                   onClick={stopPropagation}
                   onPointerDown={stopPropagation}
