@@ -152,18 +152,51 @@ export function toggleBoss(keys: string[], bossId: string, tier: BossTier): stri
   return [...keys, target];
 }
 
-// Precomputed top crystalValue per family → comparator is O(1) per pair.
-const familyTopCrystal = new Map<string, number>(
-  bosses.map((b) => [b.family, Math.max(...b.difficulty.map((d) => d.crystalValue))]),
-);
-
 /**
- * Bosses sorted by top-tier crystalValue descending. Stable across calls —
- * both `getFamilies` and the BossMatrix component depend on this order.
+ * Curated family order for the Matrix display. This is the single source of
+ * truth for row order in BossMatrix and `getFamilies`; keep in sync with any
+ * Boss added to `bosses`.
  */
-export const bossesByTopCrystalDesc: readonly Boss[] = bosses
-  .slice()
-  .sort((a, b) => familyTopCrystal.get(b.family)! - familyTopCrystal.get(a.family)!);
+const DISPLAY_ORDER: readonly string[] = [
+  'black-mage',
+  'baldrix',
+  'limbo',
+  'kaling',
+  'first-adversary',
+  'kalos-the-guardian',
+  'chosen-seren',
+  'darknell',
+  'verus-hilla',
+  'gloom',
+  'will',
+  'lucid',
+  'guardian-angel-slime',
+  'damien',
+  'lotus',
+  'papulatus',
+  'vellum',
+  'crimson-queen',
+  'von-bon',
+  'pierre',
+  'akechi-mitsuhide',
+  'princess-no',
+  'magnus',
+  'cygnus',
+  'pink-bean',
+  'hilla',
+  'zakum',
+  'arkarium',
+  'mori-ranmaru',
+  'horntail',
+  'von-leon',
+  'omni-cln',
+];
+
+export const bossesByDisplayOrder: readonly Boss[] = DISPLAY_ORDER.map((family) => {
+  const boss = bosses.find((b) => b.family === family);
+  if (!boss) throw new Error(`DISPLAY_ORDER references unknown family: ${family}`);
+  return boss;
+});
 
 /**
  * Return the difficulty entry with the highest crystalValue for this boss.
@@ -223,7 +256,7 @@ export function getFamilies(
 ): FamilyView[] {
   const selectedSet = new Set(keys);
 
-  const families: FamilyView[] = bossesByTopCrystalDesc.map((boss) => ({
+  const families: FamilyView[] = bossesByDisplayOrder.map((boss) => ({
     family: boss.family,
     displayName: boss.name,
     bosses: boss.difficulty

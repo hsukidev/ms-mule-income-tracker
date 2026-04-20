@@ -26,6 +26,7 @@ const CRA_FAMILIES = [
   'hilla',
   'magnus',
   'zakum',
+  'princess-no',
 ] as const
 
 const CTENE_FAMILIES: readonly PresetFamily[] = [
@@ -45,7 +46,13 @@ const CTENE_FAMILIES: readonly PresetFamily[] = [
   'magnus',
 ]
 
-const CTENE_OVERLAP = ['vellum', 'crimson-queen', 'papulatus', 'magnus'] as const
+const CTENE_OVERLAP = [
+  'vellum',
+  'crimson-queen',
+  'papulatus',
+  'magnus',
+  'princess-no',
+] as const
 
 /** Hardest-tier selection key for a family slug. */
 function hardestKey(family: string): string {
@@ -60,7 +67,7 @@ function entryKey(entry: PresetFamily): string {
 }
 
 describe('PRESET_FAMILIES membership', () => {
-  it('contains exactly the 10 CRA families in spec order', () => {
+  it('contains exactly the 11 CRA families in spec order', () => {
     expect(PRESET_FAMILIES.CRA).toEqual(CRA_FAMILIES)
   })
 
@@ -81,7 +88,7 @@ describe('PRESET_FAMILIES membership', () => {
     }
   })
 
-  it('CRA ∩ CTENE shares Vellum, Crimson Queen, Papulatus, Magnus', () => {
+  it('CRA ∩ CTENE shares Vellum, Crimson Queen, Papulatus, Magnus, Princess No', () => {
     const craSet: ReadonlySet<string> = new Set(PRESET_FAMILIES.CRA)
     const overlap = PRESET_FAMILIES.CTENE.map(presetEntryFamily).filter((f) =>
       craSet.has(f),
@@ -162,6 +169,11 @@ describe('LOMIEN preset', () => {
     const damien = getBossByFamily('damien')!
     expect(result).toContain(makeKey(lotus.id, 'normal', 'weekly'))
     expect(result).toContain(makeKey(damien.id, 'normal', 'weekly'))
+  })
+
+  it('includes Akechi Mitsuhide', () => {
+    const result = applyPreset([], PRESET_FAMILIES.LOMIEN)
+    expect(result).toContain(hardestKey('akechi-mitsuhide'))
   })
 })
 

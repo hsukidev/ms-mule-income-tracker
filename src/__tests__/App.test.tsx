@@ -107,7 +107,7 @@ describe('App', () => {
 
   it('renders weekly income section', () => {
     render(<App />)
-    expect(screen.getByText(/TOTAL WEEKLY INCOME/i)).toBeTruthy()
+    expect(screen.getByText(/WEEKLY INCOME/i)).toBeTruthy()
   })
 
   it('renders mule card grid', () => {

@@ -57,7 +57,7 @@ export function RosterHeader({
           <span
             style={{
               color: destructive,
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: 14,
               letterSpacing: '-0.01em',
             }}

@@ -216,7 +216,7 @@ export function useMules() {
       partySizes: {},
       active: true,
     };
-    setMules((prev) => [newMule, ...prev]);
+    setMules((prev) => [...prev, newMule]);
     return newMule.id;
   }, []);
 

@@ -531,6 +531,23 @@ describe('useMules', () => {
       })
       expect(result.current.mules[0].active).toBe(true)
     })
+
+    it('appends new mules to the end of the array', () => {
+      const { result } = renderHook(() => useMules())
+      let firstId: string | undefined
+      let secondId: string | undefined
+      let thirdId: string | undefined
+      act(() => {
+        firstId = result.current.addMule()
+      })
+      act(() => {
+        secondId = result.current.addMule()
+      })
+      act(() => {
+        thirdId = result.current.addMule()
+      })
+      expect(result.current.mules.map((m) => m.id)).toEqual([firstId, secondId, thirdId])
+    })
   })
 
   describe('active flag migration (v3 → v4)', () => {

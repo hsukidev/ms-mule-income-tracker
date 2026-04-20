@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { Boss, BossDifficulty, BossTier } from '../types';
 import {
-  bossesByTopCrystalDesc,
+  bossesByDisplayOrder,
   makeKey,
   parseKey,
   TIER_ORDER,
@@ -31,7 +31,7 @@ const STEPPER_BTN_CLASS =
 
 // Precompute tier → BossDifficulty lookup per family once at module load.
 const tierByBossId = new Map<string, Map<BossTier, BossDifficulty>>(
-  bossesByTopCrystalDesc.map((b): [string, Map<BossTier, BossDifficulty>] => [
+  bossesByDisplayOrder.map((b): [string, Map<BossTier, BossDifficulty>] => [
     b.id,
     new Map(b.difficulty.map((d) => [d.tier, d])),
   ]),
@@ -46,7 +46,7 @@ interface BossMatrixProps {
   onChangePartySize: (family: string, n: number) => void;
   /**
    * Optional filtered/re-ordered boss list. Defaults to
-   * `bossesByTopCrystalDesc` so existing callers render unchanged.
+   * `bossesByDisplayOrder` so existing callers render unchanged.
    */
   bosses?: readonly Boss[];
   /**
@@ -249,7 +249,7 @@ export const BossMatrix = memo(function BossMatrix({
   onToggleKey,
   partySizes,
   onChangePartySize,
-  bosses = bossesByTopCrystalDesc,
+  bosses = bossesByDisplayOrder,
   fusedTop = false,
 }: BossMatrixProps) {
   // Slice 2: a single boss can carry up to one daily + one weekly selection,

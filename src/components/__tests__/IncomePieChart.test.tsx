@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/test/test-utils'
-import { IncomePieChart, describeArc, formatCompact } from '../IncomePieChart'
+import {
+  IncomePieChart,
+  describeArc,
+  formatCompact,
+  formatCenterPercent,
+} from '../IncomePieChart'
 import type { Mule } from '../../types'
 import { bosses } from '../../data/bosses'
 import { makeKey } from '../../data/bossSelection'
@@ -9,6 +14,8 @@ import { MULE_PALETTE } from '../../utils/muleColor'
 const HILLA = bosses.find((b) => b.family === 'hilla')!.id
 // Normal Hilla is a daily tier (slice 2, per the PRD daily classification).
 const NORMAL_HILLA = makeKey(HILLA, 'normal', 'daily')
+const BLACK_MAGE = bosses.find((b) => b.family === 'black-mage')!.id
+const HARD_BLACK_MAGE = makeKey(BLACK_MAGE, 'hard', 'weekly')
 
 const muleWithBosses: Mule = {
   id: 'mule-1',
@@ -107,6 +114,64 @@ describe('IncomePieChart', () => {
 
     it('formats thousands with two decimal places', () => {
       expect(formatCompact(12_345)).toBe('12.35K')
+    })
+  })
+
+  describe('center percentage display', () => {
+    it('renders 100.0% by default when no slice is hovered', () => {
+      render(<IncomePieChart mules={[muleWithBosses]} />)
+      expect(screen.getByText('100.0%')).toBeTruthy()
+    })
+
+    it('renders 100.0% with multiple mules when none are hovered', () => {
+      const mules = [
+        makeMule('A', { selectedBosses: [HARD_BLACK_MAGE] }),
+        makeMule('B', { selectedBosses: [NORMAL_HILLA] }),
+      ]
+      render(<IncomePieChart mules={mules} />)
+      expect(screen.getByText('100.0%')).toBeTruthy()
+    })
+  })
+
+  describe('formatCenterPercent (center percent label)', () => {
+    it('returns 100.0% when no slice is hovered', () => {
+      expect(formatCenterPercent(undefined, [10, 30, 60])).toBe('100.0%')
+    })
+
+    it('returns the hovered slice share to one decimal', () => {
+      // 30 / (10 + 30 + 60) = 30%
+      expect(formatCenterPercent(1, [10, 30, 60])).toBe('30.0%')
+    })
+
+    it('rounds to one decimal place', () => {
+      // 1 / 3 ≈ 33.333…
+      expect(formatCenterPercent(0, [1, 1, 1])).toBe('33.3%')
+    })
+
+    it('returns 100.0% for a single-slice pie even when hovered', () => {
+      expect(formatCenterPercent(0, [42])).toBe('100.0%')
+    })
+
+    it('returns 100.0% when total is 0 (all zero values)', () => {
+      // Avoids NaN from a divide-by-zero on an empty/zero pie.
+      expect(formatCenterPercent(0, [0, 0])).toBe('100.0%')
+    })
+
+    it('returns 100.0% when activeIndex is out of range', () => {
+      expect(formatCenterPercent(5, [10, 20])).toBe('100.0%')
+      expect(formatCenterPercent(-1, [10, 20])).toBe('100.0%')
+    })
+
+    it('returns 100.0% when values is empty', () => {
+      expect(formatCenterPercent(0, [])).toBe('100.0%')
+    })
+
+    it('hovered shares of all slices sum to ~100%', () => {
+      const values = [123, 456, 789, 1011]
+      const sum = values
+        .map((_, i) => parseFloat(formatCenterPercent(i, values)))
+        .reduce((a, b) => a + b, 0)
+      expect(sum).toBeCloseTo(100, 0)
     })
   })
 

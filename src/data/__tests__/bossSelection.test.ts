@@ -9,6 +9,7 @@ import {
   hardestDifficulty,
   cadencesForBoss,
   countWeeklySelections,
+  bossesByDisplayOrder,
 } from '../bossSelection'
 import { bosses, getBossById } from '../bosses'
 import type { BossTier } from '../../types'
@@ -41,6 +42,55 @@ describe('TIER_ORDER', () => {
   it('exports tiers in extreme → easy order (hardest first)', () => {
     const expected: BossTier[] = ['extreme', 'chaos', 'hard', 'normal', 'easy']
     expect(TIER_ORDER).toEqual(expected)
+  })
+})
+
+describe('bossesByDisplayOrder', () => {
+  it('lists families in the curated Matrix display order', () => {
+    const expected = [
+      'black-mage',
+      'baldrix',
+      'limbo',
+      'kaling',
+      'first-adversary',
+      'kalos-the-guardian',
+      'chosen-seren',
+      'darknell',
+      'verus-hilla',
+      'gloom',
+      'will',
+      'lucid',
+      'guardian-angel-slime',
+      'damien',
+      'lotus',
+      'papulatus',
+      'vellum',
+      'crimson-queen',
+      'von-bon',
+      'pierre',
+      'akechi-mitsuhide',
+      'princess-no',
+      'magnus',
+      'cygnus',
+      'pink-bean',
+      'hilla',
+      'zakum',
+      'arkarium',
+      'mori-ranmaru',
+      'horntail',
+      'von-leon',
+      'omni-cln',
+    ]
+    expect(bossesByDisplayOrder.map((b) => b.family)).toEqual(expected)
+  })
+
+  it('includes every known family exactly once', () => {
+    const families = bossesByDisplayOrder.map((b) => b.family)
+    expect(new Set(families).size).toBe(families.length)
+    expect(families.length).toBe(bosses.length)
+    for (const b of bosses) {
+      expect(families).toContain(b.family)
+    }
   })
 })
 
@@ -304,14 +354,11 @@ describe('getFamilies', () => {
     expect(easyLucid.selected).toBe(false)
   })
 
-  it('returns families sorted by highest crystal value first', () => {
+  it('returns families in the curated Matrix display order', () => {
     const families = getFamilies([], '')
-    expect(families[0].family).toBe('black-mage')
-    for (let i = 1; i < families.length; i++) {
-      expect(families[i - 1].bosses[0].crystalValue).toBeGreaterThanOrEqual(
-        families[i].bosses[0].crystalValue,
-      )
-    }
+    expect(families.map((f) => f.family)).toEqual(
+      bossesByDisplayOrder.map((b) => b.family),
+    )
   })
 
   it('uses the display name without difficulty prefix', () => {

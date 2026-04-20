@@ -13,11 +13,11 @@ import { hardestDifficulty, makeKey, parseKey, toggleBoss } from './bossSelectio
  * Clicking an inactive preset while another is active first removes the
  * previously active preset's families from the selection, then applies the
  * clicked preset — so the CRA ∩ CTENE overlap (Vellum / Crimson Queen /
- * Papulatus / Magnus) is just re-added by the apply step with the clicked
- * preset's resolved tiers, no special-casing needed. Clicking the currently
- * active preset deselects it. The drawer-level handler owns this policy;
- * the helpers below (`applyPreset` / `removePreset` / `isPresetActive`) stay
- * single-purpose and family-scoped.
+ * Papulatus / Magnus / Princess No) is just re-added by the apply step with
+ * the clicked preset's resolved tiers, no special-casing needed. Clicking
+ * the currently active preset deselects it. The drawer-level handler owns
+ * this policy; the helpers below (`applyPreset` / `removePreset` /
+ * `isPresetActive`) stay single-purpose and family-scoped.
  */
 
 export type PresetKey = 'CRA' | 'LOMIEN' | 'CTENE';
@@ -40,6 +40,7 @@ export const PRESET_FAMILIES = {
     'hilla',
     'magnus',
     'zakum',
+    'princess-no',
   ],
   LOMIEN: [
     'cygnus',
@@ -52,6 +53,8 @@ export const PRESET_FAMILIES = {
     'hilla',
     'magnus',
     'zakum',
+    'princess-no',
+    'akechi-mitsuhide',
     { family: 'lotus', tier: 'normal' },
     { family: 'damien', tier: 'normal' },
   ],

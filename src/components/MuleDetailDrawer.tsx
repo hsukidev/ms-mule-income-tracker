@@ -16,7 +16,7 @@ import { BossSearch } from './BossSearch';
 import { MatrixToolbar, type CadenceFilter, type PresetKey } from './MatrixToolbar';
 import type { Boss } from '../types';
 import {
-  bossesByTopCrystalDesc,
+  bossesByDisplayOrder,
   countWeeklySelections,
   filterBySearch,
   parseKey,
@@ -107,7 +107,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const visibleBosses = useMemo(
     () =>
       filterBySearch(
-        filterByCadence(bossesByTopCrystalDesc, filter),
+        filterByCadence(bossesByDisplayOrder, filter),
         search,
       ),
     [filter, search],

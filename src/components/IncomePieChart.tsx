@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
 import { computeMuleIncome } from '../modules/income';
@@ -22,6 +22,31 @@ interface IncomePieChartProps {
 export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
   const { abbreviated } = useFormatPreference();
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+
+  // Crossing the paddingAngle gap between sectors fires a mouseLeave then a
+  // mouseEnter. Clearing synchronously would flash the "Total" view for one
+  // frame mid-sweep. Defer the clear so the very next enter can cancel it.
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (clearTimerRef.current != null) clearTimeout(clearTimerRef.current);
+    };
+  }, []);
+
+  const handleSliceEnter = (index: number) => {
+    if (clearTimerRef.current != null) {
+      clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+    setActiveIndex(index);
+  };
+  const handleSliceLeave = () => {
+    if (clearTimerRef.current != null) clearTimeout(clearTimerRef.current);
+    clearTimerRef.current = setTimeout(() => {
+      setActiveIndex(undefined);
+      clearTimerRef.current = null;
+    }, 0);
+  };
 
   // Slice color is a function of mule identity, not array position. Drag
   // reorders the roster in place, so anything derived from the array index
@@ -65,6 +90,10 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
     activeIndex !== undefined ? data[activeIndex]?.name : undefined;
   const hoveredValue =
     activeIndex !== undefined ? data[activeIndex]?.formatted : undefined;
+  const centerPercentText = formatCenterPercent(
+    activeIndex,
+    data.map((d) => d.value),
+  );
 
   const chartConfig: ChartConfig = Object.fromEntries(
     data.map((item) => [
@@ -89,8 +118,8 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
             stroke="var(--card)"
             strokeWidth={2}
             shape={renderSector as never}
-            onMouseEnter={(_e: unknown, index: number) => setActiveIndex(index)}
-            onMouseLeave={() => setActiveIndex(undefined)}
+            onMouseEnter={(_e: unknown, index: number) => handleSliceEnter(index)}
+            onMouseLeave={handleSliceLeave}
             onClick={(_event: unknown, index: number) => {
               const muleId = data[index]?.muleId;
               if (muleId != null) onSliceClick?.(muleId);
@@ -113,6 +142,9 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
           {hoveredValue ?? (abbreviated
             ? formatCompact(total)
             : total.toLocaleString())}
+        </span>
+        <span className="font-mono-nums text-xs text-muted-foreground mt-0.5">
+          {centerPercentText}
         </span>
       </div>
     </div>
@@ -209,6 +241,26 @@ export function describeArc(cx: number, cy: number, innerRadius: number, outerRa
     `A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${oex} ${oey}`,
     'Z',
   ].join(' ');
+}
+
+/**
+ * Center-of-pie percentage label. Hovered slice → its share of the total;
+ * no hover → "100.0%" (the donut as a whole).
+ */
+export function formatCenterPercent(
+  activeIndex: number | undefined,
+  values: number[],
+): string {
+  const total = values.reduce((sum, v) => sum + v, 0);
+  if (
+    activeIndex === undefined ||
+    activeIndex < 0 ||
+    activeIndex >= values.length ||
+    total <= 0
+  ) {
+    return '100.0%';
+  }
+  return `${((values[activeIndex] / total) * 100).toFixed(1)}%`;
 }
 
 export function formatCompact(n: number): string {
