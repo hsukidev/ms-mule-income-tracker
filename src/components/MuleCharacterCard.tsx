@@ -157,7 +157,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({ mule, onClick
           flexDirection: 'column',
           transform: isHovered ? 'translateY(-2px)' : undefined,
           boxShadow: isHovered
-            ? '0 8px 32px -8px var(--accent-glow), 0 0 0 1px var(--border)'
+            ? '0 8px 32px -8px var(--accent-glow)'
             : '0 0 0 1px var(--border)',
           transition: 'transform 150ms, box-shadow 150ms',
         }}

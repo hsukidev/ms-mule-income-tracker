@@ -30,6 +30,8 @@ import {
 } from '../data/bossPresets';
 import blankCharacterPng from '../assets/blank-character.png';
 import { sanitizeMuleName } from '../utils/muleName';
+import { ClassAutocomplete } from './ClassAutocomplete';
+import { GMS_CLASSES } from '../constants/classes';
 
 const PRESET_KEYS: readonly PresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
 
@@ -56,20 +58,15 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const [filter, setFilter] = useState<CadenceFilter>('All');
   const { formatted: potentialIncome } = useMuleIncome(mule ?? { selectedBosses: [] });
 
-  // Drafts decouple typing from parent state; commit to parent on blur, on
-  // mule-switch, or on drawer close. Without this, per-keystroke setMules
-  // fanned out through useDeferredValue's low-priority follow-up render and
-  // re-rendered the pie chart's N slices — typing felt laggier as the roster
-  // grew.
+  // Drafts prevent per-keystroke setMules from re-rendering the pie chart and
+  // roster cards; commits on blur/select instead.
   const [draftName, setDraftName] = useState(mule?.name ?? '');
-  const [draftClass, setDraftClass] = useState(mule?.muleClass ?? '');
   const [draftLevel, setDraftLevel] = useState(mule?.level ? String(mule.level) : '');
 
-  const draftsRef = useRef({ name: draftName, muleClass: draftClass, level: draftLevel });
-  draftsRef.current = { name: draftName, muleClass: draftClass, level: draftLevel };
+  const draftsRef = useRef({ name: draftName, level: draftLevel });
+  draftsRef.current = { name: draftName, level: draftLevel };
   const lastMuleIdRef = useRef<string | null>(mule?.id ?? null);
-  // onUpdate via ref so the mule-switch effect can depend on `mule?.id` only
-  // and still call the latest callback.
+  // Ref so the mule-switch effect depends only on mule?.id, not onUpdate.
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
 
@@ -80,15 +77,13 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
     const prevId = lastMuleIdRef.current;
     const nextId = mule?.id ?? null;
-    // Flush prior drafts to the previous mule on switch or close (nextId
-    // null). Clicking another card, pressing Esc, and backdrop click all
-    // route through here because `selectedMule` derives from mule id.
+    // Flush drafts on switch/close — Esc and backdrop also route here since
+    // selectedMule derives from mule id.
     if (prevId && prevId !== nextId) {
-      const { name, muleClass, level } = draftsRef.current;
-      onUpdateRef.current(prevId, { name, muleClass, level: Number(level) || 0 });
+      const { name, level } = draftsRef.current;
+      onUpdateRef.current(prevId, { name, level: Number(level) || 0 });
     }
     setDraftName(mule?.name ?? '');
-    setDraftClass(mule?.muleClass ?? '');
     setDraftLevel(mule?.level ? String(mule.level) : '');
     lastMuleIdRef.current = nextId;
   }, [mule?.id]);
@@ -96,12 +91,15 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const commitName = useCallback(() => {
     if (mule && draftName !== mule.name) onUpdate(mule.id, { name: draftName });
   }, [mule, draftName, onUpdate]);
-  const commitClass = useCallback(() => {
-    if (mule && draftClass !== mule.muleClass) onUpdate(mule.id, { muleClass: draftClass });
-  }, [mule, draftClass, onUpdate]);
   const commitLevel = useCallback(() => {
-    const n = Number(draftLevel) || 0;
-    if (mule && n !== mule.level) onUpdate(mule.id, { level: n });
+    if (!mule) return;
+    if (draftLevel === '') {
+      setDraftLevel(String(mule.level));
+      return;
+    }
+    const clamped = Math.min(300, Math.max(1, Number(draftLevel)));
+    if (String(clamped) !== draftLevel) setDraftLevel(String(clamped));
+    if (clamped !== mule.level) onUpdate(mule.id, { level: clamped });
   }, [mule, draftLevel, onUpdate]);
 
   const levelDisplay = Number(draftLevel) || 0;
@@ -237,7 +235,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
               </h2>
               <div className="mt-1 flex items-center gap-3 text-xs">
                 <span className="font-sans uppercase tracking-[0.22em] text-[var(--accent-secondary)]">
-                  {draftClass || 'no class'}
+                  {mule.muleClass || 'no class'}
                 </span>
                 <span className="font-mono-nums text-[var(--accent-numeric)]">
                   {levelDisplay > 0 ? `Lv.${levelDisplay}` : 'N/A'}
@@ -347,12 +345,13 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                     <Label htmlFor="mule-class" className="font-sans text-xs text-muted-foreground">
                       Class
                     </Label>
-                    <Input
+                    <ClassAutocomplete
+                      key={mule.id}
                       id="mule-class"
                       placeholder="e.g. Bishop"
-                      value={draftClass}
-                      onChange={(e) => setDraftClass(e.currentTarget.value)}
-                      onBlur={commitClass}
+                      value={mule.muleClass ?? ''}
+                      options={GMS_CLASSES}
+                      onSelect={(c) => onUpdate(mule.id, { muleClass: c })}
                       className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                     />
                   </div>
@@ -362,11 +361,15 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                     </Label>
                     <Input
                       id="mule-level"
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="0"
-                      min={0}
                       value={draftLevel}
-                      onChange={(e) => setDraftLevel(e.currentTarget.value)}
+                      onChange={(e) =>
+                        setDraftLevel(
+                          e.currentTarget.value.replace(/\D/g, '').slice(0, 3),
+                        )
+                      }
                       onBlur={commitLevel}
                       className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 font-mono-nums placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                     />

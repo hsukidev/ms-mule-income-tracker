@@ -269,6 +269,10 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     position: relative;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .panel:hover {
+    border-color: var(--accent-raw, var(--accent));
   }
   .panel-glow {
     background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
@@ -277,9 +281,18 @@
       0 20px 60px -30px var(--accent-glow),
       inset 0 1px 0 rgba(255,255,255,0.02);
   }
+  .panel-glow:hover {
+    box-shadow:
+      0 20px 60px -30px var(--accent-glow),
+      inset 0 1px 0 rgba(255,255,255,0.02);
+  }
   body.light .panel-glow {
     box-shadow:
       0 0 0 1px var(--border),
+      0 12px 40px -20px var(--accent-glow);
+  }
+  body.light .panel-glow:hover {
+    box-shadow:
       0 12px 40px -20px var(--accent-glow);
   }
   .bignum {

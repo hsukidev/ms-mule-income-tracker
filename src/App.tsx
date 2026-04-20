@@ -33,6 +33,7 @@ const dragBoundaryBaseStyle: React.CSSProperties = {
   borderWidth: '1.5px',
   borderColor: 'transparent',
   padding: '0.75rem',
+  marginInline: 'calc(-0.75rem - 1.5px)',
 };
 
 const dragBoundaryActiveStyle: React.CSSProperties = {
@@ -50,11 +51,8 @@ const dropAnimation: DropAnimation = {
 
 function AppContent() {
   const { mules, addMule, updateMule, deleteMule, reorderMules } = useMules();
-  // KpiCard + SplitCard aggregate/recharts work is the expensive reaction to
-  // drawer keystrokes, so they read a deferred snapshot and skip re-render
-  // while typing. The roster and dnd-kit SortableContext must read live
-  // `mules` — otherwise on drop, the FLIP animation targets the stale
-  // pre-reorder layout and the card visibly bounces back before snapping.
+  // KpiCard/SplitCard defer to absorb boss-matrix burst updates. Roster stays
+  // live — stale mules on drop causes FLIP to target the wrong layout.
   const deferredMules = useDeferredValue(mules);
   const { toggle: toggleAbbreviated } = useFormatPreference();
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
@@ -64,12 +62,9 @@ function AppContent() {
   const activeMule = activeMuleId ? (mules.find((m) => m.id === activeMuleId) ?? null) : null;
   const isDragging = activeMuleId !== null;
 
-  // Stabilize the SortableContext `items` array by value. `mules` gets a new
-  // reference on every drawer keystroke (updateMule rebuilds the array), but
-  // the id composition only changes on add/delete/reorder. Without this,
-  // SortableContext broadcasts a new context value per keystroke and every
-  // useSortable-consuming card re-renders — O(N)-per-keystroke lag that
-  // scales with roster size.
+  // Stabilize SortableContext items by value — updateMule rebuilds the array
+  // on every edit, but ids only change on add/delete/reorder. Without this,
+  // SortableContext rebroadcasts per edit and all cards re-render O(N).
   const muleIdsKey = mules.map((m) => m.id).join('\u0000');
   const muleIds = useMemo(
     () => mules.map((m) => m.id),

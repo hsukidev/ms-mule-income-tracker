@@ -25,7 +25,7 @@ export const KpiCard = memo(function KpiCard({ mules, onToggleFormat }: KpiCardP
     >
       <div className="eyebrow">
         <span className="dot" aria-hidden />
-        TOTAL WEEKLY INCOME
+        EXPECTED WEEKLY INCOME
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
         <button

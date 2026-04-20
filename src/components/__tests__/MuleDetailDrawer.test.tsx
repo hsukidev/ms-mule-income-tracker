@@ -86,6 +86,110 @@ describe('MuleDetailDrawer', () => {
     expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { name: 'HeroWorldToo' })
   })
 
+  describe('class autocomplete', () => {
+    it('shows matching class options as the user types', async () => {
+      renderDrawer()
+      const input = screen.getByLabelText('Class') as HTMLInputElement
+      fireEvent.focus(input)
+      fireEvent.change(input, { target: { value: 'Bish' } })
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Bishop' })).toBeTruthy()
+      })
+    })
+
+    it('filters case-sensitively — lowercase substring does not match', async () => {
+      renderDrawer()
+      const input = screen.getByLabelText('Class') as HTMLInputElement
+      fireEvent.focus(input)
+      fireEvent.change(input, { target: { value: 'bish' } })
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Bishop' })).toBeNull()
+      })
+    })
+
+    it('blurring with non-list text reverts to the committed class and does not call onUpdate', async () => {
+      const { props } = renderDrawer()
+      const input = screen.getByLabelText('Class') as HTMLInputElement
+      fireEvent.focus(input)
+      fireEvent.change(input, { target: { value: 'NotAClass' } })
+      fireEvent.blur(input)
+      await waitFor(() => {
+        expect(input.value).toBe('Hero')
+      })
+      expect(props.onUpdate).not.toHaveBeenCalled()
+    })
+
+    it("displays the mule's current class in the input on open", () => {
+      renderDrawer({ mule: { ...baseMule, muleClass: 'Bishop' } })
+      const input = screen.getByLabelText('Class') as HTMLInputElement
+      expect(input.value).toBe('Bishop')
+    })
+
+    it('clicking an option commits the selected class via onUpdate', async () => {
+      const { props } = renderDrawer()
+      const input = screen.getByLabelText('Class') as HTMLInputElement
+      fireEvent.focus(input)
+      fireEvent.change(input, { target: { value: 'Bish' } })
+      const option = await waitFor(() =>
+        screen.getByRole('option', { name: 'Bishop' }),
+      )
+      fireEvent.click(option)
+      expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, {
+        muleClass: 'Bishop',
+      })
+    })
+  })
+
+  describe('level validation', () => {
+    it('rejects non-digit characters when typing', () => {
+      renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: 'abc' } })
+      expect(input.value).toBe('')
+    })
+
+    it('strips non-digit characters from mixed input', () => {
+      renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '1a2' } })
+      expect(input.value).toBe('12')
+    })
+
+    it('rejects negative signs and decimal points', () => {
+      renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '-12.5' } })
+      expect(input.value).toBe('125')
+    })
+
+    it('clamps values above 300 to 300 on blur', () => {
+      const { props } = renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '500' } })
+      fireEvent.blur(input)
+      expect(input.value).toBe('300')
+      expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { level: 300 })
+    })
+
+    it('clamps 0 to 1 on blur', () => {
+      const { props } = renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '0' } })
+      fireEvent.blur(input)
+      expect(input.value).toBe('1')
+      expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { level: 1 })
+    })
+
+    it('reverts empty input to the prior level on blur and does not commit', () => {
+      const { props } = renderDrawer()
+      const input = screen.getByLabelText('Level') as HTMLInputElement
+      fireEvent.change(input, { target: { value: '' } })
+      fireEvent.blur(input)
+      expect(input.value).toBe('200')
+      expect(props.onUpdate).not.toHaveBeenCalled()
+    })
+  })
+
   it('renders a trash icon button', () => {
     renderDrawer()
     expect(screen.getByRole('button', { name: /delete/i })).toBeTruthy()
