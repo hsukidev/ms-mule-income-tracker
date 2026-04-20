@@ -1,11 +1,7 @@
 import { memo } from 'react';
-import type { Boss, BossDifficulty, BossTier } from '../types';
-import {
-  bossesByDisplayOrder,
-  makeKey,
-  parseKey,
-  TIER_ORDER,
-} from '../data/bossSelection';
+import type { BossTier } from '../types';
+import { TIER_ORDER } from '../data/bossSelection';
+import type { SlateFamily, SlateKey, SlateRow } from '../data/muleBossSlate';
 import { formatMeso } from '../utils/meso';
 
 const TIER_COLOR: Record<BossTier, string> = {
@@ -29,26 +25,16 @@ const GRID_TEMPLATE = '140px repeat(5, 1fr)';
 const STEPPER_BTN_CLASS =
   'grid place-items-center w-5 self-stretch text-sm leading-none text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed';
 
-// Precompute tier → BossDifficulty lookup per family once at module load.
-const tierByBossId = new Map<string, Map<BossTier, BossDifficulty>>(
-  bossesByDisplayOrder.map((b): [string, Map<BossTier, BossDifficulty>] => [
-    b.id,
-    new Map(b.difficulty.map((d) => [d.tier, d])),
-  ]),
-);
-
-const EMPTY_TIER_SET: ReadonlySet<BossTier> = new Set();
-
 interface BossMatrixProps {
-  selectedKeys: string[];
-  onToggleKey: (key: string) => void;
+  /**
+   * Projection from `MuleBossSlate.view(search)` — one entry per **Slate
+   * Family**, each carrying its **Slate Rows** with `selected: bool` baked
+   * into every row.
+   */
+  families: SlateFamily[];
+  onToggleKey: (key: SlateKey) => void;
   partySizes: Record<string, number>;
   onChangePartySize: (family: string, n: number) => void;
-  /**
-   * Optional filtered/re-ordered boss list. Defaults to
-   * `bossesByDisplayOrder` so existing callers render unchanged.
-   */
-  bosses?: readonly Boss[];
   /**
    * When true, the outer wrapper squares its top corners and drops its top
    * border so a search bar can sit fused directly above it. Defaults to
@@ -137,28 +123,34 @@ function PartyStepper({
   );
 }
 
-function FamilyRow({
-  boss,
-  selectedTiers,
+function FamilyMatrixRow({
+  family,
   partySize,
   onToggleKey,
   onChangePartySize,
 }: {
-  boss: Boss;
-  selectedTiers: ReadonlySet<BossTier>;
+  family: SlateFamily;
   partySize: number;
-  onToggleKey: (key: string) => void;
+  onToggleKey: (key: SlateKey) => void;
   onChangePartySize: (family: string, n: number) => void;
 }) {
-  const tierMap = tierByBossId.get(boss.id)!;
+  // Index rows by tier so we can render the 5-column grid even when the family
+  // doesn't offer a tier (empty cell) or offers multiple cadences on one tier
+  // (the project currently has at most one row per tier per family).
+  const rowByTier = new Map<BossTier, SlateRow>(
+    family.rows.map((r) => [r.tier, r]),
+  );
+
   // A tier cell dims iff another tier of the SAME cadence is selected on this
   // boss — opposite-cadence tiers stay fully clickable (slice 2).
   const selectedCadences = new Set(
-    boss.difficulty
-      .filter((d) => selectedTiers.has(d.tier))
-      .map((d) => d.cadence),
+    family.rows.filter((r) => r.selected).map((r) => r.cadence),
   );
-  const hasWeeklyTier = boss.difficulty.some((d) => d.cadence === 'weekly');
+  const hasWeeklyTier = family.rows.some((r) => r.cadence === 'weekly');
+  const displayName = family.displayName;
+  // Any row carries the bossId we need for stable test ids across cells.
+  const bossId = family.rows[0]?.bossId ?? family.family;
+
   return (
     <div
       role="row"
@@ -173,11 +165,11 @@ function FamilyRow({
           data-testid="family-name"
           className="font-display leading-[1.2] truncate"
         >
-          {boss.name}
+          {displayName}
         </span>
         {hasWeeklyTier ? (
           <PartyStepper
-            family={boss.family}
+            family={family.family}
             party={partySize}
             onChangePartySize={onChangePartySize}
           />
@@ -191,13 +183,13 @@ function FamilyRow({
         )}
       </div>
       {TIER_ORDER.map((tier) => {
-        const diff = tierMap.get(tier);
-        if (!diff) {
+        const row = rowByTier.get(tier);
+        if (!row) {
           return (
             <div
               key={tier}
               role="cell"
-              data-testid={`matrix-cell-${boss.id}-${tier}`}
+              data-testid={`matrix-cell-${bossId}-${tier}`}
               aria-disabled="true"
               className="grid place-items-center py-[10px] px-1 border-r border-[var(--border)] last:border-r-0 font-mono-nums text-[11px] text-[var(--muted-raw,var(--muted-foreground))]"
               style={{ cursor: 'default' }}
@@ -207,23 +199,22 @@ function FamilyRow({
           );
         }
 
-        const isSelected = selectedTiers.has(tier);
-        const isDim = !isSelected && selectedCadences.has(diff.cadence);
-        const key = makeKey(boss.id, tier, diff.cadence);
+        const isSelected = row.selected;
+        const isDim = !isSelected && selectedCadences.has(row.cadence);
         // Daily cells always render at full crystalValue; only weekly cells
         // divide by the party size.
         const displayedValue =
-          diff.cadence === 'daily' ? diff.crystalValue : diff.crystalValue / partySize;
+          row.cadence === 'daily' ? row.crystalValue : row.crystalValue / partySize;
 
         return (
           <button
             type="button"
             key={tier}
             role="cell"
-            data-testid={`matrix-cell-${boss.id}-${tier}`}
+            data-testid={`matrix-cell-${bossId}-${tier}`}
             data-state={isSelected ? 'on' : 'off'}
             data-dim={isDim ? 'true' : undefined}
-            onClick={() => onToggleKey(key)}
+            onClick={() => onToggleKey(row.key)}
             className={[
               'grid place-items-center py-[10px] px-1 border-r border-[var(--border)] last:border-r-0 font-mono-nums text-[11px] tabular-nums cursor-pointer transition-colors',
               isSelected
@@ -233,7 +224,7 @@ function FamilyRow({
           >
             <span style={isDim ? { opacity: 0.35 } : undefined}>
               {formatMeso(displayedValue, true)}
-              {diff.cadence === 'daily' && (
+              {row.cadence === 'daily' && (
                 <span className="ml-1 text-[9px] opacity-60">x 7</span>
               )}
             </span>
@@ -245,24 +236,12 @@ function FamilyRow({
 }
 
 export const BossMatrix = memo(function BossMatrix({
-  selectedKeys,
+  families,
   onToggleKey,
   partySizes,
   onChangePartySize,
-  bosses = bossesByDisplayOrder,
   fusedTop = false,
 }: BossMatrixProps) {
-  // Slice 2: a single boss can carry up to one daily + one weekly selection,
-  // so we track the full set of selected tiers per boss (not one winner).
-  const selectedTiersByBoss = new Map<string, Set<BossTier>>();
-  for (const key of selectedKeys) {
-    const parsed = parseKey(key);
-    if (!parsed) continue;
-    const existing = selectedTiersByBoss.get(parsed.bossId);
-    if (existing) existing.add(parsed.tier);
-    else selectedTiersByBoss.set(parsed.bossId, new Set([parsed.tier]));
-  }
-
   // When a search bar is fused above, the matrix drops its top border and
   // squares its top corners so the two elements visually share a border.
   const cornerClass = fusedTop
@@ -297,12 +276,11 @@ export const BossMatrix = memo(function BossMatrix({
           ))}
         </div>
 
-      {bosses.map((boss) => (
-        <FamilyRow
-          key={boss.id}
-          boss={boss}
-          selectedTiers={selectedTiersByBoss.get(boss.id) ?? EMPTY_TIER_SET}
-          partySize={partySizes[boss.family] ?? 1}
+      {families.map((family) => (
+        <FamilyMatrixRow
+          key={family.family}
+          family={family}
+          partySize={partySizes[family.family] ?? 1}
           onToggleKey={onToggleKey}
           onChangePartySize={onChangePartySize}
         />

@@ -3,7 +3,13 @@ import { render, screen, fireEvent } from '@/test/test-utils'
 import { BossMatrix } from '../BossMatrix'
 import { bosses } from '../../data/bosses'
 import { makeKey, TIER_ORDER } from '../../data/bossSelection'
+import { MuleBossSlate, type SlateFamily } from '../../data/muleBossSlate'
 import { formatMeso } from '../../utils/meso'
+
+/** Build the `SlateFamily[]` projection `BossMatrix` now consumes. */
+function viewOf(keys: string[] = []): SlateFamily[] {
+  return MuleBossSlate.from(keys).view()
+}
 
 const LUCID_BOSS = bosses.find((b) => b.family === 'lucid')!
 const LUCID = LUCID_BOSS.id
@@ -40,7 +46,7 @@ const BOSSES_WITH_WEEKLY_TIER_COUNT = bosses.filter((b) =>
 ).length
 
 function renderMatrix(
-  selectedKeys: string[] = [],
+  slateKeys: string[] = [],
   onToggleKey = vi.fn(),
   partySizes: Record<string, number> = {},
   onChangePartySize = vi.fn(),
@@ -48,7 +54,7 @@ function renderMatrix(
   return {
     ...render(
       <BossMatrix
-        selectedKeys={selectedKeys}
+        families={viewOf(slateKeys)}
         onToggleKey={onToggleKey}
         partySizes={partySizes}
         onChangePartySize={onChangePartySize}
@@ -493,7 +499,7 @@ describe('BossMatrix', () => {
 
       rerender(
         <BossMatrix
-          selectedKeys={[]}
+          families={viewOf([])}
           onToggleKey={vi.fn()}
           partySizes={{ [VELLUM_BOSS.family]: 3 }}
           onChangePartySize={vi.fn()}
@@ -559,14 +565,13 @@ describe('BossMatrix', () => {
       expect(rows).toHaveLength(bosses.length + 1)
     })
 
-    it('renders only the header row when bosses={[]} is passed', () => {
+    it('renders only the header row when families={[]} is passed', () => {
       render(
         <BossMatrix
-          selectedKeys={[]}
+          families={[]}
           onToggleKey={vi.fn()}
           partySizes={{}}
           onChangePartySize={vi.fn()}
-          bosses={[]}
         />,
       )
       const rows = screen.getAllByRole('row')
@@ -575,14 +580,26 @@ describe('BossMatrix', () => {
     })
 
     it('renders exactly the families given, in the order provided', () => {
-      const subset = [LUCID_BOSS, BLACK_MAGE_BOSS, VELLUM_BOSS]
+      const subsetFamilies = new Set([
+        LUCID_BOSS.family,
+        BLACK_MAGE_BOSS.family,
+        VELLUM_BOSS.family,
+      ])
+      // Preserve display order via the slate's view, then hand-order the
+      // subset to assert `families`-prop order is honoured by the render.
+      const all = viewOf([]).filter((f) => subsetFamilies.has(f.family))
+      const byFamily = new Map(all.map((f) => [f.family, f]))
+      const subset = [
+        byFamily.get(LUCID_BOSS.family)!,
+        byFamily.get(BLACK_MAGE_BOSS.family)!,
+        byFamily.get(VELLUM_BOSS.family)!,
+      ]
       render(
         <BossMatrix
-          selectedKeys={[]}
+          families={subset}
           onToggleKey={vi.fn()}
           partySizes={{}}
           onChangePartySize={vi.fn()}
-          bosses={subset}
         />,
       )
       const rowHeaders = screen.getAllByRole('rowheader')
@@ -604,7 +621,7 @@ describe('BossMatrix', () => {
     it('squares top corners and drops top border when fusedTop={true}', () => {
       const { container } = render(
         <BossMatrix
-          selectedKeys={[]}
+          families={viewOf([])}
           onToggleKey={vi.fn()}
           partySizes={{}}
           onChangePartySize={vi.fn()}
@@ -622,7 +639,7 @@ describe('BossMatrix', () => {
     it('keeps rounded-[10px] when fusedTop={false}', () => {
       const { container } = render(
         <BossMatrix
-          selectedKeys={[]}
+          families={viewOf([])}
           onToggleKey={vi.fn()}
           partySizes={{}}
           onChangePartySize={vi.fn()}
@@ -632,6 +649,78 @@ describe('BossMatrix', () => {
       const wrapper = container.querySelector('[role="table"]') as HTMLElement
       expect(wrapper.className).toContain('rounded-[10px]')
       expect(wrapper.className).not.toContain('rounded-t-none')
+    })
+  })
+
+  describe('slate view contract (slice 3)', () => {
+    it('renders `selected: true` Slate Rows with data-state="on"', () => {
+      renderMatrix([HARD_LUCID])
+      const cell = screen.getByTestId(`matrix-cell-${LUCID}-hard`)
+      expect(cell.getAttribute('data-state')).toBe('on')
+    })
+
+    it('Tier Swap: selecting a sibling-tier key on the same (bossId, weekly) bucket keeps exactly one row selected', () => {
+      // Simulate a Tier Swap at the slate layer — normal and hard Lucid are
+      // same-cadence on the same family; the slate must retain only one.
+      const swapped = MuleBossSlate.from([NORMAL_LUCID]).toggle(HARD_LUCID).keys
+      render(
+        <BossMatrix
+          families={MuleBossSlate.from(swapped as string[]).view()}
+          onToggleKey={vi.fn()}
+          partySizes={{}}
+          onChangePartySize={vi.fn()}
+        />,
+      )
+      expect(
+        screen.getByTestId(`matrix-cell-${LUCID}-hard`).getAttribute('data-state'),
+      ).toBe('on')
+      expect(
+        screen.getByTestId(`matrix-cell-${LUCID}-normal`).getAttribute('data-state'),
+      ).not.toBe('on')
+    })
+
+    it('cross-cadence coexistence: daily + weekly selections on a mixed boss both render as on', () => {
+      // Normal Vellum is daily; Chaos Vellum is weekly — both keys coexist in
+      // a single slate and both Slate Rows carry `selected: true`.
+      renderMatrix([NORMAL_VELLUM_DAILY, CHAOS_VELLUM_WEEKLY])
+      expect(
+        screen.getByTestId(`matrix-cell-${VELLUM}-normal`).getAttribute('data-state'),
+      ).toBe('on')
+      expect(
+        screen.getByTestId(`matrix-cell-${VELLUM}-chaos`).getAttribute('data-state'),
+      ).toBe('on')
+    })
+
+    it('search filter (slate.view(search)) hides non-matching families', () => {
+      const families = MuleBossSlate.from([HARD_LUCID]).view('lucid')
+      render(
+        <BossMatrix
+          families={families}
+          onToggleKey={vi.fn()}
+          partySizes={{}}
+          onChangePartySize={vi.fn()}
+        />,
+      )
+      const rowHeaders = screen.getAllByRole('rowheader')
+      expect(rowHeaders).toHaveLength(1)
+      expect(rowHeaders[0].textContent).toContain('Lucid')
+    })
+
+    it('selected state carries through the search filter', () => {
+      // Filter down to Lucid with Hard Lucid selected; the surviving row keeps
+      // its `selected: true` flag baked in by `slate.view`.
+      const families = MuleBossSlate.from([HARD_LUCID]).view('lucid')
+      render(
+        <BossMatrix
+          families={families}
+          onToggleKey={vi.fn()}
+          partySizes={{}}
+          onChangePartySize={vi.fn()}
+        />,
+      )
+      expect(
+        screen.getByTestId(`matrix-cell-${LUCID}-hard`).getAttribute('data-state'),
+      ).toBe('on')
     })
   })
 })

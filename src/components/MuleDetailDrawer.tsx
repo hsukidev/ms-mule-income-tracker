@@ -14,14 +14,7 @@ import { useMuleIncome } from '../modules/income-hooks';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar, type CadenceFilter, type PresetKey } from './MatrixToolbar';
-import type { Boss } from '../types';
-import {
-  bossesByDisplayOrder,
-  countWeeklySelections,
-  filterBySearch,
-  parseKey,
-  toggleBoss,
-} from '../data/bossSelection';
+import { MuleBossSlate, type SlateFamily } from '../data/muleBossSlate';
 import {
   PRESET_FAMILIES,
   applyPreset,
@@ -35,13 +28,18 @@ import { GMS_CLASSES } from '../constants/classes';
 
 const PRESET_KEYS: readonly PresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
 
-function filterByCadence(
-  list: readonly Boss[],
+/**
+ * Narrow `SlateFamily[]` to families whose rows include at least one row with
+ * the requested cadence. Applied post-`slate.view(search)` so the cadence
+ * filter composes with the search filter without reshaping slate internals.
+ */
+function filterFamiliesByCadence(
+  families: SlateFamily[],
   filter: CadenceFilter,
-): readonly Boss[] {
-  if (filter === 'All') return list;
+): SlateFamily[] {
+  if (filter === 'All') return families;
   const cadence = filter === 'Weekly' ? 'weekly' : 'daily';
-  return list.filter((b) => b.difficulty.some((d) => d.cadence === cadence));
+  return families.filter((f) => f.rows.some((r) => r.cadence === cadence));
 }
 
 interface MuleDetailDrawerProps {
@@ -104,24 +102,23 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
   const levelDisplay = Number(draftLevel) || 0;
 
-  const visibleBosses = useMemo(
-    () =>
-      filterBySearch(
-        filterByCadence(bossesByDisplayOrder, filter),
-        search,
-      ),
-    [filter, search],
-  );
-
-  const weeklyCount = useMemo(
-    () => countWeeklySelections(mule?.selectedBosses ?? []),
-    [mule?.selectedBosses],
-  );
-
   const selectedBosses = useMemo(
     () => mule?.selectedBosses ?? [],
     [mule?.selectedBosses],
   );
+  const slate = useMemo(
+    () => MuleBossSlate.from(selectedBosses),
+    [selectedBosses],
+  );
+  // Search projection first, then cadence filter on the resulting family list;
+  // `slate.view` already bakes each row's `selected: bool` from the slate.
+  const families = useMemo(
+    () => filterFamiliesByCadence(slate.view(search), filter),
+    [slate, search, filter],
+  );
+
+  const weeklyCount = slate.weeklyCount;
+
   const activePresets = useMemo(() => {
     const set = new Set(PRESET_KEYS.filter((p) => isPresetActive(p, selectedBosses)));
     // LOMIEN's resolved keys are a superset of CRA's, so both would light up
@@ -140,17 +137,9 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   const handleToggleKey = useCallback(
     (key: string) => {
       if (!muleId) return;
-      const parsed = parseKey(key);
-      if (!parsed) return;
-      onUpdate(muleId, {
-        selectedBosses: toggleBoss(
-          selectedBosses,
-          parsed.bossId,
-          parsed.tier,
-        ),
-      });
+      onUpdate(muleId, { selectedBosses: slate.toggle(key).keys as string[] });
     },
-    [muleId, selectedBosses, onUpdate],
+    [muleId, slate, onUpdate],
   );
 
   const handleChangePartySize = useCallback(
@@ -171,22 +160,26 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
 
   function handleTogglePreset(preset: PresetKey) {
     if (!mule) return;
-    const families = PRESET_FAMILIES[preset];
+    const presetFamilies = PRESET_FAMILIES[preset];
     let next: string[];
     if (activePresets.has(preset)) {
       // Clicking the active pill deselects it.
-      next = removePreset(mule.selectedBosses, families);
+      next = removePreset(slate.keys as string[], presetFamilies);
     } else {
       // Swap semantics: strip every OTHER active preset's families first,
       // then apply this one. Keeps at most one preset active at a time while
       // preserving hand-picked selections outside any preset family.
-      let cleared = mule.selectedBosses;
+      let cleared = slate.keys as string[];
       for (const other of activePresets) {
         cleared = removePreset(cleared, PRESET_FAMILIES[other]);
       }
-      next = applyPreset(cleared, families);
+      next = applyPreset(cleared, presetFamilies);
     }
-    onUpdate(mule.id, { selectedBosses: next });
+    // Normalize through construction so the Selection Invariant holds before
+    // the write hits `onUpdate`.
+    onUpdate(mule.id, {
+      selectedBosses: MuleBossSlate.from(next).keys as string[],
+    });
   }
 
   function handleClose() {
@@ -390,9 +383,8 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
               <div className="mt-2">
                 <BossSearch fused value={search} onChange={setSearch} />
                 <BossMatrix
-                  bosses={visibleBosses}
+                  families={families}
                   fusedTop
-                  selectedKeys={mule.selectedBosses}
                   onToggleKey={handleToggleKey}
                   partySizes={stablePartySizes}
                   onChangePartySize={handleChangePartySize}
