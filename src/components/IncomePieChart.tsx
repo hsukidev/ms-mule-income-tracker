@@ -28,7 +28,7 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
   // would flicker on every drop; the stable per-id mapping is what keeps
   // "the amber one is my Bishop" true across reorders and insertions.
   const data: ChartDataItem[] = mules
-    .filter((m) => m.selectedBosses.length > 0)
+    .filter((m) => m.active !== false && m.selectedBosses.length > 0)
     .map((m) => {
       const { raw, formatted } = computeMuleIncome(m.selectedBosses, abbreviated);
       return {
