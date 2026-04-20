@@ -661,6 +661,78 @@ describe('useMules', () => {
     })
   })
 
+  describe('deleteMules (batch)', () => {
+    const seed = (ids: string[]) => {
+      const payload = {
+        schemaVersion: 4,
+        mules: ids.map((id) => ({
+          id,
+          name: id.toUpperCase(),
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: [],
+          partySizes: {},
+          active: true,
+        })),
+      }
+      localStorageStore['maplestory-mule-tracker'] = JSON.stringify(payload)
+    }
+
+    it('deletes N mules in a single state update', () => {
+      seed(['a', 'b', 'c', 'd'])
+      const { result } = renderHook(() => useMules())
+      const before = result.current.mules
+      act(() => {
+        result.current.deleteMules(['a', 'b', 'c'])
+      })
+      expect(result.current.mules.map((m) => m.id)).toEqual(['d'])
+      // Single pass: the array reference must have changed exactly once (not
+      // three filter round-trips through setState).
+      expect(result.current.mules).not.toBe(before)
+    })
+
+    it('is a no-op on an empty ids array (same array reference)', () => {
+      seed(['a', 'b'])
+      const { result } = renderHook(() => useMules())
+      const before = result.current.mules
+      act(() => {
+        result.current.deleteMules([])
+      })
+      // No state change — array reference is preserved.
+      expect(result.current.mules).toBe(before)
+      expect(result.current.mules.map((m) => m.id)).toEqual(['a', 'b'])
+    })
+
+    it('is a no-op when every id is unknown', () => {
+      seed(['a', 'b'])
+      const { result } = renderHook(() => useMules())
+      act(() => {
+        result.current.deleteMules(['x', 'y', 'z'])
+      })
+      expect(result.current.mules.map((m) => m.id)).toEqual(['a', 'b'])
+    })
+
+    it('removes only the known ids when the list mixes known + unknown', () => {
+      seed(['a', 'b', 'c'])
+      const { result } = renderHook(() => useMules())
+      act(() => {
+        result.current.deleteMules(['a', 'unknown', 'c'])
+      })
+      expect(result.current.mules.map((m) => m.id)).toEqual(['b'])
+    })
+
+    it('persists the remaining mules to localStorage after debounce flush', () => {
+      seed(['a', 'b', 'c'])
+      const { result } = renderHook(() => useMules())
+      act(() => {
+        result.current.deleteMules(['a', 'c'])
+      })
+      flushPersist()
+      const saved = JSON.parse(localStorageStore['maplestory-mule-tracker'])
+      expect(saved.mules.map((m: { id: string }) => m.id)).toEqual(['b'])
+    })
+  })
+
   describe('reorderMules', () => {
     it('reorders mules', () => {
       const payload = {
@@ -864,11 +936,11 @@ describe('useMules', () => {
   })
 
   describe('outward API unchanged', () => {
-    it('returns { mules, addMule, updateMule, deleteMule, reorderMules }', () => {
+    it('returns { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules }', () => {
       const { result } = renderHook(() => useMules())
       const keys = Object.keys(result.current).sort()
       expect(keys).toEqual(
-        ['addMule', 'deleteMule', 'mules', 'reorderMules', 'updateMule'],
+        ['addMule', 'deleteMule', 'deleteMules', 'mules', 'reorderMules', 'updateMule'],
       )
     })
 

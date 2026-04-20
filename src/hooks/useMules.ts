@@ -243,9 +243,25 @@ export function useMules() {
     setMules((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
+  /**
+   * Batch delete. Removes every mule whose id is in `ids` in a single
+   * `setMules` pass so React re-renders once and the debounced persistence
+   * pipeline schedules one write (not N). Unknown ids are silently ignored
+   * and an empty `ids` array is a no-op — we preserve the prior array
+   * reference so downstream `useMemo`/`useEffect` consumers don't re-run.
+   */
+  const deleteMules = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    setMules((prev) => {
+      const next = prev.filter((m) => !idSet.has(m.id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, []);
+
   const reorderMules = useCallback((oldIndex: number, newIndex: number) => {
     setMules((prev) => arrayMove(prev, oldIndex, newIndex));
   }, []);
 
-  return { mules, addMule, updateMule, deleteMule, reorderMules };
+  return { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules };
 }
