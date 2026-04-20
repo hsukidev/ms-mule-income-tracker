@@ -64,15 +64,15 @@ describe('RosterHeader', () => {
 
     it('does not render the Bulk Action Bar in default state', () => {
       renderHeader()
-      expect(screen.queryByText(/select mules to delete/i)).toBeNull()
+      expect(screen.queryByText(/select or drag mules to delete/i)).toBeNull()
       expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull()
     })
   })
 
   describe('bulk state', () => {
-    it('renders the bulk title "Select mules to delete"', () => {
+    it('renders the bulk title "Select or drag mules to delete"', () => {
       renderHeader({ bulkMode: true })
-      expect(screen.getByText(/select mules to delete/i)).toBeTruthy()
+      expect(screen.getByText(/select or drag mules to delete/i)).toBeTruthy()
     })
 
     it('renders the Bulk Selection Pill with 0 SELECTED when no cards marked', () => {
