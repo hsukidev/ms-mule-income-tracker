@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +22,9 @@ import {
   removePreset,
 } from '../data/bossPresets';
 import blankCharacterPng from '../assets/blank-character.png';
-import { sanitizeMuleName } from '../utils/muleName';
 import { ClassAutocomplete } from './ClassAutocomplete';
 import { GMS_CLASSES } from '../constants/classes';
+import { useMuleIdentityDraft } from './MuleDetailDrawer/hooks/useMuleIdentityDraft';
 
 const PRESET_KEYS: readonly PresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
 
@@ -59,51 +59,24 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
   // show potential income regardless of active state.
   const { formatted: potentialIncome } = useIncome({ selectedBosses: mule?.selectedBosses ?? [] });
 
-  // Drafts prevent per-keystroke setMules from re-rendering the pie chart and
-  // roster cards; commits on blur/select instead.
-  const [draftName, setDraftName] = useState(mule?.name ?? '');
-  const [draftLevel, setDraftLevel] = useState(mule?.level ? String(mule.level) : '');
+  // Identity draft pairs name + level with a single Commit On Exit so Mule
+  // Switch AND Drawer Close (Esc/backdrop) both flush unblurred edits.
+  const identity = useMuleIdentityDraft(mule, onUpdate);
+  const draftName = identity.name.draft;
+  const levelDisplay = identity.level.displayNumber;
 
-  const draftsRef = useRef({ name: draftName, level: draftLevel });
-  draftsRef.current = { name: draftName, level: draftLevel };
-  const lastMuleIdRef = useRef<string | null>(mule?.id ?? null);
-  // Ref so the mule-switch effect depends only on mule?.id, not onUpdate.
-  const onUpdateRef = useRef(onUpdate);
-  onUpdateRef.current = onUpdate;
-
-  useEffect(() => {
+  // Ambient UI state (delete confirm, search, filter) resets on Mule Switch.
+  // Use the "reset state on prop change" pattern — track the last mule id in
+  // state and reset during render when it flips. Keeps this side-effect out
+  // of `useEffect` so set-state-in-effect lint passes, and renders the
+  // resets synchronously before the first paint on the new mule.
+  const [lastMuleId, setLastMuleId] = useState<string | null>(mule?.id ?? null);
+  if (lastMuleId !== (mule?.id ?? null)) {
+    setLastMuleId(mule?.id ?? null);
     setConfirmDelete(false);
     setSearch('');
     setFilter('All');
-
-    const prevId = lastMuleIdRef.current;
-    const nextId = mule?.id ?? null;
-    // Flush drafts on switch/close — Esc and backdrop also route here since
-    // selectedMule derives from mule id.
-    if (prevId && prevId !== nextId) {
-      const { name, level } = draftsRef.current;
-      onUpdateRef.current(prevId, { name, level: Number(level) || 0 });
-    }
-    setDraftName(mule?.name ?? '');
-    setDraftLevel(mule?.level ? String(mule.level) : '');
-    lastMuleIdRef.current = nextId;
-  }, [mule?.id]);
-
-  const commitName = useCallback(() => {
-    if (mule && draftName !== mule.name) onUpdate(mule.id, { name: draftName });
-  }, [mule, draftName, onUpdate]);
-  const commitLevel = useCallback(() => {
-    if (!mule) return;
-    if (draftLevel === '') {
-      if (mule.level !== 0) onUpdate(mule.id, { level: 0 });
-      return;
-    }
-    const clamped = Math.min(300, Math.max(1, Number(draftLevel)));
-    if (String(clamped) !== draftLevel) setDraftLevel(String(clamped));
-    if (clamped !== mule.level) onUpdate(mule.id, { level: clamped });
-  }, [mule, draftLevel, onUpdate]);
-
-  const levelDisplay = Number(draftLevel) || 0;
+  }
 
   const selectedBosses = useMemo(
     () => mule?.selectedBosses ?? [],
@@ -329,10 +302,10 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                   <Input
                     id="mule-name"
                     placeholder="Enter name"
-                    value={draftName}
+                    value={identity.name.draft}
                     maxLength={12}
-                    onChange={(e) => setDraftName(sanitizeMuleName(e.currentTarget.value))}
-                    onBlur={commitName}
+                    onChange={identity.name.onChange}
+                    onBlur={identity.name.onBlur}
                     className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                   />
                 </div>
@@ -360,13 +333,9 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                       type="text"
                       inputMode="numeric"
                       placeholder="0"
-                      value={draftLevel}
-                      onChange={(e) =>
-                        setDraftLevel(
-                          e.currentTarget.value.replace(/\D/g, '').slice(0, 3),
-                        )
-                      }
-                      onBlur={commitLevel}
+                      value={identity.level.draft}
+                      onChange={identity.level.onChange}
+                      onBlur={identity.level.onBlur}
                       className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 font-mono-nums placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                     />
                   </div>

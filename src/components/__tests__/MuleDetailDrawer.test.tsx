@@ -85,6 +85,17 @@ describe('MuleDetailDrawer', () => {
     expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { name: 'HeroWorldToo' })
   })
 
+  it('flushes unblurred name edits when the drawer unmounts (Drawer Close / Esc / backdrop)', () => {
+    // Regression for the latent bug: Esc / backdrop click unmount the drawer
+    // without firing blur on the name input, previously dropping the edit.
+    const onUpdate = vi.fn()
+    const { unmount } = renderDrawer({ onUpdate })
+    const input = screen.getByLabelText('Character Name') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'NewName' } })
+    unmount()
+    expect(onUpdate).toHaveBeenCalledWith(baseMule.id, { name: 'NewName' })
+  })
+
   describe('class autocomplete', () => {
     it('shows matching class options as the user types', async () => {
       renderDrawer()
