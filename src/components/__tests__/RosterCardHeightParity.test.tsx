@@ -50,6 +50,7 @@ function makeMule(overrides: Partial<Mule> = {}): Mule {
     level: 200,
     muleClass: 'Hero',
     selectedBosses: [],
+    active: true,
     ...overrides,
   }
 }
