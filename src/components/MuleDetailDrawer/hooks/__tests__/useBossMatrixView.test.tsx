@@ -413,6 +413,112 @@ describe('useBossMatrixView', () => {
       });
       expect(onUpdate).not.toHaveBeenCalled();
     });
+
+    it('CUSTOM click stays dark when weekly selection is empty', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          partySizes: undefined,
+          onUpdate: vi.fn(),
+        }),
+      );
+      expect(result.current.activePill).toBeNull();
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBeNull();
+    });
+
+    it('CUSTOM click lights the pill even when CRA is the canonical match', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: CRA_KEYS,
+          partySizes: undefined,
+          onUpdate: vi.fn(),
+        }),
+      );
+      expect(result.current.activePill).toBe('CRA');
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+    });
+
+    it('CUSTOM override clears when selection transitions to empty', () => {
+      const { result, rerender } = renderHook(
+        ({ selectedBosses }: { selectedBosses: string[] }) =>
+          useBossMatrixView({
+            muleId: 'mule-1',
+            selectedBosses,
+            partySizes: undefined,
+            onUpdate: vi.fn(),
+          }),
+        { initialProps: { selectedBosses: CRA_KEYS } },
+      );
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      // Reset-like transition: parent clears the selection.
+      rerender({ selectedBosses: [] });
+      expect(result.current.activePill).toBeNull();
+
+      // Rebuilding CRA afterwards should light CRA, not CUSTOM.
+      rerender({ selectedBosses: CRA_KEYS });
+      expect(result.current.activePill).toBe('CRA');
+    });
+
+    it('CUSTOM override clears on Mule Switch (drawer close/reopen)', () => {
+      const { result, rerender } = renderHook(
+        ({ muleId, selectedBosses }: { muleId: string | null; selectedBosses: string[] }) =>
+          useBossMatrixView({
+            muleId,
+            selectedBosses,
+            partySizes: undefined,
+            onUpdate: vi.fn(),
+          }),
+        { initialProps: { muleId: 'mule-1' as string | null, selectedBosses: CRA_KEYS } },
+      );
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      // Drawer closes: muleId → null, selection clears.
+      rerender({ muleId: null, selectedBosses: [] });
+      // Drawer reopens on the same mule: muleId flips back, selection restored.
+      rerender({ muleId: 'mule-1', selectedBosses: CRA_KEYS });
+      expect(result.current.activePill).toBe('CRA');
+    });
+
+    it('clicking a canonical pill clears the CUSTOM override', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: CRA_KEYS,
+          partySizes: undefined,
+          onUpdate: vi.fn(),
+        }),
+      );
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      act(() => {
+        result.current.applyPreset('CRA');
+      });
+      // Override cleared; selection still matches CRA, so CRA is lit.
+      expect(result.current.activePill).toBe('CRA');
+    });
   });
 
   describe('setPartySize (Party-Size Clamp 1–6)', () => {

@@ -29,7 +29,12 @@ function filterFamiliesByCadence(families: SlateFamily[], filter: CadenceFilter)
  *   **Same-Cadence Equality**; at most one canonical preset lights up, or
  *   `null` when no canonical preset matches. `applyPreset` runs **Conform**
  *   and short-circuits when the clicked preset is already the **Active
- *   Pill**.
+ *   Pill**. Clicking **Custom Preset** sets a transient override that
+ *   wins over a canonical match so the pill visibly confirms the click,
+ *   without touching the selection. The override clears on: mule switch
+ *   (drawer close/reopen), selection emptying out (reset or deselect-all),
+ *   or any canonical pill click. With an empty weekly selection the pill
+ *   stays dark regardless.
  * - Party-Size Clamp to [1, 6] on write.
  * - Toggle / reset dispatches routed through `onUpdate`. All dispatchers
  *   no-op when `muleId === null`.
@@ -64,6 +69,7 @@ export function useBossMatrixView({
 } {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CadenceFilter>('All');
+  const [customClicked, setCustomClicked] = useState(false);
 
   // Reset search + filter on Mule Switch via the render-time pattern (same
   // shape as useDraftField's Draft Source Resync).
@@ -72,6 +78,16 @@ export function useBossMatrixView({
     setLastMuleId(muleId);
     setSearch('');
     setFilter('All');
+    setCustomClicked(false);
+  }
+
+  // Clear the Custom override when selection transitions to empty so a
+  // rebuild to a canonical match doesn't carry the override forward.
+  const selectionEmpty = selectedBosses.length === 0;
+  const [wasSelectionEmpty, setWasSelectionEmpty] = useState(selectionEmpty);
+  if (wasSelectionEmpty !== selectionEmpty) {
+    setWasSelectionEmpty(selectionEmpty);
+    if (selectionEmpty) setCustomClicked(false);
   }
 
   const slate = useMemo(() => MuleBossSlate.from(selectedBosses), [selectedBosses]);
@@ -82,13 +98,14 @@ export function useBossMatrixView({
   );
 
   const activePill = useMemo<PresetKey | null>(() => {
+    // Empty weekly selection always reads as no pill, regardless of override.
+    if (slate.weeklyCount === 0) return null;
+    // A Custom click wins even when a canonical match would otherwise fire,
+    // so the pill confirms the user's click.
+    if (customClicked) return 'CUSTOM';
     const canonical = CANONICAL_PRESETS.find((p) => isPresetActive(p, selectedBosses));
-    if (canonical) return canonical;
-    // **Custom Preset**: lights up iff at least one weekly **Slate Key**
-    // exists AND no canonical preset matches. Daily-only selections leave
-    // the pill row empty.
-    return slate.weeklyCount > 0 ? 'CUSTOM' : null;
-  }, [selectedBosses, slate]);
+    return canonical ?? 'CUSTOM';
+  }, [selectedBosses, slate, customClicked]);
 
   const stablePartySizes = useMemo(() => partySizes ?? {}, [partySizes]);
 
@@ -103,17 +120,25 @@ export function useBossMatrixView({
   const applyPreset = useCallback(
     (preset: PresetKey) => {
       if (!muleId) return;
-      // **Custom Preset** has no entries — the click is purely reflective
-      // and nothing changes.
-      if (preset === 'CUSTOM') return;
-      // Re-click on the Active Pill: no state churn, no persist fire.
-      if (activePill === preset) return;
+      if (preset === 'CUSTOM') {
+        // **Custom Preset** has no entries — the click doesn't touch the
+        // selection, but it flips the override so the pill confirms the
+        // click (visually winning over any canonical match).
+        setCustomClicked(true);
+        return;
+      }
+      // Canonical click clears the override; the derivation takes over.
+      setCustomClicked(false);
+      // Already conforms: no state churn, no persist fire. Use
+      // `isPresetActive` directly since the CUSTOM override would otherwise
+      // hide a real canonical match from `activePill`.
+      if (isPresetActive(preset, selectedBosses)) return;
       const next = conform(slate.keys, preset);
       onUpdate(muleId, {
         selectedBosses: MuleBossSlate.from(next).keys as string[],
       });
     },
-    [muleId, slate, activePill, onUpdate],
+    [muleId, slate, selectedBosses, onUpdate],
   );
 
   const setPartySize = useCallback(
