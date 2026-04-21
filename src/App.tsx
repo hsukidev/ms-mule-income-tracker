@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom';
 
 import { ThemeProvider } from './context/ThemeProvider';
 import { DensityProvider } from './context/DensityProvider';
+import { WorldProvider } from './context/WorldProvider';
 import { IncomeProvider } from './modules/income';
 import { useMules } from './hooks/useMules';
 import { useBulkDragPaint } from './hooks/useBulkDragPaint';
@@ -260,9 +261,11 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <DensityProvider>
-        <IncomeProvider>
-          <AppContent />
-        </IncomeProvider>
+        <WorldProvider>
+          <IncomeProvider>
+            <AppContent />
+          </IncomeProvider>
+        </WorldProvider>
       </DensityProvider>
     </ThemeProvider>
   );
