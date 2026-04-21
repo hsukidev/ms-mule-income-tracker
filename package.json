@@ -12,7 +12,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
-    "worktree:prune": "git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D"
+    "worktree:prune": "git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-hero/sandcastle": "^0.4.5",
@@ -52,7 +53,9 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.2",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.5.9",
     "prettier": "^3.8.3",
     "prettier-eslint": "^16.4.2",
