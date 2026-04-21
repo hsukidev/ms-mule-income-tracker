@@ -137,7 +137,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [deploy-prod, deploy-staging]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -165,6 +165,14 @@ jobs:
     needs: ci
     steps:
       - uses: actions/checkout@v4
+      - name: Set Docker tag
+        id: vars
+        run: |
+          if [ "${{ github.ref_name }}" = "deploy-prod" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=staging" >> $GITHUB_OUTPUT
+          fi
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -178,10 +186,26 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ms-mule-income-tracker:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ms-mule-income-tracker:${{ steps.vars.outputs.tag }}
             ${{ secrets.DOCKERHUB_USERNAME }}/ms-mule-income-tracker:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - name: SSH and redeploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/app
+            docker compose pull
+            docker compose up -d
 ```
 
 **Add secrets to GitHub** — go to your repo → Settings → Secrets and variables → Actions → New repository secret:
@@ -190,6 +214,31 @@ jobs:
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `DOCKERHUB_USERNAME` | Your Docker Hub username                                                                                   |
 | `DOCKERHUB_TOKEN`    | A Docker Hub Personal Access Token (created at hub.docker.com → Account Settings → Personal access tokens) |
+| `VPS_HOST`           | Your Droplet's IP address                                                                                  |
+| `VPS_USER`           | `devuser`                                                                                                  |
+| `VPS_SSH_KEY`        | Contents of your CI SSH private key (see Part 4a below)                                                    |
+
+### Part 4a — SSH Key Setup for CI
+
+Generate a dedicated key pair for GitHub Actions (do this on your local machine):
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions -N ""
+```
+
+Copy the public key to your Droplet:
+
+```bash
+ssh-copy-id -i ~/.ssh/github_actions.pub devuser@<your-droplet-ip>
+```
+
+Add the private key as the `VPS_SSH_KEY` secret — copy the full output of:
+
+```bash
+cat ~/.ssh/github_actions
+```
+
+Paste that (including the `-----BEGIN` and `-----END` lines) as the secret value.
 
 ---
 
@@ -312,20 +361,13 @@ git merge main
 git push origin deploy-staging
 ```
 
-When you push to either branch, GitHub Actions will:
+When you push to either branch, GitHub Actions will automatically:
 
 1. Run lint + tests
 2. Build the Docker image and push it with the appropriate tag + `<git-sha>` to Docker Hub
+3. SSH into the Droplet and run `docker compose pull && docker compose up -d`
 
-Then SSH into the droplet to pull and redeploy:
-
-```bash
-cd ~/app
-docker compose pull
-docker compose up -d
-```
-
-> You can automate the pull/redeploy step later with a webhook or by extending the GitHub Actions workflow to SSH into the droplet — but manual pull is the safest starting point.
+No manual steps required after pushing.
 
 ---
 
