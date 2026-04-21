@@ -183,114 +183,40 @@ describe('IncomePieChart', () => {
     }
   });
 
-  describe('per-mule stable slice colors', () => {
-    it("keeps each mule's slice color unchanged when the roster is reordered", () => {
-      const mules = [makeMule('A'), makeMule('B'), makeMule('C')];
-
-      const first = render(<IncomePieChart mules={mules} />);
-      const before = readMuleColors(first.container);
-      first.unmount();
-
-      const reordered = [mules[2], mules[0], mules[1]]; // C, A, B
-      const second = render(<IncomePieChart mules={reordered} />);
-      const after = readMuleColors(second.container);
-
-      expect(after.A).toBe(before.A);
-      expect(after.B).toBe(before.B);
-      expect(after.C).toBe(before.C);
+  describe('balanced slice colors', () => {
+    it('assigns distinct colors to each mule when the roster fits in the palette', () => {
+      const mules = Array.from({ length: MULE_PALETTE.length }, (_, i) => makeMule(`mule-${i}`));
+      const { container } = render(<IncomePieChart mules={mules} />);
+      const colors = Object.values(readMuleColors(container));
+      expect(new Set(colors).size).toBe(MULE_PALETTE.length);
     });
 
-    it('does not change existing slice colors when a new mule is prepended', () => {
-      const existing = [makeMule('A'), makeMule('B'), makeMule('C')];
-
-      const first = render(<IncomePieChart mules={existing} />);
-      const before = readMuleColors(first.container);
-      first.unmount();
-
-      const withNew = [makeMule('NEW'), ...existing];
-      const second = render(<IncomePieChart mules={withNew} />);
-      const after = readMuleColors(second.container);
-
-      expect(after.A).toBe(before.A);
-      expect(after.B).toBe(before.B);
-      expect(after.C).toBe(before.C);
-      // And the new mule has a defined color as well.
-      expect(after.NEW).toBeDefined();
-    });
-
-    it('does not change existing slice colors when an unrelated mule is removed', () => {
-      const mules = [makeMule('A'), makeMule('B'), makeMule('C')];
-
-      const first = render(<IncomePieChart mules={mules} />);
-      const before = readMuleColors(first.container);
-      first.unmount();
-
-      // Drop B from the middle.
-      const shrunken = [mules[0], mules[2]];
-      const second = render(<IncomePieChart mules={shrunken} />);
-      const after = readMuleColors(second.container);
-
-      expect(after.A).toBe(before.A);
-      expect(after.C).toBe(before.C);
-    });
-
-    it('keeps name↔color pairing intact so legend/tooltip stay correct after reorder', () => {
-      const mules = [makeMule('alpha'), makeMule('bravo'), makeMule('charlie')];
-
-      const first = render(<IncomePieChart mules={mules} />);
-      const before = readMuleColors(first.container);
-      first.unmount();
-
-      // Rotate: [bravo, charlie, alpha]
-      const rotated = [mules[1], mules[2], mules[0]];
-      const second = render(<IncomePieChart mules={rotated} />);
-      const after = readMuleColors(second.container);
-
-      // The legend derives entries from chartConfig keyed by mule id, so a
-      // stable per-id color automatically keeps each name paired with the
-      // same color after any reorder.
-      for (const id of ['alpha', 'bravo', 'charlie']) {
-        expect(after[id]).toBe(before[id]);
-      }
-    });
-
-    it('with more mules than palette slots, color mapping is stable across reorders', () => {
-      const N = MULE_PALETTE.length + 3;
+    it('keeps color counts balanced within 1 when mules exceed the palette', () => {
+      const N = MULE_PALETTE.length * 3 + 2;
       const mules = Array.from({ length: N }, (_, i) => makeMule(`mule-${i}`));
+      const { container } = render(<IncomePieChart mules={mules} />);
 
-      const first = render(<IncomePieChart mules={mules} />);
-      const before = readMuleColors(first.container);
-      first.unmount();
-
-      // Every mule has a defined color.
-      for (let i = 0; i < N; i++) {
-        expect(before[`mule-${i}`]).toBeDefined();
+      const counts = new Map<string, number>();
+      for (const c of Object.values(readMuleColors(container))) {
+        counts.set(c, (counts.get(c) ?? 0) + 1);
       }
-      // Collisions exist (pigeonhole), and two colliding mules share a color.
-      const values = Object.values(before);
-      const unique = new Set(values);
-      expect(unique.size).toBeLessThan(values.length);
+      const values = [...counts.values()];
+      expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(1);
+    });
 
-      // Reorder — reverse the whole roster, which moves every mule past
-      // whichever sibling it may be color-sharing with.
-      const reversed = [...mules].reverse();
-      const second = render(<IncomePieChart mules={reversed} />);
-      const after = readMuleColors(second.container);
-
-      // Each mule keeps its color.
-      for (let i = 0; i < N; i++) {
-        expect(after[`mule-${i}`]).toBe(before[`mule-${i}`]);
-      }
-
-      // And any two mules that shared a color before still share one after,
-      // and any two that differed still differ.
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const sharedBefore = before[`mule-${i}`] === before[`mule-${j}`];
-          const sharedAfter = after[`mule-${i}`] === after[`mule-${j}`];
-          expect(sharedAfter).toBe(sharedBefore);
-        }
-      }
+    it('cycles the palette by visible position, skipping filtered-out mules', () => {
+      // muleNoBosses is filtered out; the three visible mules should land on
+      // palette slots 0, 1, 2 regardless of their position in the input.
+      const visibleA = makeMule('A');
+      const visibleB = makeMule('B');
+      const visibleC = makeMule('C');
+      const { container } = render(
+        <IncomePieChart mules={[visibleA, muleNoBosses, visibleB, visibleC]} />,
+      );
+      const colors = readMuleColors(container);
+      expect(colors.A).toBe(MULE_PALETTE[0]);
+      expect(colors.B).toBe(MULE_PALETTE[1]);
+      expect(colors.C).toBe(MULE_PALETTE[2]);
     });
   });
 });

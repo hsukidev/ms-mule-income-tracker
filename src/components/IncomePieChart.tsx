@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
 import { Income, useIncome } from '../modules/income';
-import { colorForMuleId } from '../utils/muleColor';
+import { colorForMulePosition } from '../utils/muleColor';
 import { ChartContainer, type ChartConfig } from './ui/chart';
 import { describeArc, formatCenterPercent, formatCompact } from './IncomePieChart.utils';
 
@@ -48,13 +48,12 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
     }, 0);
   };
 
-  // Slice color is a function of mule identity, not array position. Drag
-  // reorders the roster in place, so anything derived from the array index
-  // would flicker on every drop; the stable per-id mapping is what keeps
-  // "the amber one is my Bishop" true across reorders and insertions.
+  // Slice color cycles through the palette by position in the visible set so
+  // no color clusters. Reorders and insertions can shift which slice holds
+  // which color, which is the tradeoff for a balanced distribution.
   const data: ChartDataItem[] = mules
     .filter((m) => m.active !== false && m.selectedBosses.length > 0)
-    .map((m) => {
+    .map((m, i) => {
       // Per-slice math uses format-independent numbers; the hover label
       // takes a format-aware string derived from the same Income.
       const raw = Income.of(m, false).raw;
@@ -64,7 +63,7 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
         value: raw,
         formatted,
         muleId: m.id,
-        fill: colorForMuleId(m.id),
+        fill: colorForMulePosition(i),
       };
     });
 
