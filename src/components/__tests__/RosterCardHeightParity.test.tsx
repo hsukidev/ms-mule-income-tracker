@@ -106,10 +106,10 @@ describe('Roster card height parity contract', () => {
     // Variable exists at the comfy and compact density scopes (those are the
     // only two scopes the roster grid actually renders under).
     const comfyMatch = indexCssRaw.match(
-      /\[data-density="comfy"\]\s*\{[^}]*--roster-card-min-height:\s*(\d+)px/,
+      /\[data-density=['"]comfy['"]\]\s*\{[^}]*--roster-card-min-height:\s*(\d+)px/,
     );
     const compactMatch = indexCssRaw.match(
-      /\[data-density="compact"\]\s*\{[^}]*--roster-card-min-height:\s*(\d+)px/,
+      /\[data-density=['"]compact['"]\]\s*\{[^}]*--roster-card-min-height:\s*(\d+)px/,
     );
     expect(comfyMatch).not.toBeNull();
     expect(compactMatch).not.toBeNull();
