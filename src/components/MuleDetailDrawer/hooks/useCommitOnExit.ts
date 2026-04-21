@@ -41,16 +41,13 @@ export function useCommitOnExit<D extends Record<string, unknown>>(
   // effect runs after commit, by which point `drafts` has already rebased
   // to the new mule — too late to capture the previous mule's edits. The
   // linter's refs-during-render rule doesn't model this snapshot-before-
-  // rebase pattern, so it's disabled locally.
-  // eslint-disable-next-line react-hooks/refs
+  // rebase pattern.
   const muleSwitched = muleIdRef.current !== muleId;
   if (!muleSwitched) {
-    // eslint-disable-next-line react-hooks/refs
     prevDraftsForMuleRef.current = drafts;
   }
 
   const commitRef = useRef(commit);
-  // eslint-disable-next-line react-hooks/refs
   commitRef.current = commit;
 
   useEffect(() => {
