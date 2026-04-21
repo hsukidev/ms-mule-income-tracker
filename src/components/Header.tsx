@@ -1,6 +1,7 @@
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeProvider';
 import { ResetCountdown } from './ResetCountdown';
+import { WorldSelect } from './WorldSelect';
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -46,6 +47,7 @@ export function Header() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <ResetCountdown />
+            <WorldSelect />
             <button
               onClick={toggleTheme}
               className="flex size-8  items-center justify-center rounded-md transition-colors cursor-pointer"
