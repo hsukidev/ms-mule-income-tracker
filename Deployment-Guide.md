@@ -289,11 +289,35 @@ docker compose logs -f
 
 ## Part 7 — Ongoing Workflow
 
-Every push to `main` triggers the full pipeline automatically:
+Deployments are triggered by pushing to dedicated deploy branches
 
-1. GitHub Actions runs lint + tests
-2. On success, builds the Docker image and pushes `latest` + `<git-sha>` tags to Docker Hub
-3. SSH into the droplet and redeploy:
+| Branch           | Docker tag | Environment          |
+| ---------------- | ---------- | -------------------- |
+| `deploy-prod`    | `:latest`  | mules.henesys.io     |
+| `deploy-staging` | `:staging` | snow-yeti.henesys.io |
+
+**To deploy to production:**
+
+```bash
+git checkout deploy-prod
+git merge main
+git push origin deploy-prod
+```
+
+**To deploy to staging:**
+
+```bash
+git checkout deploy-staging
+git merge main
+git push origin deploy-staging
+```
+
+When you push to either branch, GitHub Actions will:
+
+1. Run lint + tests
+2. Build the Docker image and push it with the appropriate tag + `<git-sha>` to Docker Hub
+
+Then SSH into the droplet to pull and redeploy:
 
 ```bash
 cd ~/app
@@ -301,7 +325,7 @@ docker compose pull
 docker compose up -d
 ```
 
-> You can automate step 3 later with a webhook or by extending the GitHub Actions workflow to SSH into the droplet — but manual pull is the safest starting point.
+> You can automate the pull/redeploy step later with a webhook or by extending the GitHub Actions workflow to SSH into the droplet — but manual pull is the safest starting point.
 
 ---
 
