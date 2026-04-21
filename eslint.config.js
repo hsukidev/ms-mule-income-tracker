@@ -3,6 +3,7 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
@@ -18,6 +19,20 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: {
+      'better-tailwindcss': betterTailwindcss,
+    },
+    settings: {
+      'better-tailwindcss': {
+        entryPoint: 'src/index.css',
+      },
+    },
+    rules: {
+      'better-tailwindcss/enforce-canonical-classes': 'warn',
     },
   },
   {

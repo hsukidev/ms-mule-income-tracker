@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/test/test-utils'
+import { IncomePieChart } from '../IncomePieChart'
 import {
-  IncomePieChart,
   describeArc,
   formatCompact,
   formatCenterPercent,
-} from '../IncomePieChart'
+} from '../IncomePieChart.utils'
 import type { Mule } from '../../types'
 import { bosses } from '../../data/bosses'
 import { MULE_PALETTE } from '../../utils/muleColor'

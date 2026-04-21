@@ -52,7 +52,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="data-[side=right]:w-screen data-[side=right]:sm:max-w-none data-[side=right]:md:w-[640px] data-[side=right]:md:max-w-[640px] overflow-y-auto p-0 bg-[var(--surface)]"
+        className="data-[side=right]:w-screen data-[side=right]:sm:max-w-none data-[side=right]:md:w-[640px] data-[side=right]:md:max-w-[640px] overflow-y-auto p-0 bg-(--surface)"
         style={{ borderLeft: '1px solid var(--border)' }}
       >
         <SheetTitle className="sr-only">Mule Details</SheetTitle>
@@ -66,7 +66,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
           />
           <div
             aria-hidden
-            className="absolute -top-24 right-0 h-56 w-56 pointer-events-none blur-3xl opacity-30"
+            className="absolute -top-24 right-0 size-56  pointer-events-none blur-3xl opacity-30"
             style={{ background: 'radial-gradient(closest-side, var(--accent-raw, var(--accent-primary)), transparent)' }}
           />
 
@@ -74,17 +74,17 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
             <img
               src={blankCharacterPng}
               alt={identity.name.draft || 'Mule avatar'}
-              className="h-[132px] w-[132px] object-contain shrink-0"
+              className="size-[132px]  object-contain shrink-0"
             />
             <div className="min-w-0 flex-1">
-              <h2 className="mt-1 font-display text-2xl font-bold leading-tight truncate">
+              <h2 className="mt-1 font-display text-2xl/tight font-bold  truncate">
                 {identity.name.draft || <span className="text-muted-foreground italic font-normal">Unnamed Mule</span>}
               </h2>
               <div className="mt-1 flex items-center gap-3 text-xs">
-                <span className="font-sans uppercase tracking-[0.22em] text-[var(--accent-secondary)]">
+                <span className="font-sans uppercase tracking-[0.22em] text-(--accent-secondary)">
                   {mule.muleClass || 'no class'}
                 </span>
-                <span className="font-mono-nums text-[var(--accent-numeric)]">
+                <span className="font-mono-nums text-(--accent-numeric)">
                   {identity.level.displayNumber > 0 ? `Lv.${identity.level.displayNumber}` : 'N/A'}
                 </span>
               </div>
@@ -95,7 +95,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                 <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
                   Weekly
                 </span>
-                <span className="font-mono-nums text-base text-[var(--accent-numeric)]">{potentialIncome}</span>
+                <span className="font-mono-nums text-base text-(--accent-numeric)">{potentialIncome}</span>
                 <span className="font-display italic text-xs text-muted-foreground">mesos</span>
               </div>
               <div className="mt-3">
@@ -184,7 +184,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                     maxLength={12}
                     onChange={identity.name.onChange}
                     onBlur={identity.name.onBlur}
-                    className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
+                    className="bg-(--surface-2) border-border/60 focus-visible:border-(--accent-raw,var(--accent))/60 focus-visible:ring-1 focus-visible:ring-(--ring)/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -199,7 +199,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                       value={mule.muleClass ?? ''}
                       options={GMS_CLASSES}
                       onSelect={(c) => onUpdate(mule.id, { muleClass: c })}
-                      className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
+                      className="bg-(--surface-2) border-border/60 focus-visible:border-(--accent-raw,var(--accent))/60 focus-visible:ring-1 focus-visible:ring-(--ring)/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -214,7 +214,7 @@ export function MuleDetailDrawer({ mule, open, onClose, onUpdate, onDelete }: Mu
                       value={identity.level.draft}
                       onChange={identity.level.onChange}
                       onBlur={identity.level.onBlur}
-                      className="bg-[var(--surface-2)] border-border/60 focus-visible:border-[var(--accent-raw,var(--accent))]/60 focus-visible:ring-1 focus-visible:ring-[var(--ring)]/20 font-mono-nums placeholder:opacity-60 placeholder:text-xs placeholder:italic"
+                      className="bg-(--surface-2) border-border/60 focus-visible:border-(--accent-raw,var(--accent))/60 focus-visible:ring-1 focus-visible:ring-(--ring)/20 font-mono-nums placeholder:opacity-60 placeholder:text-xs placeholder:italic"
                     />
                   </div>
                 </div>

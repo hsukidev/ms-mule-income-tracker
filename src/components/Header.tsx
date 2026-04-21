@@ -13,7 +13,7 @@ export function Header() {
         backdropFilter: 'blur(12px)',
       }}
     >
-      <div className="container mx-auto max-w-[88rem] px-4 sm:px-6">
+      <div className="container mx-auto max-w-352 px-4 sm:px-6">
         <div className="flex h-14 items-center justify-between">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
@@ -50,7 +50,7 @@ export function Header() {
             <ResetCountdown />
             <button
               onClick={toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-md transition-colors cursor-pointer"
+              className="flex size-8  items-center justify-center rounded-md transition-colors cursor-pointer"
               style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >

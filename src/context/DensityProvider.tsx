@@ -14,7 +14,9 @@ function getInitialDensity(): Density {
   try {
     const stored = localStorage.getItem('density')
     if (stored === 'comfy' || stored === 'compact') return stored
-  } catch {}
+  } catch {
+    // localStorage can throw in private-mode / sandboxed iframes — fall through.
+  }
   return 'comfy'
 }
 

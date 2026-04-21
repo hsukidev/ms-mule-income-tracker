@@ -31,12 +31,12 @@ export function ClassAutocomplete({
     [draft, options],
   );
 
-  useEffect(() => {
-    if (!open) return;
-    if (highlightedIndex >= filtered.length) {
-      setHighlightedIndex(filtered.length > 0 ? 0 : -1);
-    }
-  }, [filtered, open, highlightedIndex]);
+  // Clamp the highlight when `filtered` shrinks below it. Adjusting state
+  // during render is the React-blessed alternative to an effect here — it
+  // re-renders without a commit, avoiding the cascading-render warning.
+  if (open && highlightedIndex >= filtered.length) {
+    setHighlightedIndex(filtered.length > 0 ? 0 : -1);
+  }
 
   useEffect(() => {
     if (!open || highlightedIndex < 0) return;

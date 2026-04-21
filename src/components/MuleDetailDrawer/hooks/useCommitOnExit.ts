@@ -36,12 +36,21 @@ export function useCommitOnExit<D extends Record<string, unknown>>(
   // the current mule. If muleId *did* change, freeze prevDraftsForMuleRef
   // at the last-seen drafts for the previous mule — the effect below will
   // flush with that snapshot.
+  //
+  // These ref reads/writes DURING render are intentional: the flushing
+  // effect runs after commit, by which point `drafts` has already rebased
+  // to the new mule — too late to capture the previous mule's edits. The
+  // linter's refs-during-render rule doesn't model this snapshot-before-
+  // rebase pattern, so it's disabled locally.
+  // eslint-disable-next-line react-hooks/refs
   const muleSwitched = muleIdRef.current !== muleId;
   if (!muleSwitched) {
+    // eslint-disable-next-line react-hooks/refs
     prevDraftsForMuleRef.current = drafts;
   }
 
   const commitRef = useRef(commit);
+  // eslint-disable-next-line react-hooks/refs
   commitRef.current = commit;
 
   useEffect(() => {

@@ -54,7 +54,7 @@ function TierHeader({ tier }: { tier: BossTier }) {
         className="inline-block w-[18px] h-[3px] rounded-[2px]"
         style={{ background: TIER_COLOR[tier] }}
       />
-      <span className="font-mono-nums text-[10px] uppercase tracking-[0.08em] text-[var(--muted-raw,var(--muted-foreground))]">
+      <span className="font-mono-nums text-[10px] uppercase tracking-[0.08em] text-(--muted-raw,var(--muted-foreground))">
         {TIER_HEADER_LABEL[tier]}
       </span>
     </div>
@@ -88,11 +88,11 @@ function PartyStepper({
       data-testid={`party-stepper-${family}`}
       className="inline-flex items-center gap-1.5"
     >
-      <span className="font-mono-nums text-[9px] uppercase tracking-[0.1em] text-[var(--muted-raw,var(--muted-foreground))]">
+      <span className="font-mono-nums text-[9px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground))">
         Party
       </span>
       <div
-        className="inline-flex items-stretch overflow-hidden rounded-[5px] border border-[var(--border)]"
+        className="inline-flex items-stretch overflow-hidden rounded-[5px] border border-(--border)"
         style={{ background: 'var(--surface)', height: 20 }}
       >
         <button
@@ -106,7 +106,7 @@ function PartyStepper({
           −
         </button>
         <span
-          className="grid place-items-center self-stretch px-1 font-mono-nums text-[10px] leading-none tabular-nums text-center min-w-[26px] border-x border-[var(--border)]"
+          className="grid place-items-center self-stretch px-1 font-mono-nums text-[10px] leading-none tabular-nums text-center min-w-[26px] border-x border-(--border)"
         >
           {party}
         </span>
@@ -156,12 +156,12 @@ function FamilyMatrixRow({
   return (
     <div
       role="row"
-      className="grid border-b border-[var(--border)] last:border-b-0"
+      className="grid border-b border-(--border) last:border-b-0"
       style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
       <div
         role="rowheader"
-        className="flex flex-col justify-center gap-[5px] px-[10px] py-2 border-r border-[var(--border)] text-[12px] font-medium bg-[var(--surface-2)]"
+        className="flex flex-col justify-center gap-[5px] px-[10px] py-2 border-r border-(--border) text-[12px] font-medium bg-(--surface-2)"
       >
         <span
           data-testid="family-name"
@@ -177,7 +177,7 @@ function FamilyMatrixRow({
           />
         ) : (
           <div
-            className="inline-flex items-center font-mono-nums text-[9px] uppercase tracking-[0.1em] text-[var(--muted-raw,var(--muted-foreground))]"
+            className="inline-flex items-center font-mono-nums text-[9px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground))"
             style={{ height: 20 }}
           >
             Solo
@@ -193,7 +193,7 @@ function FamilyMatrixRow({
               role="cell"
               data-testid={`matrix-cell-${bossId}-${tier}`}
               aria-disabled="true"
-              className="grid place-items-center py-[10px] px-1 border-r border-[var(--border)] last:border-r-0 font-mono-nums text-[11px] text-[var(--muted-raw,var(--muted-foreground))]"
+              className="grid place-items-center py-[10px] px-1 border-r border-(--border) last:border-r-0 font-mono-nums text-[11px] text-(--muted-raw,var(--muted-foreground))"
               style={{ cursor: 'default' }}
             >
               <span style={{ opacity: 0.3 }}>—</span>
@@ -253,16 +253,16 @@ export const BossMatrix = memo(function BossMatrix({
   return (
     <div
       role="table"
-      className={`${cornerClass} border border-[var(--border)] overflow-clip bg-[var(--surface)]`}
+      className={`${cornerClass} border border-(--border) overflow-clip bg-(--surface)`}
     >
         <div
           role="row"
-          className="grid border-b border-[var(--border)] sticky top-0 z-10 bg-[var(--surface-2)]"
+          className="grid border-b border-(--border) sticky top-0 z-10 bg-(--surface-2)"
           style={{ gridTemplateColumns: GRID_TEMPLATE }}
         >
           <div
             role="columnheader"
-            className="grid place-items-center px-3 py-[10px] border-r border-[var(--border)] font-mono-nums text-[10px] uppercase tracking-[0.08em] text-[var(--muted-raw,var(--muted-foreground))]"
+            className="grid place-items-center px-3 py-[10px] border-r border-(--border) font-mono-nums text-[10px] uppercase tracking-[0.08em] text-(--muted-raw,var(--muted-foreground))"
           >
             Bosses
           </div>
