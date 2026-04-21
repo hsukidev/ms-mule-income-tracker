@@ -12,6 +12,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
+    "deploy:prod": "bash deploy.sh prod",
+    "deploy:staging": "bash deploy.sh staging",
     "worktree:prune": "git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D",
     "prepare": "husky"
   },
