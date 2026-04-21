@@ -24,7 +24,7 @@ import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { AddCard } from './components/AddCard';
 import { Header } from './components/Header';
 import { KpiCard } from './components/KpiCard';
-import { SplitCard } from './components/SplitCard';
+import { PieChartCard } from './components/PieChartCard';
 import { RosterHeader } from './components/RosterHeader';
 
 const dragBoundaryBaseStyle: React.CSSProperties = {
@@ -51,7 +51,7 @@ const dropAnimation: DropAnimation = {
 
 function AppContent() {
   const { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules } = useMules();
-  // KpiCard/SplitCard defer to absorb boss-matrix burst updates. Roster stays
+  // KpiCard/PieChartCard defer to absorb boss-matrix burst updates. Roster stays
   // live — stale mules on drop causes FLIP to target the wrong layout.
   const deferredMules = useDeferredValue(mules);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
@@ -179,7 +179,7 @@ function AppContent() {
             <KpiCard mules={deferredMules} />
           </div>
           <div className="min-[1100px]:col-span-4 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-            <SplitCard mules={deferredMules} onSliceClick={handleCardClick} />
+            <PieChartCard mules={deferredMules} onSliceClick={handleCardClick} />
           </div>
         </section>
 
