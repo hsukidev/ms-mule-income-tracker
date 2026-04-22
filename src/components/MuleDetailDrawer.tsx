@@ -69,23 +69,6 @@ export function MuleDetailDrawer({
 
         {mule && (
           <div className="relative">
-            <div
-              aria-hidden
-              className="absolute inset-x-0 -top-px h-px"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent, var(--accent-raw, var(--accent-primary)), transparent)',
-              }}
-            />
-            <div
-              aria-hidden
-              className="absolute -top-24 right-0 size-56  pointer-events-none blur-3xl opacity-30"
-              style={{
-                background:
-                  'radial-gradient(closest-side, var(--accent-raw, var(--accent-primary)), transparent)',
-              }}
-            />
-
             <div className="relative p-8 flex items-end gap-5">
               <img
                 src={blankCharacterPng}
@@ -110,7 +93,12 @@ export function MuleDetailDrawer({
                 </div>
                 <div
                   className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
-                  style={{ background: 'var(--surface-2)' }}
+                  style={{
+                    background:
+                      'linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, color-mix(in srgb, var(--surface) 82%, transparent) 100%)',
+                    boxShadow:
+                      'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
+                  }}
                 >
                   <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
                     Weekly
@@ -128,7 +116,10 @@ export function MuleDetailDrawer({
                     onClick={() => onUpdate(mule.id, { active: !mule.active })}
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
                     style={{
-                      background: 'var(--surface-2)',
+                      background:
+                        'linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, color-mix(in srgb, var(--surface) 82%, transparent) 100%)',
+                      boxShadow:
+                        'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',
                       color: mule.active ? 'var(--chart-4)' : 'var(--muted-foreground)',
                       minWidth: 96,
@@ -154,7 +145,7 @@ export function MuleDetailDrawer({
                 </div>
               </div>
 
-              <div className="shrink-0 self-end">
+              <div className="shrink-0 self-end mr-6">
                 <CrystalTally weeklyCount={matrix.weeklyCount} dailyCount={matrix.dailyCount} />
               </div>
 

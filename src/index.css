@@ -540,24 +540,6 @@ html[data-theme-swap] *::after {
     overflow: hidden;
     isolation: isolate;
   }
-  /* Tracer line skimming the top edge — catches the accent glow from the
-   * drawer's top-edge gradient and echoes it here. */
-  .crystal-tally::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 12px;
-    right: 12px;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in srgb, var(--accent) 55%, transparent),
-      transparent
-    );
-    pointer-events: none;
-  }
-
   .crystal-tally__row {
     display: flex;
     align-items: center;
