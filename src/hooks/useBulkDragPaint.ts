@@ -84,6 +84,7 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
   const rafRef = useRef<number | null>(null);
   const lastClientRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const detachDocListenersRef = useRef<(() => void) | null>(null);
+  const detachTouchMoveRef = useRef<(() => void) | null>(null);
 
   const clearPressTimer = useCallback(() => {
     if (pressTimerRef.current !== null) {
@@ -116,6 +117,10 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     if (detachDocListenersRef.current) {
       detachDocListenersRef.current();
       detachDocListenersRef.current = null;
+    }
+    if (detachTouchMoveRef.current) {
+      detachTouchMoveRef.current();
+      detachTouchMoveRef.current = null;
     }
   }, [clearPressTimer, stopAutoscrollLoop]);
 
@@ -324,6 +329,20 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
         pressTimerRef.current = window.setTimeout(() => {
           pressTimerRef.current = null;
           engageAtStart();
+          // Scroll Preventer: iOS Safari latches the scroll decision at
+          // touchstart from the touch-action value at that instant; a later
+          // `touch-action: none` flip is ignored. preventDefault on a
+          // non-passive touchmove is the only mid-gesture escape hatch.
+          // Attached at engagement (not pointerdown) so the pre-engagement
+          // window pays no non-passive-listener tax and cannot leak across
+          // gestures.
+          const blockTouchMove = (ev: TouchEvent) => {
+            ev.preventDefault();
+          };
+          document.addEventListener('touchmove', blockTouchMove, { passive: false });
+          detachTouchMoveRef.current = () => {
+            document.removeEventListener('touchmove', blockTouchMove);
+          };
           if (rafRef.current === null) {
             rafRef.current = window.requestAnimationFrame(autoscrollTick);
           }

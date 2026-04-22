@@ -547,3 +547,131 @@ describe('useBulkDragPaint (touch long-press gate)', () => {
     expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
   });
 });
+
+describe('useBulkDragPaint (scroll preventer)', () => {
+  let restoreHitTest: (() => void) | null = null;
+
+  beforeEach(() => {
+    resetTestEnvironment();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    if (restoreHitTest) {
+      restoreHitTest();
+      restoreHitTest = null;
+    }
+  });
+
+  function dispatchTouchMove() {
+    const ev = new Event('touchmove', { bubbles: true, cancelable: true });
+    document.dispatchEvent(ev);
+    return ev;
+  }
+
+  it('touch post-engagement: a dispatched touchmove on document has its default prevented', () => {
+    // This is the load-bearing scroll-takeover fix: once the 250ms long-press
+    // has engaged the paint, native browser scroll must be cancelled per-event
+    // via preventDefault on touchmove — the only mid-gesture escape hatch iOS
+    // honors after the touch-action scroll latch.
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+
+    const ev = dispatchTouchMove();
+
+    expect(ev.defaultPrevented).toBe(true);
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+  });
+
+  it('touch pre-engagement: a dispatched touchmove on document is NOT default-prevented', () => {
+    // Pre-Engagement must preserve native scroll so the user can scroll through
+    // a long Roster in Bulk Delete Mode by tapping a card and dragging past the
+    // 5px Tolerance Cancel threshold. If the Scroll Preventer blocked scroll
+    // during the long-press window, that interaction would be lost.
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+
+    // Only 100ms elapsed — well before the 250ms Long-Press Gate fires, so
+    // brushRef is still null and native scroll must be allowed.
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    const ev = dispatchTouchMove();
+
+    expect(ev.defaultPrevented).toBe(false);
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+  });
+
+  it('touch: after pointerup, dispatched touchmove is no longer default-prevented (listener detached)', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+    pointerUp(document, centerXFor(0), 150, 'touch');
+
+    const ev = dispatchTouchMove();
+
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('touch: after pointercancel, dispatched touchmove is no longer default-prevented', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+    pointerCancel(document, centerXFor(0), 150, 'touch');
+
+    const ev = dispatchTouchMove();
+
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('mouse: pointerdown does not attach a touchmove preventer (desktop unchanged)', () => {
+    // Mouse and pen paths must not register the Scroll Preventer — there's no
+    // Scroll Latch to fight on desktop, and attaching the listener would block
+    // unrelated touchmove events on hybrid devices mid-mouse-drag.
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'mouse');
+    pointerMove(document, centerXFor(1), 150, 'mouse');
+
+    const ev = dispatchTouchMove();
+
+    expect(ev.defaultPrevented).toBe(false);
+
+    pointerUp(document, centerXFor(1), 150, 'mouse');
+  });
+});
