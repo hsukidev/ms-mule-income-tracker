@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { BossTier } from '../types';
 import type { SlateFamily, SlateKey, SlateRow } from '../data/muleBossSlate';
-import { formatMeso, formatMesoCompact } from '../utils/meso';
+import { formatMeso } from '../utils/meso';
 
 /** Column order in the Matrix — extreme → easy, hardest first. */
 const MATRIX_TIER_COLUMNS: BossTier[] = ['extreme', 'chaos', 'hard', 'normal', 'easy'];
@@ -22,7 +22,7 @@ const TIER_HEADER_LABEL: Record<BossTier, string> = {
   extreme: 'Extreme',
 };
 
-const GRID_TEMPLATE = '140px repeat(5, 1fr)';
+const GRID_TEMPLATE = 'max-content repeat(5, 1fr)';
 
 const STEPPER_BTN_CLASS =
   'grid place-items-center w-5 self-stretch text-sm leading-none text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed';
@@ -149,14 +149,13 @@ function FamilyMatrixRow({
   return (
     <div
       role="row"
-      className="grid border-b border-(--border) last:border-b-0"
-      style={{ gridTemplateColumns: GRID_TEMPLATE }}
+      className="col-span-full grid grid-cols-subgrid border-b border-(--border) last:border-b-0"
     >
       <div
         role="rowheader"
         className="flex flex-col justify-center gap-[5px] px-[10px] py-2 border-r border-(--border) text-[12px] font-medium bg-(--surface-2)"
       >
-        <span data-testid="family-name" className="font-display leading-[1.2] truncate">
+        <span data-testid="family-name" className="font-display leading-[1.2] whitespace-nowrap">
           {displayName}
         </span>
         {hasPartyableTier ? (
@@ -215,10 +214,7 @@ function FamilyMatrixRow({
             ].join(' ')}
           >
             <span style={isDim ? { opacity: 0.35 } : undefined}>
-              <span className="@max-[500px]/drawer:hidden">{formatMeso(displayedValue, true)}</span>
-              <span className="hidden @max-[500px]/drawer:inline">
-                {formatMesoCompact(displayedValue)}
-              </span>
+              {formatMeso(displayedValue, true)}
               {row.cadence === 'daily' && <span className="ml-1 text-[9px] opacity-60">x 7</span>}
             </span>
           </button>
@@ -241,41 +237,45 @@ export const BossMatrix = memo(function BossMatrix({
 
   return (
     <div
-      role="table"
-      className={`${cornerClass} border border-(--border) overflow-clip bg-(--surface)`}
+      className={`${cornerClass} overflow-x-auto overflow-y-hidden border border-(--border) bg-(--surface)`}
     >
       <div
-        role="row"
-        className="grid border-b border-(--border) sticky top-0 z-10 bg-(--surface-2)"
+        role="table"
+        className="grid @max-[500px]/drawer:min-w-[500px]"
         style={{ gridTemplateColumns: GRID_TEMPLATE }}
       >
         <div
-          role="columnheader"
-          className="grid place-items-center px-3 py-[10px] border-r border-(--border) font-mono-nums text-[10px] uppercase tracking-[0.08em] text-(--muted-raw,var(--muted-foreground))"
+          role="row"
+          className="col-span-full grid grid-cols-subgrid border-b border-(--border) sticky top-0 z-10 bg-(--surface-2)"
         >
-          Bosses
-        </div>
-        {MATRIX_TIER_COLUMNS.map((tier) => (
           <div
-            key={tier}
             role="columnheader"
-            aria-label={TIER_HEADER_LABEL[tier]}
-            className="px-2 py-[10px]"
+            className="grid place-items-center px-3 py-[10px] border-r border-(--border) font-mono-nums text-[10px] uppercase tracking-[0.08em] text-(--muted-raw,var(--muted-foreground))"
           >
-            <TierHeader tier={tier} />
+            Bosses
           </div>
+          {MATRIX_TIER_COLUMNS.map((tier) => (
+            <div
+              key={tier}
+              role="columnheader"
+              aria-label={TIER_HEADER_LABEL[tier]}
+              className="px-2 py-[10px]"
+            >
+              <TierHeader tier={tier} />
+            </div>
+          ))}
+        </div>
+
+        {families.map((family) => (
+          <FamilyMatrixRow
+            key={family.family}
+            family={family}
+            partySize={partySizes[family.family] ?? 1}
+            onToggleKey={onToggleKey}
+            onChangePartySize={onChangePartySize}
+          />
         ))}
       </div>
-
-      {families.map((family) => (
-        <FamilyMatrixRow
-          key={family.family}
-          family={family}
-          partySize={partySizes[family.family] ?? 1}
-          onToggleKey={onToggleKey}
-          onChangePartySize={onChangePartySize}
-        />
-      ))}
     </div>
   );
 });

@@ -17,55 +17,48 @@ describe('CrystalTally', () => {
     expect(daily.querySelector('.crystal-tally__cap')).toBeNull();
   });
 
-  it('renders the monthly readout as "{n}/1"', () => {
+  it('does not render a monthly readout', () => {
     render(<CrystalTally weeklyCount={0} dailyCount={0} monthlyCount={1} />);
-    const monthly = screen.getByLabelText(/monthly boss selections/i);
-    expect(monthly.textContent).toBe('1/1');
+    expect(screen.queryByLabelText(/monthly boss selections/i)).toBeNull();
   });
 
-  it('shows "0/14", "0", and "0/1" when all counts are zero', () => {
+  it('shows "0/14" and "0" when all counts are zero', () => {
     render(<CrystalTally weeklyCount={0} dailyCount={0} monthlyCount={0} />);
     expect(screen.getByLabelText(/weekly boss selections/i).textContent).toBe('0/14');
     expect(screen.getByLabelText(/daily boss selections/i).textContent).toBe('0');
-    expect(screen.getByLabelText(/monthly boss selections/i).textContent).toBe('0/1');
   });
 
-  it('does not clamp values greater than the cap on weekly or monthly', () => {
-    // Caps are displayed, not enforced at the component level — a stale
-    // monthly count of 2 (e.g. pre-radio-mutex) still renders honestly.
+  it('does not clamp values greater than the weekly cap', () => {
     render(<CrystalTally weeklyCount={17} dailyCount={40} monthlyCount={2} />);
     expect(screen.getByLabelText(/weekly boss selections/i).textContent).toBe('17/14');
     expect(screen.getByLabelText(/daily boss selections/i).textContent).toBe('40');
-    expect(screen.getByLabelText(/monthly boss selections/i).textContent).toBe('2/1');
   });
 
   it('marks empty cells with is-empty and filled cells with is-filled', () => {
     const { container } = render(<CrystalTally weeklyCount={3} dailyCount={0} monthlyCount={1} />);
     const weeklyCell = container.querySelector('[data-kind="weekly"]');
     const dailyCell = container.querySelector('[data-kind="daily"]');
-    const monthlyCell = container.querySelector('[data-kind="monthly"]');
     expect(weeklyCell?.classList.contains('is-filled')).toBe(true);
     expect(dailyCell?.classList.contains('is-empty')).toBe(true);
-    expect(monthlyCell?.classList.contains('is-filled')).toBe(true);
   });
 
-  it('renders all three crystal PNGs (weekly, daily, monthly)', () => {
+  it('renders weekly and daily crystal PNGs (no monthly)', () => {
     const { container } = render(<CrystalTally weeklyCount={1} dailyCount={1} monthlyCount={1} />);
     expect(container.querySelector('.crystal-tally__crystal.is-weekly')).toBeTruthy();
     expect(container.querySelector('.crystal-tally__crystal.is-daily')).toBeTruthy();
-    expect(container.querySelector('.crystal-tally__crystal.is-monthly')).toBeTruthy();
+    expect(container.querySelector('.crystal-tally__crystal.is-monthly')).toBeNull();
   });
 
-  it('orders the cells Weekly, Daily, Monthly top-to-bottom', () => {
+  it('orders the cells Weekly, Daily top-to-bottom', () => {
     const { container } = render(<CrystalTally weeklyCount={1} dailyCount={1} monthlyCount={1} />);
     const cells = Array.from(container.querySelectorAll('[data-kind]'));
-    expect(cells.map((c) => c.getAttribute('data-kind'))).toEqual(['weekly', 'daily', 'monthly']);
+    expect(cells.map((c) => c.getAttribute('data-kind'))).toEqual(['weekly', 'daily']);
   });
 
-  it('places a horizontal divider between each pair of adjacent cells', () => {
+  it('places a horizontal divider between the two cells', () => {
     const { container } = render(<CrystalTally weeklyCount={1} dailyCount={1} monthlyCount={1} />);
-    // Three cells → two dividers.
-    expect(container.querySelectorAll('.crystal-tally__divider')).toHaveLength(2);
+    // Two cells → one divider.
+    expect(container.querySelectorAll('.crystal-tally__divider')).toHaveLength(1);
   });
 
   it('exposes a labelled group wrapper so screen readers announce the tally together', () => {
@@ -80,9 +73,6 @@ describe('CrystalTally', () => {
     ).toBe(true);
     expect(
       screen.getByLabelText(/daily boss selections/i).classList.contains('font-mono-nums'),
-    ).toBe(true);
-    expect(
-      screen.getByLabelText(/monthly boss selections/i).classList.contains('font-mono-nums'),
     ).toBe(true);
   });
 });

@@ -69,7 +69,7 @@ describe('bosses data (Matrix schema)', () => {
     expect(lotus.name).toBe('Lotus');
 
     const kalos = bosses.find((b) => b.family === 'kalos-the-guardian')!;
-    expect(kalos.name).toBe('Kalos the Guardian');
+    expect(kalos.name).toBe('Kalos');
   });
 
   it('every difficulty entry has a valid BossTier', () => {
@@ -127,7 +127,7 @@ describe('bosses data (Matrix schema)', () => {
   });
 
   it('names of tier-less bosses stay intact', () => {
-    expect(bosses.find((b) => b.family === 'akechi-mitsuhide')!.name).toBe('Akechi Mitsuhide');
+    expect(bosses.find((b) => b.family === 'akechi-mitsuhide')!.name).toBe('Akechi');
     expect(bosses.find((b) => b.family === 'omni-cln')!.name).toBe('OMNI-CLN');
     expect(bosses.find((b) => b.family === 'princess-no')!.name).toBe('Princess No');
   });

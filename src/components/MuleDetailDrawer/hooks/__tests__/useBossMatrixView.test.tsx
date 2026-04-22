@@ -742,7 +742,7 @@ describe('useBossMatrixView', () => {
   });
 
   describe('visibleBosses (search + cadence filter)', () => {
-    it('returns every family when search is empty and filter is All', () => {
+    it('returns every family except Black Mage when search is empty and filter is All', () => {
       const { result } = renderHook(() =>
         useBossMatrixView({
           muleId: 'mule-1',
@@ -751,7 +751,9 @@ describe('useBossMatrixView', () => {
           onUpdate: vi.fn(),
         }),
       );
-      expect(result.current.visibleBosses.length).toBe(bosses.length);
+      // Black Mage is hidden from the Matrix; all other families appear.
+      expect(result.current.visibleBosses.length).toBe(bosses.length - 1);
+      expect(result.current.visibleBosses.map((f) => f.family)).not.toContain('black-mage');
     });
 
     it('responds to search (narrows to families matching substring)', () => {

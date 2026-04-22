@@ -98,7 +98,8 @@ export function useBossMatrixView({
   const slate = useMemo(() => MuleBossSlate.from(selectedBosses), [selectedBosses]);
 
   const visibleBosses = useMemo(
-    () => filterFamiliesByCadence(slate.view(search), filter),
+    () =>
+      filterFamiliesByCadence(slate.view(search), filter).filter((f) => f.family !== 'black-mage'),
     [slate, search, filter],
   );
 

@@ -50,7 +50,7 @@ export const bosses: Boss[] = [
   },
   {
     id: '94ba4f12-f313-4d5b-bf93-f19221341d89',
-    name: 'Kalos the Guardian',
+    name: 'Kalos',
     family: 'kalos-the-guardian',
     difficulty: [
       { tier: 'easy', crystalValue: 937500000, cadence: 'weekly' },
@@ -127,7 +127,7 @@ export const bosses: Boss[] = [
   },
   {
     id: 'b76be02b-ecab-4ea2-a407-5ae87c0e0509',
-    name: 'Guardian Angel Slime',
+    name: 'Slime',
     family: 'guardian-angel-slime',
     difficulty: [
       { tier: 'normal', crystalValue: 231673500, cadence: 'weekly' },
@@ -164,7 +164,7 @@ export const bosses: Boss[] = [
   },
   {
     id: '8004e8a0-b748-42f7-81f9-72635aabb9dd',
-    name: 'Akechi Mitsuhide',
+    name: 'Akechi',
     family: 'akechi-mitsuhide',
     difficulty: [{ tier: 'normal', crystalValue: 144000000, cadence: 'weekly' }],
   },
@@ -269,7 +269,7 @@ export const bosses: Boss[] = [
   },
   {
     id: '2b739dbc-8949-4d53-853a-e1cde5921140',
-    name: 'Mori Ranmaru',
+    name: 'Ranmaru',
     family: 'mori-ranmaru',
     difficulty: [
       { tier: 'normal', crystalValue: 4202500, cadence: 'daily' },

@@ -1,6 +1,5 @@
 import weeklyCrystalPng from '../../assets/weekly-crystal.png';
 import dailyCrystalPng from '../../assets/daily-crystal.png';
-import monthlyCrystalPng from '../../assets/monthly-crystal.png';
 
 interface CrystalTallyProps {
   weeklyCount: number;
@@ -10,30 +9,22 @@ interface CrystalTallyProps {
 
 /** Weekly Crystal Cap reference — displayed, not enforced. */
 const WEEKLY_CRYSTAL_CAP = 14;
-/**
- * Monthly Crystal Cap — enforced to 1 by the Monthly Radio Mutex in
- * `MuleBossSlate.toggle` (Black Mage Hard ↔ Extreme), so the cap is also
- * the game-accurate ceiling: one Black Mage clear per month per mule.
- */
-const MONTHLY_CRYSTAL_CAP = 1;
 
 /**
- * Three crystal plates stacked vertically in the drawer header:
+ * Two crystal plates stacked vertically in the drawer header:
  *   Weekly ({n}/14)
  *   ──────────────
  *   Daily  ({n})
- *   ──────────────
- *   Monthly ({n}/1)
  *
  * Each plate pairs an icon on a radial halo with a two-line readout — a
  * micro-tracked eyebrow label above a mono-numeric count. Empty plates
  * fade to muted; filled plates lift to the accent colour. Horizontal
- * gradient hairlines separate the three rows.
+ * gradient hairlines separate the rows.
  *
  * The count span carries an `aria-label` so SR users get context without
  * reading the adjacent caption as label text.
  */
-export function CrystalTally({ weeklyCount, dailyCount, monthlyCount }: CrystalTallyProps) {
+export function CrystalTally({ weeklyCount, dailyCount }: CrystalTallyProps) {
   return (
     <div className="crystal-tally" role="group" aria-label="Crystal tally">
       <CrystalCell
@@ -51,15 +42,6 @@ export function CrystalTally({ weeklyCount, dailyCount, monthlyCount }: CrystalT
         label="Daily"
         count={dailyCount}
         ariaLabel="Daily boss selections"
-      />
-      <div className="crystal-tally__divider" aria-hidden />
-      <CrystalCell
-        kind="monthly"
-        icon={monthlyCrystalPng}
-        label="Monthly"
-        count={monthlyCount}
-        cap={MONTHLY_CRYSTAL_CAP}
-        ariaLabel="Monthly boss selections"
       />
     </div>
   );

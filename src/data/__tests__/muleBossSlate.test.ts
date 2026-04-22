@@ -246,7 +246,7 @@ describe('MuleBossSlate.view', () => {
     const view = MuleBossSlate.EMPTY.view();
     const akechi = view.find((f) => f.family === 'akechi-mitsuhide')!;
     expect(akechi.rows[0].difficultyLabel).toBeNull();
-    expect(akechi.rows[0].name).toBe('Akechi Mitsuhide');
+    expect(akechi.rows[0].name).toBe('Akechi');
   });
 
   it('sorts rows within a family by crystalValue descending', () => {
