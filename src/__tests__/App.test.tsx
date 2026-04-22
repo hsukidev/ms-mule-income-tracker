@@ -85,6 +85,9 @@ function simulatePointerDrag(
   endX: number,
   endY: number,
 ) {
+  // Fire both pointer and mouse events: MouseSensor listens for mouse*;
+  // the bulk-paint hook listens for pointer*. Firing both keeps a single
+  // helper working for both the reorder and bulk-paint test paths.
   fireEvent.pointerDown(startEl, {
     pointerId: 1,
     clientX: startX,
@@ -93,6 +96,7 @@ function simulatePointerDrag(
     isPrimary: true,
     bubbles: true,
   });
+  fireEvent.mouseDown(startEl, { clientX: startX, clientY: startY, button: 0, bubbles: true });
 
   fireEvent.pointerMove(document, {
     pointerId: 1,
@@ -101,6 +105,7 @@ function simulatePointerDrag(
     isPrimary: true,
     bubbles: true,
   });
+  fireEvent.mouseMove(document, { clientX: startX + 10, clientY: startY, bubbles: true });
 
   fireEvent.pointerMove(document, {
     pointerId: 1,
@@ -109,6 +114,7 @@ function simulatePointerDrag(
     isPrimary: true,
     bubbles: true,
   });
+  fireEvent.mouseMove(document, { clientX: endX, clientY: endY, bubbles: true });
 
   fireEvent.pointerUp(document, {
     pointerId: 1,
@@ -117,6 +123,7 @@ function simulatePointerDrag(
     isPrimary: true,
     bubbles: true,
   });
+  fireEvent.mouseUp(document, { clientX: endX, clientY: endY, bubbles: true });
 }
 
 describe('App', () => {
@@ -501,21 +508,8 @@ describe('App DnD interactions', () => {
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement;
     const cardB = container.querySelector('[data-mule-card="mule-b"]') as HTMLElement;
 
-    fireEvent.pointerDown(cardA, {
-      pointerId: 1,
-      clientX: 100,
-      clientY: 150,
-      button: 0,
-      isPrimary: true,
-      bubbles: true,
-    });
-    fireEvent.pointerMove(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseDown(cardA, { clientX: 100, clientY: 150, button: 0, bubbles: true });
+    fireEvent.mouseMove(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       expect(cardA.style.transition).not.toMatch(/transform\s+\d/);
@@ -530,13 +524,7 @@ describe('App DnD interactions', () => {
     // Flush dnd-kit's drop animation state updates inside act so they don't
     // leak past the test boundary and warn about un-act'd AnimationManager updates.
     await act(async () => {
-      fireEvent.pointerUp(document, {
-        pointerId: 1,
-        clientX: 110,
-        clientY: 150,
-        isPrimary: true,
-        bubbles: true,
-      });
+      fireEvent.mouseUp(document, { clientX: 110, clientY: 150, bubbles: true });
     });
   });
 
@@ -544,21 +532,8 @@ describe('App DnD interactions', () => {
     const { container } = render(<App />);
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement;
 
-    fireEvent.pointerDown(cardA, {
-      pointerId: 1,
-      clientX: 100,
-      clientY: 150,
-      button: 0,
-      isPrimary: true,
-      bubbles: true,
-    });
-    fireEvent.pointerMove(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseDown(cardA, { clientX: 100, clientY: 150, button: 0, bubbles: true });
+    fireEvent.mouseMove(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       const transition = cardA.style.transition;
@@ -571,13 +546,7 @@ describe('App DnD interactions', () => {
     // Flush dnd-kit's drop animation state updates inside act so they don't
     // leak past the test boundary and warn about un-act'd AnimationManager updates.
     await act(async () => {
-      fireEvent.pointerUp(document, {
-        pointerId: 1,
-        clientX: 110,
-        clientY: 150,
-        isPrimary: true,
-        bubbles: true,
-      });
+      fireEvent.mouseUp(document, { clientX: 110, clientY: 150, bubbles: true });
     });
   });
 
@@ -588,33 +557,14 @@ describe('App DnD interactions', () => {
     fireEvent.mouseEnter(cardA);
     expect(cardA.style.opacity).toBe('1');
 
-    fireEvent.pointerDown(cardA, {
-      pointerId: 1,
-      clientX: 100,
-      clientY: 150,
-      button: 0,
-      isPrimary: true,
-      bubbles: true,
-    });
-    fireEvent.pointerMove(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseDown(cardA, { clientX: 100, clientY: 150, button: 0, bubbles: true });
+    fireEvent.mouseMove(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       expect(cardA.style.opacity).toBe('0');
     });
 
-    fireEvent.pointerUp(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseUp(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       expect(cardA.style.opacity).toBe('1');
@@ -632,22 +582,8 @@ describe('App DnD interactions', () => {
 
     expect(gridWrapper!.style.borderColor).toBe('transparent');
 
-    fireEvent.pointerDown(cardA, {
-      pointerId: 1,
-      clientX: 100,
-      clientY: 150,
-      button: 0,
-      isPrimary: true,
-      bubbles: true,
-    });
-
-    fireEvent.pointerMove(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseDown(cardA, { clientX: 100, clientY: 150, button: 0, bubbles: true });
+    fireEvent.mouseMove(document, { clientX: 110, clientY: 150, bubbles: true });
 
     fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
 
@@ -709,34 +645,15 @@ describe('App DnD interactions', () => {
     expect(beforePadding).toBeTruthy();
 
     const cardA = container.querySelector('[data-mule-card="mule-a"]') as HTMLElement;
-    fireEvent.pointerDown(cardA, {
-      pointerId: 1,
-      clientX: 100,
-      clientY: 150,
-      button: 0,
-      isPrimary: true,
-      bubbles: true,
-    });
-    fireEvent.pointerMove(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseDown(cardA, { clientX: 100, clientY: 150, button: 0, bubbles: true });
+    fireEvent.mouseMove(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       // Drag is now active — padding must be identical to before.
       expect(boundary.style.padding).toBe(beforePadding);
     });
 
-    fireEvent.pointerUp(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
-    });
+    fireEvent.mouseUp(document, { clientX: 110, clientY: 150, bubbles: true });
 
     await waitFor(() => {
       expect(boundary.style.padding).toBe(beforePadding);

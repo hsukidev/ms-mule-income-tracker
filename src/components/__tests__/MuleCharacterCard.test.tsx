@@ -254,6 +254,47 @@ describe('MuleCharacterCard', () => {
     });
   });
 
+  describe('press-and-hold affordance (touch)', () => {
+    it('scales the panel to 1.04 on touchstart and reverts on touchend', () => {
+      const { container } = renderCard();
+      const panel = container.querySelector('[data-mule-card] .panel') as HTMLElement;
+      expect(panel.style.transform || '').not.toMatch(/scale\(/);
+
+      fireEvent.touchStart(panel);
+      expect(panel.style.transform).toMatch(/scale\(1\.04\)/);
+
+      fireEvent.touchEnd(panel);
+      expect(panel.style.transform || '').not.toMatch(/scale\(/);
+    });
+
+    it('reverts scale on touchcancel', () => {
+      const { container } = renderCard();
+      const panel = container.querySelector('[data-mule-card] .panel') as HTMLElement;
+
+      fireEvent.touchStart(panel);
+      expect(panel.style.transform).toMatch(/scale\(1\.04\)/);
+
+      fireEvent.touchCancel(panel);
+      expect(panel.style.transform || '').not.toMatch(/scale\(/);
+    });
+
+    it('suppresses text selection on the panel during press-and-hold', () => {
+      // jsdom silently drops -webkit-touch-callout (vendor-unknown to its
+      // CSSStyleDeclaration); userSelect is enough to confirm the intent
+      // that press gestures do not begin a text selection. The vendor
+      // callout suppression is covered by the touch e2e suite.
+      const { container } = renderCard();
+      const panel = container.querySelector('[data-mule-card] .panel') as HTMLElement;
+      expect(panel.style.userSelect).toBe('none');
+    });
+
+    it('includes transform in the 200ms ease-out transition so the scale-up animates', () => {
+      const { container } = renderCard();
+      const panel = container.querySelector('[data-mule-card] .panel') as HTMLElement;
+      expect(panel.style.transition).toMatch(/transform\s+200ms\s+ease-out/);
+    });
+  });
+
   describe('bulk mode', () => {
     it('click toggles selection via onToggleSelect and does NOT call onClick (drawer)', () => {
       const { container, onClick, onToggleSelect } = renderCard({}, { bulkMode: true });

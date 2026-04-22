@@ -178,6 +178,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
     disabled: bulkMode,
   });
   const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const style: React.CSSProperties = isDragging
@@ -224,6 +225,13 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         ? '0 8px 32px -8px var(--accent-glow)'
         : '0 0 0 1px var(--border)';
 
+  // Press-and-hold wins over hover-lift: touch start scales the card to 1.04
+  // for 200ms, finishing just before the 250ms TouchSensor engages drag.
+  const panelTransform = isPressed ? 'scale(1.04)' : hoverActive ? 'translateY(-2px)' : undefined;
+
+  const handlePressStart = () => setIsPressed(true);
+  const handlePressEnd = () => setIsPressed(false);
+
   return (
     <div
       ref={setNodeRef}
@@ -237,17 +245,22 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         onClick={handleActivate}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onTouchCancel={handlePressEnd}
         className="panel cursor-pointer"
         style={{
           padding: 'var(--card-pad, 16px)',
           minHeight: 'var(--roster-card-min-height, 260px)',
           display: 'flex',
           flexDirection: 'column',
-          transform: hoverActive ? 'translateY(-2px)' : undefined,
+          transform: panelTransform,
           boxShadow: panelBoxShadow,
           borderColor: bulkMode && selected ? DESTRUCTIVE : undefined,
           background: bulkMode && selected ? destructiveAlpha(10) : undefined,
-          transition: 'transform 150ms, box-shadow 150ms, border-color 150ms',
+          transition: 'transform 200ms ease-out, box-shadow 200ms ease-out, border-color 150ms',
+          WebkitTouchCallout: 'none',
+          userSelect: 'none',
         }}
         role="button"
         tabIndex={0}

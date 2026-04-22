@@ -6,10 +6,17 @@ import {
   type DragEndEvent,
   type DragStartEvent,
   type DropAnimation,
-  PointerSensor,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
+  useSensors,
 } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -74,7 +81,14 @@ function AppContent() {
     [muleIdsKey],
   );
 
-  const sensors = [useSensor(PointerSensor, { activationConstraint: { distance: 0 } })];
+  // Split sensors so mouse stays instant (distance: 0) while touch gates
+  // behind a 250ms long-press — a unified PointerSensor would delay desktop
+  // too. KeyboardSensor opportunistically adds Space/arrow reorder for a11y.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 0 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveMuleId(String(event.active.id));

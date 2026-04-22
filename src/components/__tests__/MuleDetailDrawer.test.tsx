@@ -68,13 +68,14 @@ describe('MuleDetailDrawer (smoke)', () => {
     expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { name: 'NewName' });
   });
 
-  it('wires the matrix Reset button to resetBosses (empty selectedBosses)', () => {
+  it('wires the matrix Reset button to resetBosses (wipes selections and party sizes)', () => {
     const { props } = renderDrawer({
       mule: { ...baseMule, selectedBosses: [HARD_LUCID] },
     });
     fireEvent.click(screen.getByRole('button', { name: /^reset$/i }));
     expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, {
       selectedBosses: [],
+      partySizes: {},
     });
   });
 

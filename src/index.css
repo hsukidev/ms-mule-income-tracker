@@ -693,12 +693,16 @@ html[data-theme-swap] *::after {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Bulk Delete Mode — additionally suppress touch scrolling and the iOS
- * long-press callout on Character Cards so the Drag-to-Select gesture owns
- * the pointer stream without the page scrolling underneath it.
+ * Bulk Delete Mode — suppress the iOS long-press callout on Character Cards
+ * unconditionally so the Drag-to-Select gesture can own the touch stream
+ * once engaged. Touch-action stays at the browser default pre-engagement so
+ * vertical swipes scroll naturally; the engaged CSS rule below pins it to
+ * `none` only while the rAF paint loop is running.
  * ────────────────────────────────────────────────────────────────────────── */
 [data-drag-boundary][data-bulk-mode='true'] [data-mule-card] {
   -webkit-touch-callout: none;
+}
+[data-drag-boundary][data-paint-engaged='true'] {
   touch-action: none;
 }
 

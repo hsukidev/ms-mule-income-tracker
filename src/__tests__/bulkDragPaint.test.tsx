@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@/test/test-utils';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@/test/test-utils';
 import App from '../App';
 import type { Mule } from '../types';
 
@@ -115,7 +115,9 @@ function centerXFor(idx: number): number {
   return idx * 220 + 100;
 }
 
-function pointerDown(el: Element, x: number, y: number) {
+type PointerKind = 'mouse' | 'touch' | 'pen';
+
+function pointerDown(el: Element, x: number, y: number, pointerType: PointerKind = 'mouse') {
   fireEvent.pointerDown(el, {
     pointerId: 1,
     clientX: x,
@@ -123,36 +125,55 @@ function pointerDown(el: Element, x: number, y: number) {
     button: 0,
     isPrimary: true,
     bubbles: true,
+    pointerType,
   });
 }
 
-function pointerMove(el: Element | Document, x: number, y: number) {
+function pointerMove(
+  el: Element | Document,
+  x: number,
+  y: number,
+  pointerType: PointerKind = 'mouse',
+) {
   fireEvent.pointerMove(el, {
     pointerId: 1,
     clientX: x,
     clientY: y,
     isPrimary: true,
     bubbles: true,
+    pointerType,
   });
 }
 
-function pointerUp(el: Element | Document, x: number, y: number) {
+function pointerUp(
+  el: Element | Document,
+  x: number,
+  y: number,
+  pointerType: PointerKind = 'mouse',
+) {
   fireEvent.pointerUp(el, {
     pointerId: 1,
     clientX: x,
     clientY: y,
     isPrimary: true,
     bubbles: true,
+    pointerType,
   });
 }
 
-function pointerCancel(el: Element | Document, x: number, y: number) {
+function pointerCancel(
+  el: Element | Document,
+  x: number,
+  y: number,
+  pointerType: PointerKind = 'mouse',
+) {
   fireEvent.pointerCancel(el, {
     pointerId: 1,
     clientX: x,
     clientY: y,
     isPrimary: true,
     bubbles: true,
+    pointerType,
   });
 }
 
@@ -376,5 +397,153 @@ describe('useBulkDragPaint (drag-to-select gesture)', () => {
     expect(isCardSelected(container, 'mule-c')).toBe(false); // original: unmarked
     expect(isCardSelected(container, 'mule-d')).toBe(true); // original: marked
     expect(isCardSelected(container, 'mule-e')).toBe(false); // never touched
+  });
+});
+
+describe('useBulkDragPaint (touch long-press gate)', () => {
+  let restoreHitTest: (() => void) | null = null;
+
+  beforeEach(() => {
+    resetTestEnvironment();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    if (restoreHitTest) {
+      restoreHitTest();
+      restoreHitTest = null;
+    }
+  });
+
+  it('touch: pointerup before 250ms does NOT engage the paint (scroll-preserving tap)', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+
+    act(() => {
+      vi.advanceTimersByTime(249);
+    });
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+
+    // No cards were painted — the gesture never engaged.
+    expect(isCardSelected(container, 'mule-a')).toBe(false);
+    expect(isCardSelected(container, 'mule-b')).toBe(false);
+  });
+
+  it('touch: holding past 250ms engages the paint on the start card', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+
+    // Engagement happens from the timer — start card is brushed with add.
+    expect(isCardSelected(container, 'mule-a')).toBe(true);
+    expect(isCardSelected(container, 'mule-b')).toBe(false);
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+  });
+
+  it('touch: pre-engagement pointermove > 5px cancels the long-press timer', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    const startX = centerXFor(0);
+    pointerDown(cardA, startX, 150, 'touch');
+
+    // Scroll-cancel: finger drifts 20px vertically within 150ms.
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    pointerMove(document, startX, 170, 'touch');
+    act(() => {
+      vi.advanceTimersByTime(200); // would fire the original 250ms timer
+    });
+
+    // Timer was cancelled — no engagement even after crossing 250ms.
+    expect(isCardSelected(container, 'mule-a')).toBe(false);
+
+    pointerUp(document, startX, 170, 'touch');
+  });
+
+  it('mouse: engages immediately on pointerdown (no 250ms gate on desktop)', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'mouse');
+    pointerMove(document, centerXFor(1), 150, 'mouse');
+
+    // Engagement is immediate — first move paints through to card B.
+    expect(isCardSelected(container, 'mule-a')).toBe(true);
+    expect(isCardSelected(container, 'mule-b')).toBe(true);
+
+    pointerUp(document, centerXFor(1), 150, 'mouse');
+  });
+
+  it('touch: engaged paint flips data-paint-engaged on the drag boundary', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const boundary = container.querySelector('[data-drag-boundary]') as HTMLElement;
+    expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+
+    // Before the timer fires, paint is not engaged — touch-action should
+    // stay at default so the browser can scroll.
+    expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
+
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+
+    // Timer fired → engagement → attribute flipped so the CSS rule can
+    // pin touch-action: none on the boundary.
+    expect(boundary.getAttribute('data-paint-engaged')).toBe('true');
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+
+    // Released → revert so native scroll resumes.
+    expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
+  });
+
+  it('touch: pointercancel clears data-paint-engaged after engagement', () => {
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const boundary = container.querySelector('[data-drag-boundary]') as HTMLElement;
+    const cardA = getCardWrapper(container, 'mule-a');
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+    expect(boundary.getAttribute('data-paint-engaged')).toBe('true');
+
+    pointerCancel(document, centerXFor(0), 150, 'touch');
+
+    expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
   });
 });

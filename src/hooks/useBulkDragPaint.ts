@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef } from 'react';
  * iPhone Photos-style drag-to-select gesture for Bulk Delete Mode.
  *
  * Owns all pointer state as refs so the drag produces zero re-renders from
- * the hook itself. On first `pointermove` after `pointerdown`, snapshots
+ * the hook itself. Mouse/pen engage immediately on the first `pointermove`;
+ * touch gates behind a 250ms long-press so that short taps open the drawer
+ * and vertical swipes scroll the page. On engagement the hook snapshots
  * every Mule's current selection (the Original Snapshot) and fixes the
  * Brush polarity from the inverse of the Start Card's snapshot value. The
  * Paint Range is recomputed on every move as
@@ -21,6 +23,12 @@ import { useCallback, useEffect, useRef } from 'react';
  * portable across JSDOM and real browsers without relying on
  * `setPointerCapture` support.
  */
+
+const TOUCH_LONG_PRESS_MS = 250;
+const TOUCH_MOVE_CANCEL_PX = 5;
+// Autoscroll tuning for engaged touch paint.
+const AUTOSCROLL_ZONE_PX = 100;
+const AUTOSCROLL_MAX_PX_PER_FRAME = 14;
 
 type Brush = 'add' | 'remove';
 
@@ -68,9 +76,28 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
   const originalRef = useRef<Map<string, boolean>>(new Map());
   const paintedRangeRef = useRef<PaintedRange | null>(null);
   const suppressClickRef = useRef(false);
-  // Document-level listener cleanup. Kept in a ref so pointerup/cancel can
-  // remove the same functions we added on pointerdown.
+  // Touch long-press bookkeeping: the timer is scheduled on touch pointerdown
+  // and cleared either on engagement, early pointerup, or a > 5px drift.
+  const pressTimerRef = useRef<number | null>(null);
+  const startClientRef = useRef<{ x: number; y: number } | null>(null);
+  const boundaryRef = useRef<HTMLElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastClientRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const detachDocListenersRef = useRef<(() => void) | null>(null);
+
+  const clearPressTimer = useCallback(() => {
+    if (pressTimerRef.current !== null) {
+      window.clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  }, []);
+
+  const stopAutoscrollLoop = useCallback(() => {
+    if (rafRef.current !== null) {
+      window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
 
   const resetGesture = useCallback(() => {
     startIdRef.current = null;
@@ -79,11 +106,18 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     brushRef.current = null;
     originalRef.current = new Map();
     paintedRangeRef.current = null;
+    startClientRef.current = null;
+    clearPressTimer();
+    stopAutoscrollLoop();
+    if (boundaryRef.current) {
+      boundaryRef.current.removeAttribute('data-paint-engaged');
+      boundaryRef.current = null;
+    }
     if (detachDocListenersRef.current) {
       detachDocListenersRef.current();
       detachDocListenersRef.current = null;
     }
-  }, []);
+  }, [clearPressTimer, stopAutoscrollLoop]);
 
   const revertAll = useCallback(() => {
     const snapshot = originalRef.current;
@@ -123,6 +157,45 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     [orderRef, setSelected],
   );
 
+  // Paints the range [start, card-under-(x,y)] if the point falls on a known
+  // card. Shared by the pointermove handler and the autoscroll tick so both
+  // paths apply the exact same range math.
+  const paintFromPoint = useCallback(
+    (x: number, y: number) => {
+      const startIdx = startIdxRef.current;
+      if (startIdx === null) return;
+      const curId = cardIdFromPoint(x, y);
+      if (curId === null) return;
+      const curIdx = orderRef.current.indexOf(curId);
+      if (curIdx < 0) return;
+      applyRangeDiff({
+        lo: Math.min(startIdx, curIdx),
+        hi: Math.max(startIdx, curIdx),
+      });
+    },
+    [applyRangeDiff, orderRef],
+  );
+
+  const autoscrollTick = useCallback(() => {
+    rafRef.current = null;
+    if (brushRef.current === null) return;
+    const { x, y } = lastClientRef.current;
+    const viewportH = window.innerHeight;
+    const topDistance = y;
+    const bottomDistance = viewportH - y;
+    let delta = 0;
+    if (topDistance < AUTOSCROLL_ZONE_PX) {
+      delta = -AUTOSCROLL_MAX_PX_PER_FRAME * (1 - topDistance / AUTOSCROLL_ZONE_PX);
+    } else if (bottomDistance < AUTOSCROLL_ZONE_PX) {
+      delta = AUTOSCROLL_MAX_PX_PER_FRAME * (1 - bottomDistance / AUTOSCROLL_ZONE_PX);
+    }
+    if (delta !== 0) window.scrollBy(0, delta);
+    // Re-paint: the card under a stationary finger can change as the page
+    // scrolls underneath it.
+    paintFromPoint(x, y);
+    rafRef.current = window.requestAnimationFrame(autoscrollTick);
+  }, [paintFromPoint]);
+
   const engageAtStart = useCallback(() => {
     const startId = startIdRef.current;
     const startIdx = startIdxRef.current;
@@ -136,25 +209,38 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     brushRef.current = wasSelected ? 'remove' : 'add';
     paintedRangeRef.current = null;
     applyRangeDiff({ lo: startIdx, hi: startIdx });
+    // Flip the boundary into engaged mode so CSS can pin touch-action: none
+    // and the page stops fighting our autoscroll.
+    if (boundaryRef.current) {
+      boundaryRef.current.setAttribute('data-paint-engaged', 'true');
+    }
   }, [applyRangeDiff, isSelected, orderRef]);
 
   const handleMove = useCallback(
     (e: PointerEvent) => {
       if (startIdRef.current === null || startIdxRef.current === null) return;
       if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+      lastClientRef.current = { x: e.clientX, y: e.clientY };
+      // Pre-engagement on touch: a > 5px drift before the 250ms timer fires
+      // means the user is trying to scroll, not long-press. Cancel the timer
+      // and abandon the gesture — pointerup/cancel will tear down the rest.
+      if (brushRef.current === null && pressTimerRef.current !== null) {
+        const start = startClientRef.current;
+        if (start) {
+          const dx = e.clientX - start.x;
+          const dy = e.clientY - start.y;
+          if (Math.hypot(dx, dy) > TOUCH_MOVE_CANCEL_PX) {
+            clearPressTimer();
+          }
+        }
+        return;
+      }
       if (brushRef.current === null) {
         engageAtStart();
       }
-      const curId = cardIdFromPoint(e.clientX, e.clientY);
-      if (curId === null) return;
-      const curIdx = orderRef.current.indexOf(curId);
-      if (curIdx < 0) return;
-      const startIdx = startIdxRef.current;
-      const lo = Math.min(startIdx, curIdx);
-      const hi = Math.max(startIdx, curIdx);
-      applyRangeDiff({ lo, hi });
+      paintFromPoint(e.clientX, e.clientY);
     },
-    [applyRangeDiff, engageAtStart, orderRef],
+    [clearPressTimer, engageAtStart, paintFromPoint],
   );
 
   const handleUp = useCallback(
@@ -204,16 +290,18 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
       brushRef.current = null;
       originalRef.current = new Map();
       paintedRangeRef.current = null;
+      startClientRef.current = { x: e.clientX, y: e.clientY };
+      lastClientRef.current = { x: e.clientX, y: e.clientY };
+      boundaryRef.current = e.currentTarget;
       // Clear any leftover suppress flag. If the previous gesture released
       // outside the boundary and the browser never fired a trailing click,
       // the flag could be stuck true and would otherwise swallow the next
       // real click.
       suppressClickRef.current = false;
 
-      // Attach document-level listeners for the duration of the gesture.
-      // This keeps the gesture alive even if the pointer leaves the boundary
-      // element mid-drag, and avoids depending on setPointerCapture (which
-      // JSDOM doesn't implement).
+      // Document-level listeners (not pointer-capture) so the gesture keeps
+      // flowing if the pointer leaves the boundary — and stays portable to
+      // JSDOM, which doesn't implement setPointerCapture.
       if (detachDocListenersRef.current) {
         detachDocListenersRef.current();
       }
@@ -225,8 +313,33 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
         document.removeEventListener('pointerup', handleUp);
         document.removeEventListener('pointercancel', handleCancel);
       };
+
+      // Touch: gate engagement behind a 250ms long-press so short taps fall
+      // through to the panel's onClick (zero-move toggle) and vertical
+      // swipes scroll the page. Mouse/pen keep today's instant-engage feel.
+      // The autoscroll rAF loop is touch-only, so kicking it off here — in
+      // the one branch that knows it's touch — lets us drop an isTouchRef.
+      clearPressTimer();
+      if (e.pointerType === 'touch') {
+        pressTimerRef.current = window.setTimeout(() => {
+          pressTimerRef.current = null;
+          engageAtStart();
+          if (rafRef.current === null) {
+            rafRef.current = window.requestAnimationFrame(autoscrollTick);
+          }
+        }, TOUCH_LONG_PRESS_MS);
+      }
     },
-    [enabled, handleCancel, handleMove, handleUp, orderRef],
+    [
+      autoscrollTick,
+      clearPressTimer,
+      enabled,
+      engageAtStart,
+      handleCancel,
+      handleMove,
+      handleUp,
+      orderRef,
+    ],
   );
 
   const onClickCapture = useCallback((e: React.MouseEvent<HTMLElement>) => {
@@ -236,15 +349,12 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     e.stopPropagation();
   }, []);
 
-  // Detach any in-flight document listeners on unmount so we don't leak.
+  // Mid-gesture unmount: tear everything down via the shared reset path so
+  // the boundary attribute, document listeners, rAF loop, and long-press
+  // timer all clear together — a partial teardown could leak state.
   useEffect(() => {
-    return () => {
-      if (detachDocListenersRef.current) {
-        detachDocListenersRef.current();
-        detachDocListenersRef.current = null;
-      }
-    };
-  }, []);
+    return resetGesture;
+  }, [resetGesture]);
 
   return {
     onPointerDown,
