@@ -109,7 +109,7 @@ export function MatrixToolbar({
         >
           <Info className="size-3.5 " aria-hidden />
         </TooltipTrigger>
-        <TooltipContent>Weekly preset</TooltipContent>
+        <TooltipContent className="px-3.5 py-2.5">Weekly preset</TooltipContent>
       </Tooltip>
       <button
         type="button"

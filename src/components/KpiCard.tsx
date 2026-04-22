@@ -1,15 +1,66 @@
-import { memo } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIncome } from '../modules/income';
+import { formatMeso } from '../utils/meso';
 import type { Mule } from '../types';
 
 interface KpiCardProps {
   mules: Mule[];
 }
 
+const NARROW_VIEWPORT_QUERY = '(max-width: 374.99px)';
+
 export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
-  const { raw: totalRaw, formatted: totalWeeklyIncome, toggle } = useIncome(mules);
+  const { raw: totalRaw, abbreviated, toggle } = useIncome(mules);
   const activeMuleCount = mules.filter((m) => m.active).length;
   const canToggleFormat = totalRaw > 0;
+
+  // Below 375px the abbreviated value drops decimals (e.g. "504.32M" → "504M")
+  // to free up horizontal space for the "mesos" caption.
+  const [isNarrowViewport, setIsNarrowViewport] = useState(() => {
+    try {
+      return window.matchMedia(NARROW_VIEWPORT_QUERY).matches;
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    let mql: MediaQueryList;
+    try {
+      mql = window.matchMedia(NARROW_VIEWPORT_QUERY);
+    } catch {
+      return;
+    }
+    const update = () => setIsNarrowViewport(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
+  }, []);
+
+  // The toggle is a global format preference — it always flips on click.
+  // Locally, if the unabbreviated value would push "mesos" past the row's
+  // edge, fall back to the abbreviated string for display only. We measure by
+  // rendering an off-screen probe at `width: max-content` and comparing its
+  // natural width to the visible row's clientWidth.
+  const abbrFormatted = formatMeso(totalRaw, true, isNarrowViewport);
+  const fullFormatted = formatMeso(totalRaw, false);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLDivElement>(null);
+  const [unabbreviatedOverflows, setUnabbreviatedOverflows] = useState(false);
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const probe = probeRef.current;
+    if (!row || !probe) return;
+    const measure = () => {
+      setUnabbreviatedOverflows(probe.offsetWidth > row.clientWidth);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [fullFormatted]);
+
+  const displayValue = !abbreviated && !unabbreviatedOverflows ? fullFormatted : abbrFormatted;
 
   return (
     <div
@@ -21,7 +72,16 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
         <span className="dot" aria-hidden />
         EXPECTED WEEKLY INCOME
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
+      <div
+        ref={rowRef}
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          marginTop: 14,
+          position: 'relative',
+        }}
+      >
         <button
           type="button"
           onClick={canToggleFormat ? toggle : undefined}
@@ -29,7 +89,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           aria-label="Toggle abbreviated meso format"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
-          {totalWeeklyIncome}
+          {displayValue}
         </button>
         <span
           style={{
@@ -40,6 +100,24 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
         >
           mesos
         </span>
+        <div
+          ref={probeRef}
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 'max-content',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 10,
+          }}
+        >
+          <span className="bignum">{fullFormatted}</span>
+          <span style={{ fontStyle: 'italic', fontFamily: 'monospace' }}>mesos</span>
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 28, marginTop: 18 }}>
         <KpiStat label="MULES" value={String(mules.length)} />
