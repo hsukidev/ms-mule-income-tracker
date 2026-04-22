@@ -36,4 +36,4 @@ export function render(
   return rtlRender(ui, { wrapper: Wrapper, ...options });
 }
 
-export { screen, fireEvent, waitFor, within } from '@testing-library/react';
+export { screen, fireEvent, waitFor, within, act } from '@testing-library/react';

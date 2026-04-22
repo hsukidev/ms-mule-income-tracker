@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
+import { render, screen, fireEvent, waitFor, act } from '@/test/test-utils';
 import App from '../App';
 import type { Mule } from '../types';
 
@@ -527,12 +527,16 @@ describe('App DnD interactions', () => {
       .filter((p: string) => p.trim().startsWith('transform'));
     expect(transformParts.length).toBeGreaterThan(0);
 
-    fireEvent.pointerUp(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
+    // Flush dnd-kit's drop animation state updates inside act so they don't
+    // leak past the test boundary and warn about un-act'd AnimationManager updates.
+    await act(async () => {
+      fireEvent.pointerUp(document, {
+        pointerId: 1,
+        clientX: 110,
+        clientY: 150,
+        isPrimary: true,
+        bubbles: true,
+      });
     });
   });
 
@@ -564,12 +568,16 @@ describe('App DnD interactions', () => {
       expect(transformParts.length).toBe(0);
     });
 
-    fireEvent.pointerUp(document, {
-      pointerId: 1,
-      clientX: 110,
-      clientY: 150,
-      isPrimary: true,
-      bubbles: true,
+    // Flush dnd-kit's drop animation state updates inside act so they don't
+    // leak past the test boundary and warn about un-act'd AnimationManager updates.
+    await act(async () => {
+      fireEvent.pointerUp(document, {
+        pointerId: 1,
+        clientX: 110,
+        clientY: 150,
+        isPrimary: true,
+        bubbles: true,
+      });
     });
   });
 
