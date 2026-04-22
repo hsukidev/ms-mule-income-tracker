@@ -41,8 +41,7 @@ export function Header() {
                 fontSize: 15,
               }}
             >
-              Mule
-              <span style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}>.Income</span>
+              Mules
             </span>
           </div>
           <div className="flex items-center gap-5 max-[479.99px]:gap-2">

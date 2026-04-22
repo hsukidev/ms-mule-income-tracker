@@ -488,20 +488,17 @@ html[data-theme-swap] *::after {
     flex-shrink: 0;
   }
 
-  /* Matrix Reset — flat muted text button; hovers to the destructive red. */
+  /* Matrix Reset — flat destructive-red text button. */
   .d-toolbar-reset {
     background: transparent;
     border: none;
-    color: var(--muted-foreground);
+    color: #e05040;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.06em;
     padding: 4px 8px 4px 0;
     cursor: pointer;
     transition: color 0.1s;
-  }
-  .d-toolbar-reset:hover {
-    color: #e05040;
   }
 
   /* ── Crystal Tally (drawer header readout) ─────────────────────────────

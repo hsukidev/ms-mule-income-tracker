@@ -92,7 +92,7 @@ export function ClassAutocomplete({ id, value, options, onSelect, placeholder, c
         id={id}
         value={draft}
         placeholder={placeholder}
-        className={className}
+        className={`text-ellipsis ${className ?? ''}`}
         role="combobox"
         aria-expanded={open}
         aria-autocomplete="list"

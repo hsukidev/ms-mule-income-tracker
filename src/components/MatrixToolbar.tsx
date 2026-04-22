@@ -105,7 +105,7 @@ export function MatrixToolbar({
           aria-label="Weekly preset info"
           closeOnClick={false}
           onClick={() => setInfoOpen(true)}
-          className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring max-[292.99px]:hidden"
         >
           <Info className="size-3.5 " aria-hidden />
         </TooltipTrigger>
@@ -114,7 +114,7 @@ export function MatrixToolbar({
       <button
         type="button"
         onClick={onReset}
-        className="d-toolbar-reset ml-auto"
+        className="d-toolbar-reset ml-auto max-[339.99px]:ml-0 max-[339.99px]:basis-full max-[339.99px]:w-full max-[339.99px]:text-center max-[339.99px]:p-2  max-[339.99px]:border max-[339.99px]:border-border max-[339.99px]:rounded-[8px]"
         style={{ opacity: 0.6 }}
       >
         Reset
