@@ -538,6 +538,62 @@ describe('useBossMatrixView', () => {
       expect(result.current.activePill).toBe('CTENE');
     });
 
+    it('toggling a daily ON preserves the CUSTOM override (canonical does not reassert)', () => {
+      const horntailDaily = `${HORNTAIL_BOSS.id}:chaos:daily`;
+      const { result, rerender } = renderHook(
+        ({ selectedBosses }: { selectedBosses: string[] }) =>
+          useBossMatrixView({
+            muleId: 'mule-1',
+            selectedBosses,
+            partySizes: undefined,
+            onUpdate: vi.fn(),
+          }),
+        { initialProps: { selectedBosses: CRA_KEYS } },
+      );
+      expect(result.current.activePill).toBe('CRA');
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      act(() => {
+        result.current.toggleKey(horntailDaily);
+      });
+      rerender({ selectedBosses: [...CRA_KEYS, horntailDaily] });
+      // Daily toggle does not clear the override; pill stays CUSTOM even
+      // though the weekly selection still matches CRA.
+      expect(result.current.activePill).toBe('CUSTOM');
+    });
+
+    it('toggling a daily OFF preserves the CUSTOM override (canonical does not reassert)', () => {
+      const horntailDaily = `${HORNTAIL_BOSS.id}:chaos:daily`;
+      const { result, rerender } = renderHook(
+        ({ selectedBosses }: { selectedBosses: string[] }) =>
+          useBossMatrixView({
+            muleId: 'mule-1',
+            selectedBosses,
+            partySizes: undefined,
+            onUpdate: vi.fn(),
+          }),
+        { initialProps: { selectedBosses: [...CRA_KEYS, horntailDaily] } },
+      );
+      expect(result.current.activePill).toBe('CRA');
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      act(() => {
+        result.current.toggleKey(horntailDaily);
+      });
+      rerender({ selectedBosses: CRA_KEYS });
+      // Removing a daily also leaves weekly match status unchanged, so
+      // the override persists.
+      expect(result.current.activePill).toBe('CUSTOM');
+    });
+
     it('clicking a canonical pill clears the CUSTOM override', () => {
       const { result } = renderHook(() =>
         useBossMatrixView({
