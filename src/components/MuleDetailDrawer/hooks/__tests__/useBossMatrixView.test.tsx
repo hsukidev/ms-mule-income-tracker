@@ -419,7 +419,7 @@ describe('useBossMatrixView', () => {
       expect(onUpdate).not.toHaveBeenCalled();
     });
 
-    it('CUSTOM click stays dark when weekly selection is empty', () => {
+    it('CUSTOM click lights the pill even when selection is empty', () => {
       const { result } = renderHook(() =>
         useBossMatrixView({
           muleId: 'mule-1',
@@ -432,6 +432,30 @@ describe('useBossMatrixView', () => {
 
       act(() => {
         result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+    });
+
+    it('resetBosses clears the CUSTOM override when matrix is already empty', () => {
+      // The selection-empty transition effect only fires on non-empty → empty.
+      // When the matrix is already empty and the user clicks CUSTOM then Reset,
+      // resetBosses itself must clear the override or the pill would stay lit.
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          partySizes: undefined,
+          onUpdate: vi.fn(),
+        }),
+      );
+
+      act(() => {
+        result.current.applyPreset('CUSTOM');
+      });
+      expect(result.current.activePill).toBe('CUSTOM');
+
+      act(() => {
+        result.current.resetBosses();
       });
       expect(result.current.activePill).toBeNull();
     });

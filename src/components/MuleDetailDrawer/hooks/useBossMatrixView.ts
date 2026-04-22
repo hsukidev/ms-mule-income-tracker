@@ -36,8 +36,8 @@ function filterFamiliesByCadence(families: SlateFamily[], filter: CadenceFilter)
  *   any canonical pill click, or a **weekly** **Slate Key** toggle (the
  *   modified weekly selection now speaks for what pill should light).
  *   Daily toggles leave the override intact, since daily keys can't change
- *   canonical match status. With an empty weekly selection the pill stays
- *   dark regardless.
+ *   canonical match status. Clicking Custom on an already-empty matrix
+ *   lights the pill — the override beats the empty-weekly short-circuit.
  * - Party-Size Clamp to [1, 6] on write.
  * - Toggle / reset dispatches routed through `onUpdate`. All dispatchers
  *   no-op when `muleId === null`.
@@ -103,11 +103,11 @@ export function useBossMatrixView({
   );
 
   const activePill = useMemo<PresetKey | null>(() => {
-    // Empty weekly selection always reads as no pill, regardless of override.
-    if (slate.weeklyCount === 0) return null;
-    // A Custom click wins even when a canonical match would otherwise fire,
-    // so the pill confirms the user's click.
+    // A Custom click wins unconditionally — even on an empty matrix — so the
+    // pill confirms the user's click regardless of selection state.
     if (customClicked) return 'CUSTOM';
+    // With no weekly selection and no Custom click, no pill lights.
+    if (slate.weeklyCount === 0) return null;
     const canonical = CANONICAL_PRESETS.find((p) => isPresetActive(p, selectedBosses));
     return canonical ?? 'CUSTOM';
   }, [selectedBosses, slate, customClicked]);
@@ -165,6 +165,9 @@ export function useBossMatrixView({
 
   const resetBosses = useCallback(() => {
     if (!muleId) return;
+    // Reset is authoritative: always clear the Custom override, even when the
+    // selection is already empty (the transition effect wouldn't fire).
+    setCustomClicked(false);
     onUpdate(muleId, { selectedBosses: [] });
   }, [muleId, onUpdate]);
 

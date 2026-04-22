@@ -1,3 +1,6 @@
+import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 export type CadenceFilter = 'All' | 'Weekly' | 'Daily';
 export type PresetKey = 'CRA' | 'LOMIEN' | 'CTENE' | 'CUSTOM';
 
@@ -90,6 +93,15 @@ export function MatrixToolbar({
             </button>
           ))}
         </div>
+        <Tooltip>
+          <TooltipTrigger
+            aria-label="Weekly preset info"
+            className="ml-1.5 inline-flex size-5  items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <Info className="size-3.5 " aria-hidden />
+          </TooltipTrigger>
+          <TooltipContent>Weekly preset</TooltipContent>
+        </Tooltip>
       </div>
       <button type="button" onClick={onReset} className="d-toolbar-reset" style={{ opacity: 0.6 }}>
         Reset
