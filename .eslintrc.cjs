@@ -18,10 +18,7 @@ module.exports = {
   plugins: ['@typescript-eslint', 'react-refresh', 'better-tailwindcss'],
   rules: {
     'prettier/prettier': 'warn',
-    'react-refresh/only-export-components': [
-      'warn',
-      { allowConstantExport: true },
-    ],
+    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
   },
   overrides: [
     {

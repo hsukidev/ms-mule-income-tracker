@@ -264,7 +264,7 @@ export function MuleDetailDrawer({
               <Button
                 variant="outline"
                 size="lg"
-                className="sm:hidden w-full mt-2"
+                className="sm:hidden w-full -mt-2 h-10 rounded-[10px]"
                 onClick={onClose}
               >
                 Close
