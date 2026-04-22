@@ -94,8 +94,7 @@ export function MuleDetailDrawer({
                 <div
                   className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
                   style={{
-                    background:
-                      'linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, color-mix(in srgb, var(--surface) 82%, transparent) 100%)',
+                    background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
                     boxShadow:
                       'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
                   }}
@@ -116,8 +115,7 @@ export function MuleDetailDrawer({
                     onClick={() => onUpdate(mule.id, { active: !mule.active })}
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
                     style={{
-                      background:
-                        'linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 92%, transparent) 0%, color-mix(in srgb, var(--surface) 82%, transparent) 100%)',
+                      background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
                       boxShadow:
                         'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',

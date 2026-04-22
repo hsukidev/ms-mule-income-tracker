@@ -358,20 +358,11 @@ html[data-theme-swap] *::after {
   }
   .panel-glow {
     background-color: var(--surface);
-    box-shadow:
-      0 0 0 1px var(--border),
-      0 20px 60px -30px var(--accent-glow),
-      inset 0 1px 0 rgba(255, 255, 255, 0.02);
   }
   .panel-glow:hover {
     box-shadow:
       0 20px 60px -30px var(--accent-glow),
       inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  }
-  body.light .panel-glow {
-    box-shadow:
-      0 0 0 1px var(--border),
-      0 12px 40px -20px var(--accent-glow);
   }
   body.light .panel-glow:hover {
     box-shadow: 0 12px 40px -20px var(--accent-glow);
@@ -529,11 +520,7 @@ html[data-theme-swap] *::after {
     min-width: 148px;
     border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
     border-radius: 14px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-2) 92%, transparent) 0%,
-      color-mix(in srgb, var(--surface) 82%, transparent) 100%
-    );
+    background: color-mix(in srgb, var(--surface-2) 92%, transparent);
     box-shadow:
       inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
       0 1px 2px color-mix(in srgb, black 8%, transparent);
