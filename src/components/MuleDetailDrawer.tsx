@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
+import { formatMeso } from '../utils/meso';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar } from './MatrixToolbar';
@@ -33,8 +34,11 @@ export function MuleDetailDrawer({
 }: MuleDetailDrawerProps) {
   // Strip `active` so the Active-Flag Filter doesn't zero the pill when the
   // drawer opens on an inactive mule — the drawer is the editor and needs to
-  // show potential income regardless of active state.
-  const { formatted: potentialIncome } = useIncome({ selectedBosses: mule?.selectedBosses ?? [] });
+  // show potential income regardless of active state. Force abbreviation in
+  // the header chip so the readout stays compact regardless of the global
+  // Format Preference.
+  const { raw: potentialIncomeRaw } = useIncome({ selectedBosses: mule?.selectedBosses ?? [] });
+  const potentialIncome = formatMeso(potentialIncomeRaw, true);
 
   const identity = useMuleIdentityDraft(mule, onUpdate);
   const matrix = useBossMatrixView({
@@ -69,77 +73,79 @@ export function MuleDetailDrawer({
 
         {mule && (
           <div className="relative">
-            <div className="relative p-8 flex items-end gap-5">
-              <img
-                src={blankCharacterPng}
-                alt={identity.name.draft || 'Mule avatar'}
-                className="size-[132px]  object-contain shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <h2 className="mt-1 font-display text-2xl/tight font-bold  truncate">
-                  {identity.name.draft || (
-                    <span className="text-muted-foreground italic font-normal">Unnamed Mule</span>
-                  )}
-                </h2>
-                <div className="mt-1 flex items-center gap-3 text-xs">
-                  <span className="font-sans uppercase tracking-[0.22em] text-(--accent-secondary)">
-                    {mule.muleClass || 'no class'}
-                  </span>
-                  <span className="font-mono-nums text-(--accent-numeric)">
-                    {identity.level.displayNumber > 0
-                      ? `Lv.${identity.level.displayNumber}`
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div
-                  className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
-                  style={{
-                    background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
-                    boxShadow:
-                      'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
-                  }}
-                >
-                  <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
-                    Weekly
-                  </span>
-                  <span className="font-mono-nums text-base text-(--accent-numeric)">
-                    {potentialIncome}
-                  </span>
-                  <span className="font-display italic text-xs text-muted-foreground">mesos</span>
-                </div>
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    data-testid="active-toggle"
-                    aria-pressed={mule.active}
-                    onClick={() => onUpdate(mule.id, { active: !mule.active })}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
+            <div className="relative p-8 flex items-center gap-5">
+              <div className="flex items-end gap-5 flex-1 min-w-0">
+                <img
+                  src={blankCharacterPng}
+                  alt={identity.name.draft || 'Mule avatar'}
+                  className="size-[132px]  object-contain shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <h2 className="mt-1 font-display text-2xl/tight font-bold  truncate">
+                    {identity.name.draft || (
+                      <span className="text-muted-foreground italic font-normal">Unnamed Mule</span>
+                    )}
+                  </h2>
+                  <div className="mt-1 flex items-center gap-3 text-xs">
+                    <span className="font-sans uppercase tracking-[0.22em] text-(--accent-secondary) translate-x-0.5">
+                      {mule.muleClass || 'no class'}
+                    </span>
+                    <span className="font-mono-nums text-(--accent-numeric)">
+                      {identity.level.displayNumber > 0
+                        ? `Lv.${identity.level.displayNumber}`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div
+                    className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
                     style={{
                       background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
                       boxShadow:
                         'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
-                      border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',
-                      color: mule.active ? 'var(--chart-4)' : 'var(--muted-foreground)',
-                      minWidth: 96,
-                      justifyContent: 'center',
-                      cursor: 'pointer',
                     }}
                   >
-                    {mule.active && (
-                      <span
-                        data-active-dot
-                        aria-hidden
-                        style={{
-                          display: 'inline-block',
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: 'var(--chart-4)',
-                        }}
-                      />
-                    )}
-                    <span>{mule.active ? 'Active' : 'Inactive'}</span>
-                  </button>
+                    <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
+                      Weekly
+                    </span>
+                    <span className="font-mono-nums text-base text-(--accent-numeric)">
+                      {potentialIncome}
+                    </span>
+                    <span className="font-display italic text-xs text-muted-foreground">mesos</span>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      data-testid="active-toggle"
+                      aria-pressed={mule.active}
+                      onClick={() => onUpdate(mule.id, { active: !mule.active })}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
+                      style={{
+                        background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
+                        boxShadow:
+                          'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',
+                        color: mule.active ? 'var(--chart-4)' : 'var(--muted-foreground)',
+                        minWidth: 96,
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {mule.active && (
+                        <span
+                          data-active-dot
+                          aria-hidden
+                          style={{
+                            display: 'inline-block',
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: 'var(--chart-4)',
+                          }}
+                        />
+                      )}
+                      <span>{mule.active ? 'Active' : 'Inactive'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
