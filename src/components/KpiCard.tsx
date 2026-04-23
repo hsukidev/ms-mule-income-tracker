@@ -1,9 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Info } from 'lucide-react';
 import { useIncome } from '../modules/income';
 import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
 import dailyCrystalPng from '../assets/daily-crystal.png';
 import type { Mule } from '../types';
@@ -191,23 +189,9 @@ function CrystalKpiStat({ icon, label, value }: { icon: string; label: string; v
 }
 
 function WeeklyCapKpiStat({ crystalTotal, cap }: { crystalTotal: number; cap: number }) {
-  const [infoOpen, setInfoOpen] = useState(false);
   return (
     <div>
-      <div className="eyebrow-plain" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        WEEKLY CAP
-        <Tooltip open={infoOpen} onOpenChange={setInfoOpen}>
-          <TooltipTrigger
-            aria-label="Weekly cap info"
-            closeOnClick={false}
-            onClick={() => setInfoOpen(true)}
-            className="inline-flex size-4 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <Info className="size-3" aria-hidden />
-          </TooltipTrigger>
-          <TooltipContent className="px-3.5 py-2.5">Monthly crystals excluded</TooltipContent>
-        </Tooltip>
-      </div>
+      <div className="eyebrow-plain">WEEKLY CAP</div>
       <div
         style={{
           color: 'var(--text, var(--foreground))',
