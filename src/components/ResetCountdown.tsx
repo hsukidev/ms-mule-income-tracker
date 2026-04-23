@@ -59,7 +59,7 @@ export function ResetCountdown() {
         >
           {formatCountdown(remaining, 'smart')}
         </TooltipTrigger>
-        <TooltipContent className="px-3.5 py-2.5">Weekly reset timer</TooltipContent>
+        <TooltipContent className="px-3.5 py-2.5">WEEKLY RESET</TooltipContent>
       </Tooltip>
     );
   }
