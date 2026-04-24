@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMatchMedia } from '../hooks/useMatchMedia';
 import { formatCountdown, nextWeeklyResetUtc } from '../utils/resetCountdown';
 
 const VERY_NARROW_QUERY = '(max-width: 319.99px)';
@@ -9,63 +10,49 @@ const VERY_NARROW_QUERY = '(max-width: 319.99px)';
 // Live Countdown Format; below sm switches to the Smart Countdown Format. Below
 // 320px the "RESET IN" label is dropped and the timer becomes a tooltip
 // trigger labelled "Weekly reset timer".
-export function ResetCountdown() {
+export function ResetCountdown({ align = 'left' }: { align?: 'left' | 'right' } = {}) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const [isVeryNarrow, setIsVeryNarrow] = useState(() => {
-    try {
-      return window.matchMedia(VERY_NARROW_QUERY).matches;
-    } catch {
-      return false;
-    }
-  });
-  useEffect(() => {
-    let mql: MediaQueryList;
-    try {
-      mql = window.matchMedia(VERY_NARROW_QUERY);
-    } catch {
-      return;
-    }
-    const update = () => setIsVeryNarrow(mql.matches);
-    update();
-    mql.addEventListener('change', update);
-    return () => mql.removeEventListener('change', update);
-  }, []);
+  const isVeryNarrow = useMatchMedia(VERY_NARROW_QUERY);
 
   const [tipOpen, setTipOpen] = useState(false);
 
   const remaining = nextWeeklyResetUtc(now) - now;
   const valueStyle = { color: 'var(--text, var(--foreground))' };
 
+  const alignStyle = align === 'right' ? { textAlign: 'right' as const } : {};
+
   if (isVeryNarrow) {
     return (
-      <Tooltip open={tipOpen} onOpenChange={setTipOpen}>
-        <TooltipTrigger
-          aria-label="Weekly reset timer"
-          closeOnClick={false}
-          onClick={() => setTipOpen(true)}
-          className="eyebrow-plain cursor-pointer"
-          style={{
-            opacity: 0.7,
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            ...valueStyle,
-          }}
-        >
-          {formatCountdown(remaining, 'smart')}
-        </TooltipTrigger>
-        <TooltipContent className="px-3.5 py-2.5">WEEKLY RESET</TooltipContent>
-      </Tooltip>
+      <div style={alignStyle}>
+        <Tooltip open={tipOpen} onOpenChange={setTipOpen}>
+          <TooltipTrigger
+            aria-label="Weekly reset timer"
+            closeOnClick={false}
+            onClick={() => setTipOpen(true)}
+            className="eyebrow-plain cursor-pointer"
+            style={{
+              opacity: 0.7,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              ...valueStyle,
+            }}
+          >
+            {formatCountdown(remaining, 'smart')}
+          </TooltipTrigger>
+          <TooltipContent className="px-3.5 py-2.5">WEEKLY RESET</TooltipContent>
+        </Tooltip>
+      </div>
     );
   }
 
   return (
-    <div className="eyebrow-plain" style={{ opacity: 0.7 }}>
+    <div className="eyebrow-plain" style={{ opacity: 0.7, ...alignStyle }}>
       RESET IN{' '}
       <span className="hidden sm:inline" style={valueStyle}>
         {formatCountdown(remaining, 'live')}

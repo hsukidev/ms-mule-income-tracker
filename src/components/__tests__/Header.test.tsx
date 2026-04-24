@@ -67,19 +67,22 @@ describe('Header WorldSelect integration', () => {
     expect(mobileTrigger).toBeTruthy();
   });
 
-  it('renders the WorldSelect between the ResetCountdown and the theme toggle', () => {
+  it('renders the WorldSelect before the theme toggle (countdown lives on the KpiCard now)', () => {
     render(<Header />, { defaultWorld: null });
     const themeToggle = screen.getByLabelText('Switch to light mode');
     const rightSide = themeToggle.parentElement!;
     const children = Array.from(rightSide.children);
-    const countdownIdx = children.findIndex((c) => /RESET IN/.test(c.textContent ?? ''));
     const worldSelectIdx = children.findIndex(
       (c) => c.getAttribute('aria-label') === 'Select world',
     );
     const themeIdx = children.indexOf(themeToggle);
-    expect(countdownIdx).toBeGreaterThanOrEqual(0);
-    expect(worldSelectIdx).toBeGreaterThan(countdownIdx);
+    expect(worldSelectIdx).toBeGreaterThanOrEqual(0);
     expect(themeIdx).toBeGreaterThan(worldSelectIdx);
+  });
+
+  it('does not render the Reset Countdown in the header (it lives on the KpiCard)', () => {
+    const { container } = render(<Header />, { defaultWorld: null });
+    expect(container.textContent ?? '').not.toMatch(/RESET IN/i);
   });
 
   it('opens the panel with two groups (HEROIC and INTERACTIVE) when the trigger is clicked', async () => {

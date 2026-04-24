@@ -1,7 +1,10 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { useIncome } from '../modules/income';
+import { useMatchMedia } from '../hooks/useMatchMedia';
 import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
+import { ResetCountdown } from './ResetCountdown';
+import { WeeklyCapRail } from './WeeklyCapRail';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
 import dailyCrystalPng from '../assets/daily-crystal.png';
 import type { Mule } from '../types';
@@ -13,6 +16,7 @@ interface KpiCardProps {
 }
 
 const NARROW_VIEWPORT_QUERY = '(max-width: 374.99px)';
+const STACK_VIEWPORT_QUERY = '(max-width: 479.99px)';
 
 export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
   const { raw: totalRaw, abbreviated, toggle } = useIncome(mules);
@@ -30,25 +34,12 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
 
   // Below 375px the abbreviated value drops decimals (e.g. "504.32M" → "504M")
   // to free up horizontal space for the "mesos" caption.
-  const [isNarrowViewport, setIsNarrowViewport] = useState(() => {
-    try {
-      return window.matchMedia(NARROW_VIEWPORT_QUERY).matches;
-    } catch {
-      return false;
-    }
-  });
-  useEffect(() => {
-    let mql: MediaQueryList;
-    try {
-      mql = window.matchMedia(NARROW_VIEWPORT_QUERY);
-    } catch {
-      return;
-    }
-    const update = () => setIsNarrowViewport(mql.matches);
-    update();
-    mql.addEventListener('change', update);
-    return () => mql.removeEventListener('change', update);
-  }, []);
+  const isNarrowViewport = useMatchMedia(NARROW_VIEWPORT_QUERY);
+  const isStackedLayout = useMatchMedia(STACK_VIEWPORT_QUERY);
+
+  const statRowStyle: React.CSSProperties = isStackedLayout
+    ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px', marginTop: 18 }
+    : { display: 'flex', gap: 28, marginTop: 18 };
 
   // The toggle is a global format preference — it always flips on click.
   // Locally, if the unabbreviated value would push "mesos" past the row's
@@ -82,9 +73,21 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
       className="panel panel-glow relative overflow-hidden h-full"
       style={{ padding: '24px' }}
     >
-      <div className="eyebrow">
-        <span className="dot" aria-hidden />
-        EXPECTED WEEKLY INCOME
+      <div
+        data-testid="kpi-eyebrow-row"
+        style={{
+          display: 'flex',
+          flexDirection: isStackedLayout ? 'column' : 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: isStackedLayout ? 6 : 12,
+        }}
+      >
+        <div className="eyebrow">
+          <span className="dot" aria-hidden />
+          EXPECTED WEEKLY INCOME
+        </div>
+        <ResetCountdown align={isStackedLayout ? 'left' : 'right'} />
       </div>
       <div
         ref={rowRef}
@@ -133,12 +136,14 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           <span style={{ fontStyle: 'italic', fontFamily: 'monospace' }}>mesos</span>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 28, marginTop: 18 }}>
+      <div data-testid="kpi-stat-row" style={statRowStyle}>
         <KpiStat label="MULES" value={String(mules.length)} />
         <KpiStat label="ACTIVE" value={String(activeMuleCount)} accent />
         <CrystalKpiStat icon={weeklyCrystalPng} label="WEEKLY" value={String(weeklyTotal)} />
         <CrystalKpiStat icon={dailyCrystalPng} label="DAILY" value={String(dailyTotal)} />
-        <WeeklyCapKpiStat crystalTotal={weeklyTotal + dailyTotal} cap={WORLD_WEEKLY_CRYSTAL_CAP} />
+      </div>
+      <div style={{ marginTop: 20 }}>
+        <WeeklyCapRail crystalTotal={weeklyTotal + dailyTotal} cap={WORLD_WEEKLY_CRYSTAL_CAP} />
       </div>
     </div>
   );
@@ -183,27 +188,6 @@ function CrystalKpiStat({ icon, label, value }: { icon: string; label: string; v
         }}
       >
         {value}
-      </div>
-    </div>
-  );
-}
-
-function WeeklyCapKpiStat({ crystalTotal, cap }: { crystalTotal: number; cap: number }) {
-  return (
-    <div>
-      <div className="eyebrow-plain">WEEKLY CAP</div>
-      <div
-        style={{
-          color: 'var(--text, var(--foreground))',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 22,
-          marginTop: 4,
-        }}
-      >
-        {crystalTotal}
-        <span style={{ color: 'var(--muted-raw, var(--muted-foreground))', fontSize: 16 }}>
-          /{cap}
-        </span>
       </div>
     </div>
   );

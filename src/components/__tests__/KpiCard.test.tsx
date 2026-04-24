@@ -1,8 +1,37 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, screen, within, fireEvent } from '@/test/test-utils';
 import { KpiCard } from '../KpiCard';
 import type { Mule } from '../../types';
 import { bosses } from '../../data/bosses';
+
+function mockNarrowViewport(maxPx: number) {
+  const mock = vi.fn().mockImplementation((query: string) => {
+    const m = /max-width:\s*([\d.]+)px/.exec(query);
+    const queryMaxPx = m ? Number(m[1]) : Infinity;
+    return {
+      matches: maxPx <= queryMaxPx,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    };
+  });
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: mock,
+  });
+}
+
+function restoreMatchMedia() {
+  // Delete back to jsdom default (matchMedia missing → KpiCard's try/catch
+  // returns false, which is the "wide" layout).
+  // @ts-expect-error - we intentionally remove the property
+  delete window.matchMedia;
+}
 
 const HARD_LUCID = `${bosses.find((b) => b.family === 'lucid')!.id}:hard:weekly`;
 
@@ -78,5 +107,49 @@ describe('KpiCard', () => {
     ];
     render(<KpiCard mules={mules} />);
     expect(activeStatValue()).toBe('1');
+  });
+
+  describe('hybrid layout', () => {
+    it('renders the Reset Countdown inside the income card (top-right)', () => {
+      render(<KpiCard mules={[mule]} />);
+      const card = screen.getByTestId('income-card');
+      expect(within(card).getByText(/RESET IN/i)).toBeTruthy();
+    });
+
+    it('renders the WEEKLY CAP rail at the bottom with a progressbar role', () => {
+      render(<KpiCard mules={[mule]} />);
+      const card = screen.getByTestId('income-card');
+      expect(within(card).getByRole('progressbar')).toBeTruthy();
+      expect(within(card).getByText('WEEKLY CAP')).toBeTruthy();
+    });
+
+    describe('narrow viewport (<480px)', () => {
+      afterEach(() => {
+        restoreMatchMedia();
+      });
+
+      it('uses a 2x2 grid for the stat row', () => {
+        mockNarrowViewport(400);
+        render(<KpiCard mules={[mule]} />);
+        const card = screen.getByTestId('income-card');
+        const statRow = within(card).getByTestId('kpi-stat-row');
+        expect(statRow.style.display).toBe('grid');
+      });
+
+      it('stacks the eyebrow row (countdown drops below the title)', () => {
+        mockNarrowViewport(400);
+        render(<KpiCard mules={[mule]} />);
+        const card = screen.getByTestId('income-card');
+        const eyebrowRow = within(card).getByTestId('kpi-eyebrow-row');
+        expect(eyebrowRow.style.flexDirection).toBe('column');
+      });
+
+      it('keeps the desktop flex layout when matchMedia is unavailable', () => {
+        render(<KpiCard mules={[mule]} />);
+        const card = screen.getByTestId('income-card');
+        const statRow = within(card).getByTestId('kpi-stat-row');
+        expect(statRow.style.display).toBe('flex');
+      });
+    });
   });
 });
