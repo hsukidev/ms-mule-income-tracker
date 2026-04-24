@@ -23,6 +23,10 @@ interface MuleCharacterCardProps {
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
 // `color-mix` to get alpha variants without introducing #e05040 literals.
 const DESTRUCTIVE = 'var(--destructive)';
+
+// Shared press/drag scale — the in-place card on touch-hold and the drag
+// overlay must use the same value so the engagement transition is seamless.
+const PRESS_SCALE = 'scale(1.04)';
 const destructiveAlpha = (pct: number) =>
   `color-mix(in oklab, var(--destructive) ${pct}%, transparent)`;
 
@@ -162,7 +166,7 @@ export const MuleCharacterCardOverlay = memo(function MuleCharacterCardOverlay({
         minHeight: 'var(--roster-card-min-height, 260px)',
         display: 'flex',
         flexDirection: 'column',
-        transform: 'translateY(-2px)',
+        transform: PRESS_SCALE,
         boxShadow: '0 12px 40px -8px var(--accent-glow), 0 0 0 1px var(--border)',
         opacity: mule.active ? 1 : 0.55,
       }}
@@ -239,7 +243,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
 
   // Press-and-hold wins over hover-lift: touch start scales the card to 1.04
   // for 200ms, finishing just before the 250ms TouchSensor engages drag.
-  const panelTransform = isPressed ? 'scale(1.04)' : hoverActive ? 'translateY(-2px)' : undefined;
+  const panelTransform = isPressed ? PRESS_SCALE : hoverActive ? 'translateY(-2px)' : undefined;
 
   const handlePressStart = () => setIsPressed(true);
   const handlePressEnd = () => setIsPressed(false);

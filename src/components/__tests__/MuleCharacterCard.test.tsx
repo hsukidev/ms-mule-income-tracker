@@ -166,6 +166,14 @@ describe('MuleCharacterCard', () => {
     expect(overlay.style.opacity).toBe('0.55');
   });
 
+  it('renders the drag overlay scaled up to continue the press-engagement feel', () => {
+    // Must match the in-place card's press-scale so the handoff at engagement
+    // (in-place card → opacity: 0, overlay takes over) has no visual pop.
+    const { container } = render(<MuleCharacterCardOverlay mule={baseMule} />);
+    const overlay = container.querySelector('.panel') as HTMLElement;
+    expect(overlay.style.transform).toBe('scale(1.04)');
+  });
+
   describe('trash icon and delete popover', () => {
     it('shows trash icon on card hover', () => {
       const { container } = renderCard();
