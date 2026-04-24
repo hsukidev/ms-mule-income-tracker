@@ -39,6 +39,7 @@ export function Toaster() {
       }}
       style={
         {
+          '--width': '380px',
           '--normal-bg': 'var(--surface)',
           '--normal-text': 'var(--foreground)',
           '--normal-border': 'transparent',

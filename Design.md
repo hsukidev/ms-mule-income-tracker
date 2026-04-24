@@ -337,7 +337,7 @@ Bottom-right notification stack using [sonner](https://sonner.emilkowal.ski/) `2
 - **Description** — 12px, `text-muted-foreground`, leading 4. Single-delete: `"{Name} removed from roster"` (falls back to `"Mule removed from roster"` when the name is empty). Bulk: `"{N} mule(s) removed"` with correct pluralization.
 - **Action button (Undo)** — JetBrains Mono, 11px, weight 600, `letter-spacing: 0.12em`, uppercase, `color: var(--accent)`, transparent fill, `border-radius: 4px`, `padding: 4px 8px`. Hover: `background: var(--accent-soft)`. Mirrors the design's `.t-link`.
 - **No close (X) button** — the 5-second auto-dismiss + Undo action is the entire UX.
-- **Dimensions & position** — `min-width: 320px; max-width: 380px`. Anchored `bottom-right`, `offset: 20`, `gap: 10` between stacked toasts. Auto-dismiss `duration: 5000ms` (long enough to reach for Undo).
+- **Dimensions & position** — Desktop (≥600px viewport): `--width: 380px` (set on `<Toaster>`, overrides sonner's 356px default). Below 600px: sonner's built-in responsive rule kicks in and sizes each toast to `calc(100% - mobile-offset * 2)` — we deliberately don't set a `min-width` on the shell so narrow phones don't force the toast past the right edge. Anchored `bottom-right`, `offset: 20`, `gap: 10` between stacked toasts. Auto-dismiss `duration: 5000ms` (long enough to reach for Undo).
 
 **Why the styling lives in `index.css`, not Tailwind classNames**
 

@@ -721,8 +721,10 @@ html[data-theme-swap] *::after {
   border: 1px solid var(--border);
   border-left: 3px solid var(--success);
   padding: 11px 13px 11px 11px;
-  min-width: 320px;
-  max-width: 380px;
+  /* No min-width: below 600px sonner forces `width: calc(100% - offsets)`
+   * so each viewport fits the toast exactly. A min-width here would push
+   * the toast past the right edge on phones. Desktop width is governed by
+   * sonner's --width variable (set on <Toaster>) instead. */
   background: var(--surface);
   color: var(--foreground);
   border-radius: var(--radius);
