@@ -6,8 +6,8 @@ describe('sanitizeMuleName', () => {
     expect(sanitizeMuleName('Hero')).toBe('Hero');
   });
 
-  it('strips digits', () => {
-    expect(sanitizeMuleName('Hero1')).toBe('Hero');
+  it('preserves digits', () => {
+    expect(sanitizeMuleName('Hero1')).toBe('Hero1');
   });
 
   it('strips symbols and whitespace', () => {
@@ -18,7 +18,7 @@ describe('sanitizeMuleName', () => {
     expect(sanitizeMuleName('Abcdefghijklmn')).toBe('Abcdefghijkl');
   });
 
-  it('strips non-letters before applying the cap', () => {
-    expect(sanitizeMuleName('H1ero@WorldTooLong')).toBe('HeroWorldToo');
+  it('strips symbols before applying the cap', () => {
+    expect(sanitizeMuleName('H1ero@WorldTooLong')).toBe('H1eroWorldTo');
   });
 });
