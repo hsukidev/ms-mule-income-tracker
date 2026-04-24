@@ -156,3 +156,37 @@ describe('getBossById', () => {
     }
   });
 });
+
+/**
+ * Structural invariants for the **World Pricing** shape.
+ *
+ * Every `(boss, tier)` pair must declare both Heroic and Interactive crystal
+ * values, and Interactive must never exceed Heroic — a gameplay truth
+ * (Interactive worlds pay less than Heroic for boss crystals). The canonical
+ * 0.2 ratio is deliberately **not** asserted: Extreme Kaling already deviates
+ * (a 250 000-meso gap on a 6 B-meso crystal), and future bosses may ship
+ * with their own non-uniform Interactive pricing.
+ */
+describe('bosses.ts — world pricing invariants', () => {
+  it('every boss-tier has both Heroic and Interactive crystal values > 0', () => {
+    for (const boss of bosses) {
+      for (const diff of boss.difficulty) {
+        const { Heroic, Interactive } = diff.crystalValue;
+        expect(Heroic, `${boss.name} ${diff.tier} Heroic`).toBeGreaterThan(0);
+        expect(Interactive, `${boss.name} ${diff.tier} Interactive`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('Heroic crystal value is never less than Interactive for any boss-tier', () => {
+    for (const boss of bosses) {
+      for (const diff of boss.difficulty) {
+        const { Heroic, Interactive } = diff.crystalValue;
+        expect(
+          Heroic,
+          `${boss.name} ${diff.tier} — Heroic (${Heroic}) must be >= Interactive (${Interactive})`,
+        ).toBeGreaterThanOrEqual(Interactive);
+      }
+    }
+  });
+});

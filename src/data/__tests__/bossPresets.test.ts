@@ -27,7 +27,9 @@ function buildKey(
 }
 
 function pickHardest(boss: Boss): BossDifficulty {
-  return boss.difficulty.reduce((best, d) => (d.crystalValue > best.crystalValue ? d : best));
+  return boss.difficulty.reduce((best, d) =>
+    d.crystalValue.Heroic > best.crystalValue.Heroic ? d : best,
+  );
 }
 
 const CRA_FAMILIES = [

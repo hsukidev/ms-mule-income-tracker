@@ -364,14 +364,16 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     const diff = getBossById(VELLUM)!.difficulty.find((d) => d.tier === 'normal')!;
     expect(diff.cadence).toBe('daily');
     const slate = MuleBossSlate.from([key(VELLUM, 'normal')]);
-    expect(slate.totalCrystalValue()).toBe(diff.crystalValue * 7);
+    expect(slate.totalCrystalValue()).toBe(diff.crystalValue.Heroic * 7);
   });
 
   it('sums a mixed daily + weekly slate', () => {
     const weeklyDiff = getBossById(LUCID)!.difficulty.find((d) => d.tier === 'hard')!;
     const dailyDiff = getBossById(VELLUM)!.difficulty.find((d) => d.tier === 'normal')!;
     const slate = MuleBossSlate.from([key(LUCID, 'hard'), key(VELLUM, 'normal')]);
-    expect(slate.totalCrystalValue()).toBe(weeklyDiff.crystalValue + dailyDiff.crystalValue * 7);
+    expect(slate.totalCrystalValue()).toBe(
+      weeklyDiff.crystalValue.Heroic + dailyDiff.crystalValue.Heroic * 7,
+    );
   });
 
   it('divides a Weekly Cadence key by the family Party Size (Computed Value)', () => {
@@ -387,7 +389,7 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     expect(diff.cadence).toBe('daily');
     const slate = MuleBossSlate.from([key(VELLUM, 'normal')]);
     const vellumFamily = getBossById(VELLUM)!.family;
-    expect(slate.totalCrystalValue({ [vellumFamily]: 3 })).toBe(diff.crystalValue * 7);
+    expect(slate.totalCrystalValue({ [vellumFamily]: 3 })).toBe(diff.crystalValue.Heroic * 7);
   });
 
   /**
@@ -400,7 +402,7 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     for (const b of bosses) {
       const diff = b.difficulty.find((d) => d.cadence === 'weekly');
       if (!diff) continue;
-      picks.push({ slateKey: key(b.id, diff.tier), value: diff.crystalValue });
+      picks.push({ slateKey: key(b.id, diff.tier), value: diff.crystalValue.Heroic });
       if (picks.length === count) break;
     }
     if (picks.length < count) {
@@ -436,6 +438,33 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     expect(slate.weeklyCount).toBe(16);
     const highSum = highs.reduce((s, p) => s + p.value, 0);
     expect(slate.totalCrystalValue()).toBe(highSum + TIED_VALUE);
+  });
+
+  it('defaults to Heroic world group when no worldGroup is supplied', () => {
+    // Hard Lucid Heroic = 504M. Omitting the second argument to `from` must
+    // behave exactly like passing 'Heroic' — the pre-World-Pricing default.
+    const slate = MuleBossSlate.from([key(LUCID, 'hard')]);
+    expect(slate.totalCrystalValue()).toBe(504_000_000);
+  });
+
+  it('uses Interactive crystal values when the slate is built with worldGroup: "Interactive"', () => {
+    // Hard Lucid Interactive = 100.8M (Heroic 504M × 0.2).
+    const slate = MuleBossSlate.from([key(LUCID, 'hard')], 'Interactive');
+    expect(slate.totalCrystalValue()).toBe(100_800_000);
+  });
+
+  it('uses Heroic crystal values when the slate is built with worldGroup: "Heroic"', () => {
+    // Explicit 'Heroic' matches the default behaviour.
+    const slate = MuleBossSlate.from([key(LUCID, 'hard')], 'Heroic');
+    expect(slate.totalCrystalValue()).toBe(504_000_000);
+  });
+
+  it('Extreme Kaling honours its non-5x Interactive ratio (1.20525B, not 1.2052B)', () => {
+    // The one boss in the current matrix where Interactive != Heroic/5.
+    // Heroic 6_026_000_000; Interactive 1_205_250_000.
+    const KALING = idForFamily('kaling');
+    const slate = MuleBossSlate.from([key(KALING, 'extreme')], 'Interactive');
+    expect(slate.totalCrystalValue()).toBe(1_205_250_000);
   });
 });
 

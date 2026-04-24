@@ -76,9 +76,16 @@ function buildSelectionKey(bossId: string, tier: BossTier, cadence: BossCadence)
   return `${bossId}:${tier}:${cadence}`;
 }
 
-/** Hardest-Tier difficulty — biggest `crystalValue` wins, tier name ignored. */
+/**
+ * Hardest-Tier difficulty — biggest `crystalValue` wins, tier name ignored.
+ * Compared on the Heroic world price: the Heroic/Interactive ordering is
+ * monotonic for every boss in the matrix, so either world yields the same
+ * winner.
+ */
 function pickHardest(boss: Boss): BossDifficulty {
-  return boss.difficulty.reduce((best, d) => (d.crystalValue > best.crystalValue ? d : best));
+  return boss.difficulty.reduce((best, d) =>
+    d.crystalValue.Heroic > best.crystalValue.Heroic ? d : best,
+  );
 }
 
 /**

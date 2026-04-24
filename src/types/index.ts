@@ -1,4 +1,4 @@
-import type { WorldId } from '../data/worlds';
+import type { WorldGroup, WorldId } from '../data/worlds';
 
 export type BossTier = 'easy' | 'normal' | 'hard' | 'chaos' | 'extreme';
 
@@ -15,7 +15,14 @@ export type BossCadence = 'daily' | 'weekly' | 'monthly';
 
 export interface BossDifficulty {
   tier: BossTier;
-  crystalValue: number;
+  /**
+   * Per-world-group crystal sale price (in meso). Heroic worlds pay the
+   * headline price; Interactive worlds pay ~1/5 across most bosses, but the
+   * ratio is **not** guaranteed per boss — Extreme Kaling already deviates,
+   * and future bosses may ship with their own non-uniform Interactive price.
+   * Both values are authoritative and stored independently.
+   */
+  crystalValue: Record<WorldGroup, number>;
   cadence: BossCadence;
 }
 

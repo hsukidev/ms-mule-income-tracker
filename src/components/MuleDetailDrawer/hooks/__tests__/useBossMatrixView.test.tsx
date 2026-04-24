@@ -1040,4 +1040,53 @@ describe('useBossMatrixView', () => {
       expect(onUpdate).not.toHaveBeenCalled();
     });
   });
+
+  describe("World Pricing — cells reflect the edited mule's world group", () => {
+    it('shows Heroic prices when worldId is unset', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          partySizes: undefined,
+          onUpdate: vi.fn(),
+        }),
+      );
+
+      const lucidFamily = result.current.visibleBosses.find((f) => f.family === 'lucid')!;
+      const hardLucid = lucidFamily.rows.find((r) => r.tier === 'hard')!;
+      expect(hardLucid.crystalValue).toBe(504_000_000); // Heroic
+    });
+
+    it('shows Heroic prices when worldId is a Heroic world', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          partySizes: undefined,
+          worldId: 'heroic-kronos',
+          onUpdate: vi.fn(),
+        }),
+      );
+
+      const lucidFamily = result.current.visibleBosses.find((f) => f.family === 'lucid')!;
+      const hardLucid = lucidFamily.rows.find((r) => r.tier === 'hard')!;
+      expect(hardLucid.crystalValue).toBe(504_000_000);
+    });
+
+    it('shows Interactive prices when worldId is an Interactive world', () => {
+      const { result } = renderHook(() =>
+        useBossMatrixView({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          partySizes: undefined,
+          worldId: 'interactive-scania',
+          onUpdate: vi.fn(),
+        }),
+      );
+
+      const lucidFamily = result.current.visibleBosses.find((f) => f.family === 'lucid')!;
+      const hardLucid = lucidFamily.rows.find((r) => r.tier === 'hard')!;
+      expect(hardLucid.crystalValue).toBe(100_800_000); // Interactive (Heroic 504M × 0.2)
+    });
+  });
 });

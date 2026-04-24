@@ -1,12 +1,12 @@
 /**
- * World data module — the single source of truth for the six World options
- * the header World Select offers.
+ * World data module — the single source of truth for the World options the
+ * header World Select offers.
  *
  * MapleStory GMS partitions worlds into two World Groups: Heroic (Kronos,
- * Hyperion, Challenger World (Heroic)) and Interactive (Scania, Bera,
- * Challenger World (Interactive)). Challenger World exists in both groups
- * and is disambiguated at the label level — `CW (Heroic)` / `CW (Interactive)`
- * — while its `WorldId` keeps the two entries distinct.
+ * Hyperion, Solis, Challenger World (Heroic)) and Interactive (Scania, Bera,
+ * Luna, Challenger World (Interactive)). Challenger World exists in both
+ * groups and is disambiguated at the label level — `CW (Heroic)` /
+ * `CW (Interactive)` — while its `WorldId` keeps the two entries distinct.
  *
  * See issue #194 §Approach for the locked shape.
  */
@@ -16,9 +16,11 @@ export type WorldGroup = 'Heroic' | 'Interactive';
 export type WorldId =
   | 'heroic-kronos'
   | 'heroic-hyperion'
+  | 'heroic-solis'
   | 'heroic-challenger'
   | 'interactive-scania'
   | 'interactive-bera'
+  | 'interactive-luna'
   | 'interactive-challenger';
 
 export interface World {
@@ -30,9 +32,11 @@ export interface World {
 export const WORLDS: readonly World[] = [
   { id: 'heroic-kronos', label: 'Kronos', group: 'Heroic' },
   { id: 'heroic-hyperion', label: 'Hyperion', group: 'Heroic' },
+  { id: 'heroic-solis', label: 'Solis', group: 'Heroic' },
   { id: 'heroic-challenger', label: 'CW (Heroic)', group: 'Heroic' },
   { id: 'interactive-scania', label: 'Scania', group: 'Interactive' },
   { id: 'interactive-bera', label: 'Bera', group: 'Interactive' },
+  { id: 'interactive-luna', label: 'Luna', group: 'Interactive' },
   { id: 'interactive-challenger', label: 'CW (Interactive)', group: 'Interactive' },
 ];
 
@@ -54,4 +58,22 @@ export function findWorld(id: string | null): World | null {
 /** Narrows an unknown value to `WorldId` against the canonical set. */
 export function isWorldId(value: unknown): value is WorldId {
   return typeof value === 'string' && WORLD_IDS.has(value as WorldId);
+}
+
+/**
+ * Fallback **World Group** when a source has no `worldId` (or an
+ * unrecognized one). Heroic preserves pre-World-Pricing numbers: the app
+ * behaved Heroic-only before World Pricing shipped, so mules predating the
+ * World Select feature keep identical income until the user assigns a
+ * world explicitly.
+ */
+export const FALLBACK_WORLD_GROUP: WorldGroup = 'Heroic';
+
+/**
+ * Resolve any `worldId` value — valid `WorldId`, stale string, `null`, or
+ * `undefined` — to its **World Group**. Unset / unrecognized values fall
+ * back to `FALLBACK_WORLD_GROUP`.
+ */
+export function resolveWorldGroup(worldId: string | null | undefined): WorldGroup {
+  return findWorld(worldId ?? null)?.group ?? FALLBACK_WORLD_GROUP;
 }

@@ -22,8 +22,16 @@ export const bosses: Boss[] = [
     name: 'Black Mage',
     family: 'black-mage',
     difficulty: [
-      { tier: 'hard', crystalValue: 4500000000, cadence: 'monthly' },
-      { tier: 'extreme', crystalValue: 18000000000, cadence: 'monthly' },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 4500000000, Interactive: 900000000 },
+        cadence: 'monthly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 18000000000, Interactive: 3600000000 },
+        cadence: 'monthly',
+      },
     ],
   },
   {
@@ -31,10 +39,26 @@ export const bosses: Boss[] = [
     name: 'Kaling',
     family: 'kaling',
     difficulty: [
-      { tier: 'easy', crystalValue: 1031250000, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 1506500000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 2990000000, cadence: 'weekly' },
-      { tier: 'extreme', crystalValue: 6026000000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 1031250000, Interactive: 206250000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 1506500000, Interactive: 301300000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 2990000000, Interactive: 598000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 6026000000, Interactive: 1205250000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -42,10 +66,26 @@ export const bosses: Boss[] = [
     name: 'First Adversary',
     family: 'first-adversary',
     difficulty: [
-      { tier: 'easy', crystalValue: 985000000, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 1365000000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 2940000000, cadence: 'weekly' },
-      { tier: 'extreme', crystalValue: 5880000000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 985000000, Interactive: 197000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 1365000000, Interactive: 273000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 2940000000, Interactive: 588000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 5880000000, Interactive: 1176000000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -53,10 +93,26 @@ export const bosses: Boss[] = [
     name: 'Kalos',
     family: 'kalos-the-guardian',
     difficulty: [
-      { tier: 'easy', crystalValue: 937500000, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 1300000000, cadence: 'weekly' },
-      { tier: 'chaos', crystalValue: 2600000000, cadence: 'weekly' },
-      { tier: 'extreme', crystalValue: 5200000000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 937500000, Interactive: 187500000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 1300000000, Interactive: 260000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 2600000000, Interactive: 520000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 5200000000, Interactive: 1040000000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -64,9 +120,21 @@ export const bosses: Boss[] = [
     name: 'Chosen Seren',
     family: 'chosen-seren',
     difficulty: [
-      { tier: 'normal', crystalValue: 889021875, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 1096562500, cadence: 'weekly' },
-      { tier: 'extreme', crystalValue: 4235000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 889021875, Interactive: 177804375 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 1096562500, Interactive: 219312500 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 4235000000, Interactive: 847000000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -74,8 +142,16 @@ export const bosses: Boss[] = [
     name: 'Baldrix',
     family: 'baldrix',
     difficulty: [
-      { tier: 'normal', crystalValue: 2800000000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 4200000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 2800000000, Interactive: 560000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 4200000000, Interactive: 840000000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -83,8 +159,16 @@ export const bosses: Boss[] = [
     name: 'Limbo',
     family: 'limbo',
     difficulty: [
-      { tier: 'normal', crystalValue: 2100000000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 3745000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 2100000000, Interactive: 420000000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 3745000000, Interactive: 749000000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -92,9 +176,21 @@ export const bosses: Boss[] = [
     name: 'Lotus',
     family: 'lotus',
     difficulty: [
-      { tier: 'normal', crystalValue: 162562500, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 444675000, cadence: 'weekly' },
-      { tier: 'extreme', crystalValue: 1397500000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 162562500, Interactive: 32512500 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 444675000, Interactive: 88935000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'extreme',
+        crystalValue: { Heroic: 1397500000, Interactive: 279500000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -102,8 +198,16 @@ export const bosses: Boss[] = [
     name: 'Verus Hilla',
     family: 'verus-hilla',
     difficulty: [
-      { tier: 'normal', crystalValue: 581880000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 762105000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 581880000, Interactive: 116376000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 762105000, Interactive: 152421000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -111,8 +215,16 @@ export const bosses: Boss[] = [
     name: 'Darknell',
     family: 'darknell',
     difficulty: [
-      { tier: 'normal', crystalValue: 316875000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 667920000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 316875000, Interactive: 63375000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 667920000, Interactive: 133584000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -120,9 +232,21 @@ export const bosses: Boss[] = [
     name: 'Will',
     family: 'will',
     difficulty: [
-      { tier: 'easy', crystalValue: 246744750, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 279075000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 621810000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 246744750, Interactive: 49348950 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 279075000, Interactive: 55815000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 621810000, Interactive: 124362000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -130,8 +254,16 @@ export const bosses: Boss[] = [
     name: 'Slime',
     family: 'guardian-angel-slime',
     difficulty: [
-      { tier: 'normal', crystalValue: 231673500, cadence: 'weekly' },
-      { tier: 'chaos', crystalValue: 600578125, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 231673500, Interactive: 46334700 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 600578125, Interactive: 120115625 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -139,8 +271,16 @@ export const bosses: Boss[] = [
     name: 'Gloom',
     family: 'gloom',
     difficulty: [
-      { tier: 'normal', crystalValue: 297675000, cadence: 'weekly' },
-      { tier: 'chaos', crystalValue: 563945000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 297675000, Interactive: 59535000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 563945000, Interactive: 112789000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -148,9 +288,21 @@ export const bosses: Boss[] = [
     name: 'Lucid',
     family: 'lucid',
     difficulty: [
-      { tier: 'easy', crystalValue: 237009375, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 253828125, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 504000000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 237009375, Interactive: 47401875 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 253828125, Interactive: 50765625 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 504000000, Interactive: 100800000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -158,24 +310,50 @@ export const bosses: Boss[] = [
     name: 'Damien',
     family: 'damien',
     difficulty: [
-      { tier: 'normal', crystalValue: 169000000, cadence: 'weekly' },
-      { tier: 'hard', crystalValue: 421875000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 169000000, Interactive: 33800000 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 421875000, Interactive: 84375000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
     id: '8004e8a0-b748-42f7-81f9-72635aabb9dd',
     name: 'Akechi',
     family: 'akechi-mitsuhide',
-    difficulty: [{ tier: 'normal', crystalValue: 144000000, cadence: 'weekly' }],
+    difficulty: [
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 144000000, Interactive: 28800000 },
+        cadence: 'weekly',
+      },
+    ],
   },
   {
     id: '12f43424-b32f-4874-903f-e253b65026f5',
     name: 'Papulatus',
     family: 'papulatus',
     difficulty: [
-      { tier: 'easy', crystalValue: 3422500, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 13322500, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 132250000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 3422500, Interactive: 684500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 13322500, Interactive: 2664500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 132250000, Interactive: 26450000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -183,8 +361,16 @@ export const bosses: Boss[] = [
     name: 'Vellum',
     family: 'vellum',
     difficulty: [
-      { tier: 'normal', crystalValue: 4840000, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 105062500, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4840000, Interactive: 968000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 105062500, Interactive: 21012500 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -192,25 +378,55 @@ export const bosses: Boss[] = [
     name: 'Magnus',
     family: 'magnus',
     difficulty: [
-      { tier: 'easy', crystalValue: 3610000, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 12960000, cadence: 'daily' },
-      { tier: 'hard', crystalValue: 95062500, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 3610000, Interactive: 722000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 12960000, Interactive: 2592000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 95062500, Interactive: 19012500 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
     id: '722b4793-d736-4951-8c2f-a281c1e702d1',
     name: 'Princess No',
     family: 'princess-no',
-    difficulty: [{ tier: 'normal', crystalValue: 81000000, cadence: 'weekly' }],
+    difficulty: [
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 81000000, Interactive: 16200000 },
+        cadence: 'weekly',
+      },
+    ],
   },
   {
     id: '03efcbe1-d6e2-4b48-90ff-337fc6a644ba',
     name: 'Zakum',
     family: 'zakum',
     difficulty: [
-      { tier: 'easy', crystalValue: 1000000, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 3062500, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 81000000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 1000000, Interactive: 200000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 3062500, Interactive: 612500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 81000000, Interactive: 16200000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -218,8 +434,16 @@ export const bosses: Boss[] = [
     name: 'Pierre',
     family: 'pierre',
     difficulty: [
-      { tier: 'normal', crystalValue: 4840000, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 81000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4840000, Interactive: 968000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 81000000, Interactive: 16200000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -227,8 +451,16 @@ export const bosses: Boss[] = [
     name: 'Von Bon',
     family: 'von-bon',
     difficulty: [
-      { tier: 'normal', crystalValue: 4840000, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 81000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4840000, Interactive: 968000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 81000000, Interactive: 16200000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -236,8 +468,16 @@ export const bosses: Boss[] = [
     name: 'Crimson Queen',
     family: 'crimson-queen',
     difficulty: [
-      { tier: 'normal', crystalValue: 4840000, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 81000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4840000, Interactive: 968000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 81000000, Interactive: 16200000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -245,8 +485,16 @@ export const bosses: Boss[] = [
     name: 'Cygnus',
     family: 'cygnus',
     difficulty: [
-      { tier: 'easy', crystalValue: 45562500, cadence: 'weekly' },
-      { tier: 'normal', crystalValue: 72250000, cadence: 'weekly' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 45562500, Interactive: 9112500 },
+        cadence: 'weekly',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 72250000, Interactive: 14450000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -254,8 +502,16 @@ export const bosses: Boss[] = [
     name: 'Pink Bean',
     family: 'pink-bean',
     difficulty: [
-      { tier: 'normal', crystalValue: 7022500, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 64000000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 7022500, Interactive: 1404500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 64000000, Interactive: 12800000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -263,8 +519,16 @@ export const bosses: Boss[] = [
     name: 'Hilla',
     family: 'hilla',
     difficulty: [
-      { tier: 'normal', crystalValue: 4000000, cadence: 'daily' },
-      { tier: 'hard', crystalValue: 56250000, cadence: 'weekly' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4000000, Interactive: 800000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 56250000, Interactive: 11250000 },
+        cadence: 'weekly',
+      },
     ],
   },
   {
@@ -272,8 +536,16 @@ export const bosses: Boss[] = [
     name: 'Ranmaru',
     family: 'mori-ranmaru',
     difficulty: [
-      { tier: 'normal', crystalValue: 4202500, cadence: 'daily' },
-      { tier: 'hard', crystalValue: 13322500, cadence: 'daily' },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 4202500, Interactive: 840500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 13322500, Interactive: 2664500 },
+        cadence: 'daily',
+      },
     ],
   },
   {
@@ -281,8 +553,16 @@ export const bosses: Boss[] = [
     name: 'Arkarium',
     family: 'arkarium',
     difficulty: [
-      { tier: 'easy', crystalValue: 5760000, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 12602500, cadence: 'daily' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 5760000, Interactive: 1152000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 12602500, Interactive: 2520500 },
+        cadence: 'daily',
+      },
     ],
   },
   {
@@ -290,9 +570,21 @@ export const bosses: Boss[] = [
     name: 'Von Leon',
     family: 'von-leon',
     difficulty: [
-      { tier: 'easy', crystalValue: 5290000, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 7290000, cadence: 'daily' },
-      { tier: 'hard', crystalValue: 12250000, cadence: 'daily' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 5290000, Interactive: 1058000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 7290000, Interactive: 1458000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'hard',
+        crystalValue: { Heroic: 12250000, Interactive: 2450000 },
+        cadence: 'daily',
+      },
     ],
   },
   {
@@ -300,16 +592,34 @@ export const bosses: Boss[] = [
     name: 'Horntail',
     family: 'horntail',
     difficulty: [
-      { tier: 'easy', crystalValue: 4410000, cadence: 'daily' },
-      { tier: 'normal', crystalValue: 5062500, cadence: 'daily' },
-      { tier: 'chaos', crystalValue: 6760000, cadence: 'daily' },
+      {
+        tier: 'easy',
+        crystalValue: { Heroic: 4410000, Interactive: 882000 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 5062500, Interactive: 1012500 },
+        cadence: 'daily',
+      },
+      {
+        tier: 'chaos',
+        crystalValue: { Heroic: 6760000, Interactive: 1352000 },
+        cadence: 'daily',
+      },
     ],
   },
   {
     id: 'c91e5d28-1211-46c4-a4fc-4dd57e0d2801',
     name: 'OMNI-CLN',
     family: 'omni-cln',
-    difficulty: [{ tier: 'normal', crystalValue: 6250000, cadence: 'daily' }],
+    difficulty: [
+      {
+        tier: 'normal',
+        crystalValue: { Heroic: 6250000, Interactive: 1250000 },
+        cadence: 'daily',
+      },
+    ],
   },
 ];
 

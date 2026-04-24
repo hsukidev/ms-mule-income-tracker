@@ -47,6 +47,7 @@ export function MuleDetailDrawer({
     muleId: mule?.id ?? null,
     selectedBosses: mule?.selectedBosses ?? [],
     partySizes: mule?.partySizes,
+    worldId: mule?.worldId,
     onUpdate,
   });
   const del = useDeleteConfirm({

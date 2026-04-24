@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate, type SlateFamily } from '../../../data/muleBossSlate';
 import { conform, isPresetActive, type CanonicalPresetKey } from '../../../data/bossPresets';
+import { resolveWorldGroup } from '../../../data/worlds';
 import type { CadenceFilter, PresetKey } from '../../MatrixToolbar';
 
 const CANONICAL_PRESETS: readonly CanonicalPresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
@@ -50,11 +51,18 @@ export function useBossMatrixView({
   muleId,
   selectedBosses,
   partySizes,
+  worldId,
   onUpdate,
 }: {
   muleId: string | null;
   selectedBosses: readonly string[];
   partySizes: Mule['partySizes'];
+  /**
+   * Edited mule's **World Id**. Resolved to a **World Group** so BossMatrix
+   * cells and Crystal Tally totals reflect the prices this mule actually
+   * earns. Unset / unrecognized → Heroic (matches pre-World-Pricing).
+   */
+  worldId?: Mule['worldId'];
   onUpdate: (id: string, patch: Partial<Omit<Mule, 'id'>>) => void;
 }): {
   search: string;
@@ -95,7 +103,12 @@ export function useBossMatrixView({
     if (selectionEmpty) setCustomClicked(false);
   }
 
-  const slate = useMemo(() => MuleBossSlate.from(selectedBosses), [selectedBosses]);
+  const worldGroup = resolveWorldGroup(worldId);
+
+  const slate = useMemo(
+    () => MuleBossSlate.from(selectedBosses, worldGroup),
+    [selectedBosses, worldGroup],
+  );
 
   const visibleBosses = useMemo(
     () =>

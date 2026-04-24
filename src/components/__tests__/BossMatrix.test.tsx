@@ -20,20 +20,21 @@ const LUCID = LUCID_BOSS.id;
 // Lucid tiers are all weekly pre- and post-slice-2.
 const HARD_LUCID = `${LUCID}:hard:weekly`;
 const NORMAL_LUCID = `${LUCID}:normal:weekly`;
-const LUCID_HARD_VALUE = LUCID_BOSS.difficulty.find((d) => d.tier === 'hard')!.crystalValue;
+const LUCID_HARD_VALUE = LUCID_BOSS.difficulty.find((d) => d.tier === 'hard')!.crystalValue.Heroic;
 
 const BLACK_MAGE_BOSS = bosses.find((b) => b.family === 'black-mage')!;
 const BLACK_MAGE = BLACK_MAGE_BOSS.id;
-const BLACK_MAGE_EXTREME_VALUE = BLACK_MAGE_BOSS.difficulty.find(
-  (d) => d.tier === 'extreme',
-)!.crystalValue;
+const BLACK_MAGE_EXTREME_VALUE = BLACK_MAGE_BOSS.difficulty.find((d) => d.tier === 'extreme')!
+  .crystalValue.Heroic;
 const AKECHI = bosses.find((b) => b.family === 'akechi-mitsuhide')!.id;
 
 // Mixed-cadence bosses (slice 2).
 const VELLUM_BOSS = bosses.find((b) => b.family === 'vellum')!;
 const VELLUM = VELLUM_BOSS.id;
-const VELLUM_NORMAL_VALUE = VELLUM_BOSS.difficulty.find((d) => d.tier === 'normal')!.crystalValue;
-const VELLUM_CHAOS_VALUE = VELLUM_BOSS.difficulty.find((d) => d.tier === 'chaos')!.crystalValue;
+const VELLUM_NORMAL_VALUE = VELLUM_BOSS.difficulty.find((d) => d.tier === 'normal')!.crystalValue
+  .Heroic;
+const VELLUM_CHAOS_VALUE = VELLUM_BOSS.difficulty.find((d) => d.tier === 'chaos')!.crystalValue
+  .Heroic;
 const NORMAL_VELLUM_DAILY = `${VELLUM}:normal:daily`;
 const CHAOS_VELLUM_WEEKLY = `${VELLUM}:chaos:weekly`;
 
@@ -514,7 +515,7 @@ describe('BossMatrix', () => {
         renderMatrix([], vi.fn(), { [HORNTAIL_BOSS.family]: 4 });
         const cell = screen.getByTestId(`matrix-cell-${HORNTAIL}-${tier}`);
         const diff = HORNTAIL_BOSS.difficulty.find((d) => d.tier === tier)!;
-        expect(cell.textContent).toContain(formatMeso(diff.crystalValue, true));
+        expect(cell.textContent).toContain(formatMeso(diff.crystalValue.Heroic, true));
       },
     );
   });

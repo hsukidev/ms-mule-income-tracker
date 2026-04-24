@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { MuleBossSlate } from '../data/muleBossSlate';
+import { resolveWorldGroup } from '../data/worlds';
 import { formatMeso } from '../utils/meso';
 
 /**
@@ -22,6 +23,13 @@ export interface IncomeSource {
   selectedBosses: string[];
   active?: boolean;
   partySizes?: Record<string, number>;
+  /**
+   * Optional **World Id** assignment for the source. Resolved to a
+   * **World Group** via `findWorld`; unset or unrecognized values fall back
+   * to `'Heroic'` so mules predating the World Select feature keep their
+   * pre-World-Pricing numbers.
+   */
+  worldId?: string;
 }
 
 /**
@@ -53,7 +61,8 @@ export class Income {
     let raw = 0;
     for (const s of sources) {
       if (s.active === false) continue;
-      raw += MuleBossSlate.from(s.selectedBosses).totalCrystalValue(s.partySizes);
+      const worldGroup = resolveWorldGroup(s.worldId);
+      raw += MuleBossSlate.from(s.selectedBosses, worldGroup).totalCrystalValue(s.partySizes);
     }
     return new Income(raw, abbreviated);
   }

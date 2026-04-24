@@ -1,5 +1,6 @@
 import type { Boss, BossCadence, BossDifficulty, BossTier } from '../types';
 import { bosses, getBossById, TIER_LESS_FAMILIES } from './bosses';
+import { FALLBACK_WORLD_GROUP, type WorldGroup } from './worlds';
 import { formatMeso } from '../utils/meso';
 
 /**
@@ -91,6 +92,11 @@ function resolveKey(key: string): { boss: Boss; diff: BossDifficulty } | null {
   return { boss, diff };
 }
 
+/** Resolve a **Boss Difficulty**'s crystal value for a specific **World Group**. */
+function priceFor(diff: BossDifficulty, worldGroup: WorldGroup): number {
+  return diff.crystalValue[worldGroup];
+}
+
 /**
  * Row shape emitted internally by `getFamilies` and projected into
  * `SlateRow` by `MuleBossSlate.view()`.
@@ -119,7 +125,7 @@ function rowLabel(family: string, tier: BossTier, familyName: string): string {
   return TIER_LESS_FAMILIES.has(family) ? familyName : `${TIER_LABEL[tier]} ${familyName}`;
 }
 
-function validateBossSelection(keys: string[]): string[] {
+function validateBossSelection(keys: string[], worldGroup: WorldGroup): string[] {
   interface ResolvedKey {
     key: string;
     bossId: string;
@@ -134,7 +140,7 @@ function validateBossSelection(keys: string[]): string[] {
         key,
         bossId: r.boss.id,
         cadence: r.diff.cadence,
-        crystalValue: r.diff.crystalValue,
+        crystalValue: priceFor(r.diff, worldGroup),
       });
     }
   }
@@ -249,6 +255,7 @@ function countMonthlySelections(keys: string[]): number {
 function getFamilies(
   keys: string[],
   search: string,
+  worldGroup: WorldGroup,
   { abbreviated = true }: { abbreviated?: boolean } = {},
 ): FamilyView[] {
   const selectedSet = new Set(keys);
@@ -258,16 +265,17 @@ function getFamilies(
     displayName: boss.name,
     bosses: boss.difficulty
       .slice()
-      .sort((a, b) => b.crystalValue - a.crystalValue)
+      .sort((a, b) => priceFor(b, worldGroup) - priceFor(a, worldGroup))
       .map((diff): FamilyRow => {
         const key = makeKey(boss.id, diff.tier, diff.cadence);
+        const resolved = priceFor(diff, worldGroup);
         return {
           bossId: boss.id,
           tier: diff.tier,
           key,
           name: rowLabel(boss.family, diff.tier, boss.name),
-          crystalValue: diff.crystalValue,
-          formattedValue: formatMeso(diff.crystalValue, abbreviated),
+          crystalValue: resolved,
+          formattedValue: formatMeso(resolved, abbreviated),
           difficulty: TIER_LESS_FAMILIES.has(boss.family) ? null : TIER_LABEL[diff.tier],
           selected: selectedSet.has(key),
         };
@@ -316,35 +324,68 @@ export interface SlateFamily {
 
 export class MuleBossSlate {
   /**
-   * Reference-stable empty singleton. `MuleBossSlate.from([])` returns this
-   * same instance so `slate === MuleBossSlate.EMPTY` is a cheap equality
-   * check for React memoization.
+   * Reference-stable empty slate cache, keyed by **World Group**. At most
+   * one entry per World Group (today: 2). Populated lazily by `emptyFor`.
    */
-  static readonly EMPTY: MuleBossSlate = new MuleBossSlate([]);
+  private static readonly emptyByGroup: Map<WorldGroup, MuleBossSlate> = new Map();
+
+  /**
+   * Reference-stable empty singleton for the default **World Group** (Heroic).
+   * `MuleBossSlate.from([])` returns this same instance so
+   * `slate === MuleBossSlate.EMPTY` remains a cheap equality check for React
+   * memoization. Interactive empty slates have their own cached singleton via
+   * `emptyFor`, so the optimization generalizes to every World Group.
+   */
+  static readonly EMPTY: MuleBossSlate = MuleBossSlate.emptyFor(FALLBACK_WORLD_GROUP);
 
   /** Read-only array of validated **Slate Keys**, in caller-supplied order. */
   readonly keys: readonly SlateKey[];
 
-  private constructor(keys: readonly SlateKey[]) {
+  /**
+   * The **World Group** this slate is priced against. Private because no
+   * external consumer needs to read it — callers already have `worldGroup`
+   * in scope before constructing, and all price-reading methods
+   * (`view`, `totalCrystalValue`) resolve against it internally.
+   */
+  private readonly worldGroup: WorldGroup;
+
+  private constructor(keys: readonly SlateKey[], worldGroup: WorldGroup) {
     this.keys = keys;
+    this.worldGroup = worldGroup;
+  }
+
+  /** Fetch-or-create the reference-stable empty slate for a **World Group**. */
+  private static emptyFor(worldGroup: WorldGroup): MuleBossSlate {
+    let cached = MuleBossSlate.emptyByGroup.get(worldGroup);
+    if (!cached) {
+      cached = new MuleBossSlate([], worldGroup);
+      MuleBossSlate.emptyByGroup.set(worldGroup, cached);
+    }
+    return cached;
   }
 
   /**
    * Construct a **Boss Slate** from a raw key array.
    *
+   * - `worldGroup` (default `'Heroic'`) binds the slate to a **World Group**;
+   *   every price-reading method resolves against it.
    * - Duplicate `(bossId, cadence)` buckets keep the highest-**Crystal
-   *   Value** **Slate Key**.
+   *   Value** **Slate Key** for the chosen World Group.
    * - Unresolvable keys (unknown boss, unknown tier, cadence disagrees with
    *   boss data) drop silently.
    * - **Legacy Slate Keys** (`<uuid>:<tier>` without cadence) are rejected;
    *   migration is the caller's responsibility upstream in `useMules`.
-   * - `from([])` returns the `EMPTY` singleton.
+   * - Empty outcomes return a per-World-Group cached empty slate (see
+   *   `emptyFor`) so reference equality survives across calls.
    */
-  static from(keys: readonly string[]): MuleBossSlate {
-    if (keys.length === 0) return MuleBossSlate.EMPTY;
-    const validated = validateBossSelection(keys as string[]);
-    if (validated.length === 0) return MuleBossSlate.EMPTY;
-    return new MuleBossSlate(validated);
+  static from(
+    keys: readonly string[],
+    worldGroup: WorldGroup = FALLBACK_WORLD_GROUP,
+  ): MuleBossSlate {
+    if (keys.length === 0) return MuleBossSlate.emptyFor(worldGroup);
+    const validated = validateBossSelection(keys as string[], worldGroup);
+    if (validated.length === 0) return MuleBossSlate.emptyFor(worldGroup);
+    return new MuleBossSlate(validated, worldGroup);
   }
 
   /**
@@ -354,24 +395,27 @@ export class MuleBossSlate {
    * - Different tier on the same `(bossId, cadence)` → **Tier Swap**.
    * - Different cadence on the same boss → the new key coexists.
    * - Unresolvable `key` → the slate is returned unchanged.
+   *
+   * The new slate retains this slate's **World Group** binding.
    */
   toggle(key: SlateKey): MuleBossSlate {
     const parsed = parseKey(key);
     if (!parsed) return this;
     const next = toggleBoss(this.keys as string[], parsed.bossId, parsed.tier);
     if (next === this.keys) return this;
-    if (next.length === 0) return MuleBossSlate.EMPTY;
-    return new MuleBossSlate(next);
+    if (next.length === 0) return MuleBossSlate.emptyFor(this.worldGroup);
+    return new MuleBossSlate(next, this.worldGroup);
   }
 
   /**
    * Project this slate into `SlateFamily[]` for rendering by **Boss Matrix**.
    * Families are ordered by the curated display order; rows within a family
-   * are sorted by **Crystal Value** descending. `search` filters
-   * case-insensitively on family slug + display name + boss/row name.
+   * are sorted by **Crystal Value** descending (for the slate's bound
+   * **World Group**). `search` filters case-insensitively on family slug +
+   * display name + boss/row name.
    */
   view(search: string = '', opts: { abbreviated?: boolean } = {}): SlateFamily[] {
-    const families = getFamilies(this.keys as string[], search, opts);
+    const families = getFamilies(this.keys as string[], search, this.worldGroup, opts);
     return families.map((f) => ({
       family: f.family,
       displayName: f.displayName,
@@ -422,7 +466,8 @@ export class MuleBossSlate {
    * Cut** contributes — the `WEEKLY_CRYSTAL_CAP` highest **Computed
    * Values** among Weekly Cadence keys, ties broken by insertion order
    * (stable sort). The basis for **Potential Income** before the
-   * **Active-Flag Filter**.
+   * **Active-Flag Filter**. Prices are resolved against this slate's bound
+   * **World Group**.
    */
   totalCrystalValue(partySizes: Record<string, number> = {}): number {
     const weeklies: number[] = [];
@@ -433,11 +478,12 @@ export class MuleBossSlate {
       if (parsed.cadence === 'monthly') continue;
       const boss = getBossById(parsed.bossId)!;
       const diff = boss.difficulty.find((d) => d.tier === parsed.tier)!;
+      const price = priceFor(diff, this.worldGroup);
       if (parsed.cadence === 'daily') {
-        dailyTotal += diff.crystalValue * 7;
+        dailyTotal += price * 7;
       } else {
         const party = partySizes[boss.family] ?? 1;
-        weeklies.push(diff.crystalValue / party);
+        weeklies.push(price / party);
       }
     }
     // Stable sort preserves insertion order on ties, so earlier selections

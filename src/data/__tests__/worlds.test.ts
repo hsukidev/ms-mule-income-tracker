@@ -2,14 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { WORLDS, WORLD_IDS, findWorld, type WorldId } from '../worlds';
 
 describe('worlds data module', () => {
-  it('contains exactly the six PRD-specified worlds in order', () => {
-    expect(WORLDS).toHaveLength(6);
+  it('contains exactly the eight PRD-specified worlds in order', () => {
+    expect(WORLDS).toHaveLength(8);
     expect(WORLDS.map((w) => w.id)).toEqual([
       'heroic-kronos',
       'heroic-hyperion',
+      'heroic-solis',
       'heroic-challenger',
       'interactive-scania',
       'interactive-bera',
+      'interactive-luna',
       'interactive-challenger',
     ] satisfies WorldId[]);
   });
@@ -26,15 +28,17 @@ describe('worlds data module', () => {
     expect(WORLD_IDS.size).toBe(WORLDS.length);
   });
 
-  it('WORLD_IDS contains exactly the six ids', () => {
-    expect(WORLD_IDS.size).toBe(6);
+  it('WORLD_IDS contains exactly the eight ids', () => {
+    expect(WORLD_IDS.size).toBe(8);
     expect([...WORLD_IDS].sort()).toEqual(
       [
         'heroic-kronos',
         'heroic-hyperion',
+        'heroic-solis',
         'heroic-challenger',
         'interactive-scania',
         'interactive-bera',
+        'interactive-luna',
         'interactive-challenger',
       ].sort(),
     );
@@ -42,7 +46,7 @@ describe('worlds data module', () => {
 
   it('Heroic worlds have group "Heroic"', () => {
     const heroic = WORLDS.filter((w) => w.id.startsWith('heroic-'));
-    expect(heroic).toHaveLength(3);
+    expect(heroic).toHaveLength(4);
     for (const world of heroic) {
       expect(world.group).toBe('Heroic');
     }
@@ -50,7 +54,7 @@ describe('worlds data module', () => {
 
   it('Interactive worlds have group "Interactive"', () => {
     const interactive = WORLDS.filter((w) => w.id.startsWith('interactive-'));
-    expect(interactive).toHaveLength(3);
+    expect(interactive).toHaveLength(4);
     for (const world of interactive) {
       expect(world.group).toBe('Interactive');
     }
@@ -66,8 +70,10 @@ describe('worlds data module', () => {
   it('non-Challenger world labels match expected display names', () => {
     expect(WORLDS.find((w) => w.id === 'heroic-kronos')?.label).toBe('Kronos');
     expect(WORLDS.find((w) => w.id === 'heroic-hyperion')?.label).toBe('Hyperion');
+    expect(WORLDS.find((w) => w.id === 'heroic-solis')?.label).toBe('Solis');
     expect(WORLDS.find((w) => w.id === 'interactive-scania')?.label).toBe('Scania');
     expect(WORLDS.find((w) => w.id === 'interactive-bera')?.label).toBe('Bera');
+    expect(WORLDS.find((w) => w.id === 'interactive-luna')?.label).toBe('Luna');
   });
 });
 

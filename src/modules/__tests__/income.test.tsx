@@ -82,6 +82,43 @@ describe('Income.of', () => {
     const illegal = new Income(1, true);
     expect(illegal).toBeInstanceOf(Income);
   });
+
+  describe('World Pricing — per-mule world group resolution', () => {
+    it('defaults to Heroic prices when worldId is unset', () => {
+      // No worldId on the source → Heroic prices (matches pre-World-Pricing).
+      const mule = { selectedBosses: [HARD_LUCID] };
+      expect(Income.of(mule, false).raw).toBe(504_000_000);
+    });
+
+    it('uses Heroic prices when the mule is on a Heroic world', () => {
+      const mule = { selectedBosses: [HARD_LUCID], worldId: 'heroic-kronos' };
+      expect(Income.of(mule, false).raw).toBe(504_000_000);
+    });
+
+    it('uses Interactive prices when the mule is on an Interactive world', () => {
+      // Hard Lucid Interactive = 100.8M (Heroic 504M × 0.2).
+      const mule = { selectedBosses: [HARD_LUCID], worldId: 'interactive-scania' };
+      expect(Income.of(mule, false).raw).toBe(100_800_000);
+    });
+
+    it('defaults to Heroic when worldId is an unknown string (stale persistence)', () => {
+      // Conservative fallback: an unrecognized worldId preserves today's number.
+      const mule = { selectedBosses: [HARD_LUCID], worldId: 'some-dead-world' };
+      expect(Income.of(mule, false).raw).toBe(504_000_000);
+    });
+
+    it('prices each source in a roster against its own world group', () => {
+      const heroic = {
+        selectedBosses: [HARD_LUCID],
+        worldId: 'heroic-kronos',
+      };
+      const interactive = {
+        selectedBosses: [HARD_LUCID],
+        worldId: 'interactive-scania',
+      };
+      expect(Income.of([heroic, interactive], false).raw).toBe(504_000_000 + 100_800_000);
+    });
+  });
 });
 
 describe('IncomeProvider', () => {
