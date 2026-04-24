@@ -401,6 +401,11 @@ html[data-theme-swap] *::after {
     text-transform: uppercase;
     font-weight: 500;
   }
+  .kpi-card .eyebrow,
+  .kpi-card .eyebrow-plain,
+  .kpi-card .kpi-meta {
+    font-size: 11px;
+  }
   .bar-accent {
     width: 4px;
     height: 20px;

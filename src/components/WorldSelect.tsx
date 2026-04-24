@@ -1,5 +1,5 @@
 import { Select } from '@base-ui/react/select';
-import { Check, ChevronDown, Globe } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useWorld } from '@/context/WorldProvider';
 import { WORLDS, type World, type WorldGroup, type WorldId } from '@/data/worlds';
 
@@ -9,10 +9,10 @@ const WORLDS_BY_GROUP: ReadonlyArray<{ group: WorldGroup; worlds: readonly World
 ];
 
 /**
- * Header World Select control. One trigger with responsive inner layout: a
- * soft chip at `≥sm` and an icon-only globe button at `<sm`. The panel groups
- * the six canonical worlds by **World Group** with right-aligned check
- * indicators on the selected row.
+ * Header World Select control. A single chip trigger (border + label +
+ * chevron) rendered at every viewport width. The panel groups the six
+ * canonical worlds by **World Group** with right-aligned check indicators on
+ * the selected row.
  */
 export function WorldSelect() {
   const { world, setWorld } = useWorld();
@@ -27,15 +27,14 @@ export function WorldSelect() {
       <Select.Trigger
         aria-label="Select world"
         data-slot="world-select-trigger"
-        className="flex size-8 items-center justify-center rounded-md text-muted-foreground cursor-pointer sm:size-auto sm:inline-flex sm:gap-1.5 sm:border sm:border-border sm:bg-(--surface-2) sm:px-2.5 sm:py-1 sm:text-xs sm:transition-colors sm:hover:border-(--accent-raw)"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-(--surface-2) px-2.5 py-1 text-xs text-muted-foreground cursor-pointer transition-colors hover:border-(--accent-raw)"
       >
-        <Globe size={16} aria-hidden="true" className="sm:hidden" />
         {world ? (
-          <span className="hidden sm:inline">{world.label}</span>
+          <span>{world.label}</span>
         ) : (
-          <span className="hidden sm:inline italic text-muted-foreground">Select world</span>
+          <span className="italic text-muted-foreground">Select world</span>
         )}
-        <ChevronDown size={14} aria-hidden="true" className="hidden sm:inline-block" />
+        <ChevronDown size={14} aria-hidden="true" />
       </Select.Trigger>
 
       <Select.Portal>

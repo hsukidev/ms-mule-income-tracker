@@ -136,12 +136,12 @@ describe('KpiCard', () => {
         expect(statRow.style.display).toBe('grid');
       });
 
-      it('stacks the eyebrow row (countdown drops below the title)', () => {
+      it('hides the EXPECTED WEEKLY INCOME eyebrow and shows only the reset countdown', () => {
         mockNarrowViewport(400);
         render(<KpiCard mules={[mule]} />);
         const card = screen.getByTestId('income-card');
-        const eyebrowRow = within(card).getByTestId('kpi-eyebrow-row');
-        expect(eyebrowRow.style.flexDirection).toBe('column');
+        expect(within(card).queryByText(/expected weekly income/i)).toBeNull();
+        expect(within(card).getByText(/reset in/i)).toBeTruthy();
       });
 
       it('keeps the desktop flex layout when matchMedia is unavailable', () => {

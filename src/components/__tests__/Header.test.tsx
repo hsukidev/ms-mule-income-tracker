@@ -58,13 +58,10 @@ describe('Header WorldSelect integration', () => {
     expect(screen.getByText('Kronos')).toBeTruthy();
   });
 
-  it('renders the mobile icon-only globe trigger with aria-label="Select world"', () => {
+  it('renders the WorldSelect trigger with aria-label="Select world" at every viewport', () => {
     render(<Header />, { defaultWorld: null });
-    // The mobile trigger is rendered alongside the desktop trigger; CSS hides
-    // one or the other. The icon-only trigger carries an aria-label so screen
-    // readers (and tests) can target it directly.
-    const mobileTrigger = screen.getByLabelText('Select world');
-    expect(mobileTrigger).toBeTruthy();
+    const trigger = screen.getByLabelText('Select world');
+    expect(trigger).toBeTruthy();
   });
 
   it('renders the WorldSelect before the theme toggle (countdown lives on the KpiCard now)', () => {
@@ -87,8 +84,8 @@ describe('Header WorldSelect integration', () => {
 
   it('opens the panel with two groups (HEROIC and INTERACTIVE) when the trigger is clicked', async () => {
     render(<Header />, { defaultWorld: null });
-    const mobileTrigger = screen.getByLabelText('Select world');
-    fireEvent.click(mobileTrigger);
+    const trigger = screen.getByLabelText('Select world');
+    fireEvent.click(trigger);
 
     await waitFor(() => {
       expect(screen.getByText('HEROIC')).toBeTruthy();

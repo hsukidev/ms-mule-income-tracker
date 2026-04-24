@@ -38,8 +38,8 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
   const isStackedLayout = useMatchMedia(STACK_VIEWPORT_QUERY);
 
   const statRowStyle: React.CSSProperties = isStackedLayout
-    ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px', marginTop: 18 }
-    : { display: 'flex', gap: 28, marginTop: 18 };
+    ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px', marginTop: 28 }
+    : { display: 'flex', gap: 28, marginTop: 28 };
 
   // The toggle is a global format preference — it always flips on click.
   // Locally, if the unabbreviated value would push "mesos" past the row's
@@ -70,23 +70,24 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
   return (
     <div
       data-testid="income-card"
-      className="panel panel-glow relative overflow-hidden h-full"
-      style={{ padding: '24px' }}
+      className="panel panel-glow kpi-card relative overflow-hidden h-full"
+      style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}
     >
       <div
         data-testid="kpi-eyebrow-row"
         style={{
           display: 'flex',
-          flexDirection: isStackedLayout ? 'column' : 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: isStackedLayout ? 6 : 12,
+          justifyContent: isStackedLayout ? 'center' : 'space-between',
+          alignItems: 'center',
+          gap: 12,
         }}
       >
-        <div className="eyebrow">
-          <span className="dot" aria-hidden />
-          EXPECTED WEEKLY INCOME
-        </div>
+        {!isStackedLayout && (
+          <div className="eyebrow">
+            <span className="dot" aria-hidden />
+            EXPECTED WEEKLY INCOME
+          </div>
+        )}
         <ResetCountdown align={isStackedLayout ? 'left' : 'right'} />
       </div>
       <div
@@ -95,7 +96,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           display: 'flex',
           alignItems: 'baseline',
           gap: 10,
-          marginTop: 14,
+          marginTop: 22,
           position: 'relative',
         }}
       >
@@ -109,6 +110,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           {displayValue}
         </button>
         <span
+          className="kpi-meta"
           style={{
             color: 'var(--muted-raw, var(--muted-foreground))',
             fontStyle: 'italic',
@@ -142,7 +144,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
         <CrystalKpiStat icon={weeklyCrystalPng} label="WEEKLY" value={String(weeklyTotal)} />
         <CrystalKpiStat icon={dailyCrystalPng} label="DAILY" value={String(dailyTotal)} />
       </div>
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: 'auto', paddingTop: 20 }}>
         <WeeklyCapRail crystalTotal={weeklyTotal + dailyTotal} cap={WORLD_WEEKLY_CRYSTAL_CAP} />
       </div>
     </div>
@@ -157,8 +159,8 @@ function KpiStat({ label, value, accent }: { label: string; value: string; accen
         style={{
           color: accent ? 'var(--accent-raw, var(--accent))' : 'var(--text, var(--foreground))',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 22,
-          marginTop: 4,
+          fontSize: 30,
+          marginTop: 6,
         }}
       >
         {value}
@@ -175,7 +177,7 @@ function CrystalKpiStat({ icon, label, value }: { icon: string; label: string; v
           src={icon}
           alt=""
           draggable={false}
-          style={{ width: 16, height: 16, objectFit: 'contain' }}
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
         />
         {label}
       </div>
@@ -183,8 +185,8 @@ function CrystalKpiStat({ icon, label, value }: { icon: string; label: string; v
         style={{
           color: 'var(--text, var(--foreground))',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 22,
-          marginTop: 4,
+          fontSize: 30,
+          marginTop: 6,
         }}
       >
         {value}
