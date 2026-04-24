@@ -21,36 +21,42 @@ Components read whichever matches their context. Inline styles mostly use the ha
 
 ### Dark (default — `ThemeProvider defaultTheme="dark"`)
 
-| Role                  | Token                                                | Value                      |
-| --------------------- | ---------------------------------------------------- | -------------------------- |
-| Page background       | `--bg` / `--background`                              | `#0b0b10`                  |
-| Page background alt   | `--bg-2`                                             | `#111118`                  |
-| Card / panel          | `--surface` / `--card`                               | `#15161d`                  |
-| Raised / recessed     | `--surface-2` / `--surface-raised`                   | `#1b1d26`                  |
-| Text                  | `--text` / `--foreground`                            | `#eeecda`                  |
-| Muted text            | `--muted-raw` / `--muted-foreground`                 | `#72778a`                  |
-| Dim (empty values)    | `--dim` / `--surface-dim`                            | `#3a3d4d`                  |
-| Border                | `--border-raw` / `--border` / `--input`              | `#262836`                  |
-| **Accent**            | `--accent-raw` / `--accent` / `--primary` / `--ring` | `#f0b44a` (amber)          |
-| Accent soft (fills)   | `--accent-soft`                                      | `rgba(240, 180, 74, 0.15)` |
-| Accent glow (shadows) | `--accent-glow`                                      | `rgba(240, 180, 74, 0.25)` |
-| Destructive           | `--destructive`                                      | `hsl(8 60% 52%)`           |
+| Role                  | Token                                                | Value                                                 |
+| --------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
+| Page background       | `--bg` / `--background`                              | `#0b0b10`                                             |
+| Page background alt   | `--bg-2`                                             | `#111118`                                             |
+| Card / panel          | `--surface` / `--card`                               | `#15161d`                                             |
+| Raised / recessed     | `--surface-2` / `--surface-raised`                   | `#1b1d26`                                             |
+| Text                  | `--text` / `--foreground`                            | `#eeecda`                                             |
+| Muted text            | `--muted-raw` / `--muted-foreground`                 | `#72778a`                                             |
+| Dim (empty values)    | `--dim` / `--surface-dim`                            | `#3a3d4d`                                             |
+| Border                | `--border-raw` / `--border` / `--input`              | `#262836`                                             |
+| **Accent**            | `--accent-raw` / `--accent` / `--primary` / `--ring` | `#f0b44a` (amber)                                     |
+| Accent soft (fills)   | `--accent-soft`                                      | `rgba(240, 180, 74, 0.15)`                            |
+| Accent glow (shadows) | `--accent-glow`                                      | `rgba(240, 180, 74, 0.25)`                            |
+| Destructive           | `--destructive`                                      | `hsl(8 60% 52%)`                                      |
+| **Success**           | `--success`                                          | `var(--chart-4)` → `#6fd3b5` (mint)                   |
+| Success soft          | `--success-soft`                                     | `color-mix(in srgb, var(--success) 18%, transparent)` |
+| Success glow          | `--success-glow`                                     | `color-mix(in srgb, var(--success) 30%, transparent)` |
 
 Chart palette (`--c1..--c5`): amber `#f0b44a`, blue `#7fb7ff`, coral `#e88774`, teal `#6fd3b5`, lavender `#b395e0`.
 
 ### Light — `Pastel Cozy`
 
-| Role        | Value                      |
-| ----------- | -------------------------- |
-| Background  | `#f6efe4` cream            |
-| Surface     | `#fffaf0`                  |
-| Surface alt | `#f8ecd6`                  |
-| Text        | `#3b2f24` deep coffee      |
-| Muted       | `#8a7a65`                  |
-| Dim         | `#c9b896`                  |
-| Border      | `#e4d6ba`                  |
-| **Accent**  | `#d97757` terracotta       |
-| Accent soft | `rgba(217, 119, 87, 0.14)` |
+| Role         | Value                                                 |
+| ------------ | ----------------------------------------------------- |
+| Background   | `#f6efe4` cream                                       |
+| Surface      | `#fffaf0`                                             |
+| Surface alt  | `#f8ecd6`                                             |
+| Text         | `#3b2f24` deep coffee                                 |
+| Muted        | `#8a7a65`                                             |
+| Dim          | `#c9b896`                                             |
+| Border       | `#e4d6ba`                                             |
+| **Accent**   | `#d97757` terracotta                                  |
+| Accent soft  | `rgba(217, 119, 87, 0.14)`                            |
+| **Success**  | `var(--chart-4)` → `#7ea67a` sage                     |
+| Success soft | `color-mix(in srgb, var(--success) 14%, transparent)` |
+| Success glow | `color-mix(in srgb, var(--success) 25%, transparent)` |
 
 Chart palette: `#d97757`, `#5b8ca8`, `#e2a84f`, `#7ea67a`, `#a97bb5`.
 
@@ -317,6 +323,27 @@ A `role="table"` grid, `grid-template-columns: 140px repeat(5, 1fr)`, rounded-[1
 ### [DensityToggle](src/components/DensityToggle.tsx)
 
 Inline two-button segmented control — `--surface-2` background, 1px border, 4px inner padding, 6px rounded pills. Active pill uses `--accent-soft` fill + `--accent-raw` text. Labels "COMFY" / "COMPACT" in 10px mono with `0.14em` tracking.
+
+### Toast (sonner) — [src/components/ui/sonner.tsx](src/components/ui/sonner.tsx) · [src/lib/toast.ts](src/lib/toast.ts)
+
+Bottom-right notification stack using [sonner](https://sonner.emilkowal.ski/) `2.0.7`, fired through the thin `toast.success(title, opts)` wrapper in `src/lib/toast.ts`. Success is the only variant wired today — add `error` / `warning` / `info` through the same wrapper and semantic tokens as needed.
+
+**Shape (matches design handoff #3 layout with design #1's left accent)**
+
+- **Container** — `var(--surface)` background, `1px solid var(--border)` frame with **`border-left: 3px solid var(--success)`** overriding the left edge. The 1px frame on the other three sides is what gives the 3px accent a neighbour at the rounded corners so it doesn't taper into nothing — matching the design's `borderLeft + borderRadius` trick. `border-radius: var(--radius)`. Asymmetric padding `11px 13px 11px 11px` compensates for the border-width mismatch so the visible content gap is a symmetric 14px L/R and 12px T/B.
+- **Drop shadow** — stacks a 16/36 `--success-glow` tint with a subtle 2/8 black shadow. No outer ring (the 1px border carries that role).
+- **Icon chip** — 26×26, `border-radius: 6px`, `--success-soft` background, `--success` foreground. Contains a **custom 14×14 check SVG** (`polyline 20 6 9 17 4 12`, stroke 2.5, rounded caps) — not the default Lucide icon sonner ships.
+- **Title** — 13px / weight 500, `tracking-tight`, leading 5.
+- **Description** — 12px, `text-muted-foreground`, leading 4. Single-delete: `"{Name} removed from roster"` (falls back to `"Mule removed from roster"` when the name is empty). Bulk: `"{N} mule(s) removed"` with correct pluralization.
+- **Action button (Undo)** — JetBrains Mono, 11px, weight 600, `letter-spacing: 0.12em`, uppercase, `color: var(--accent)`, transparent fill, `border-radius: 4px`, `padding: 4px 8px`. Hover: `background: var(--accent-soft)`. Mirrors the design's `.t-link`.
+- **No close (X) button** — the 5-second auto-dismiss + Undo action is the entire UX.
+- **Dimensions & position** — `min-width: 320px; max-width: 380px`. Anchored `bottom-right`, `offset: 20`, `gap: 10` between stacked toasts. Auto-dismiss `duration: 5000ms` (long enough to reach for Undo).
+
+**Why the styling lives in `index.css`, not Tailwind classNames**
+
+sonner's own stylesheet targets `[data-sonner-toast][data-styled='true']` (2-attribute selector) which beats Tailwind's single-class specificity silently — any `gap`, `padding`, `border-radius`, icon size, or button color applied via `classNames` loses. The shell, accent border, icon chip, and action button are therefore styled in `index.css` under `[data-sonner-toast].mule-toast[data-styled='true']` so our rules meet or exceed sonner's specificity naturally. Sonner's internal margin variables (`--toast-icon-margin-start/end`, `--toast-svg-margin-start/end`, `--toast-button-margin-start/end`) are all zeroed via the `<Toaster>` `style` prop so the container's `gap: 14px` is the single source of spacing between icon chip, content, and action button.
+
+**Undo wiring** — `useMuleActions.deleteMule` / `deleteMules` snapshot the mule(s) _before_ deletion and attach an `action: { label: 'Undo', onClick: () => restoreMule(snapshot, index) }` to the toast. `useMules.restoreMule` and `restoreMules` splice mules back at their original indexes (bulk sorts snapshots ascending-by-index so later splices land correctly after earlier ones shift). `mules` flows through a ref inside `useMuleActions` so the delete callbacks keep a stable identity and don't bust `MuleCharacterCard`'s `memo()`.
 
 ### UI primitives — [src/components/ui/](src/components/ui/)
 

@@ -25,4 +25,16 @@ describe('toast helper', () => {
     expect(sonnerMock.toast.success).toHaveBeenCalledTimes(1);
     expect(sonnerMock.toast.success).toHaveBeenCalledWith('hello', undefined);
   });
+
+  it('success() forwards description and action options through to sonner.toast.success', () => {
+    const onClick = vi.fn();
+    toast.success('Successfully deleted', {
+      description: 'Alice removed from roster',
+      action: { label: 'Undo', onClick },
+    });
+    expect(sonnerMock.toast.success).toHaveBeenCalledWith('Successfully deleted', {
+      description: 'Alice removed from roster',
+      action: { label: 'Undo', onClick },
+    });
+  });
 });

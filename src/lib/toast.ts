@@ -1,7 +1,7 @@
 import { toast as sonner } from 'sonner';
 
-type ToastOptions = Parameters<typeof sonner>[1];
+type ToastOptions = Parameters<typeof sonner.success>[1];
 
 export const toast = {
-  success: (message: string, opts?: ToastOptions) => sonner.success(message, opts),
+  success: (title: string, opts?: ToastOptions) => sonner.success(title, opts),
 };

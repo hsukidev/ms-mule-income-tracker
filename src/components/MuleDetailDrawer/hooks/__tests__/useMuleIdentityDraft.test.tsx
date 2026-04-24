@@ -26,7 +26,7 @@ describe('useMuleIdentityDraft', () => {
     expect(result.current.level.draft).toBe('200');
   });
 
-  it('sanitizes name input on change (strips non-letters, caps at 12)', () => {
+  it('sanitizes name input on change (strips non-alphanumerics, caps at 12)', () => {
     const onUpdate = vi.fn();
     const { result } = renderHook(() => useMuleIdentityDraft(baseMule, vi.fn()));
     void onUpdate;
@@ -35,7 +35,7 @@ describe('useMuleIdentityDraft', () => {
       result.current.name.onChange(makeOnChange('Hero123!WorldTooLong'));
     });
 
-    expect(result.current.name.draft).toBe('HeroWorldToo');
+    expect(result.current.name.draft).toBe('Hero123World');
   });
 
   it('name onBlur commits sanitized value via onUpdate when changed', () => {

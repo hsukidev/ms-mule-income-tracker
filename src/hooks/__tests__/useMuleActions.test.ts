@@ -76,7 +76,56 @@ describe('useMuleActions', () => {
       expect(result.current.mules).toEqual([]);
     });
 
-    it('fires toast.success("Successfully deleted.") exactly once', () => {
+    it('fires toast.success with title, named description, and an Undo action', () => {
+      const { result } = renderHook(() => useMuleActions());
+      let id = '';
+      act(() => {
+        id = result.current.addMule('heroic-kronos');
+      });
+      act(() => {
+        result.current.updateMule(id, { name: 'Alice' });
+      });
+      act(() => {
+        result.current.deleteMule(id);
+      });
+      expect(sonnerMock.toast.success).toHaveBeenCalledTimes(1);
+      expect(sonnerMock.toast.success).toHaveBeenCalledWith(
+        'Successfully deleted',
+        expect.objectContaining({
+          description: 'Alice removed from roster',
+          action: expect.objectContaining({
+            label: 'Undo',
+            onClick: expect.any(Function),
+          }),
+        }),
+      );
+    });
+
+    it('Undo restores the deleted mule at its original index', () => {
+      const { result } = renderHook(() => useMuleActions());
+      const ids: string[] = [];
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        result.current.deleteMule(ids[1]);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[2]]);
+      const call = sonnerMock.toast.success.mock.calls.at(-1);
+      const onUndo = call?.[1]?.action?.onClick as () => void;
+      act(() => {
+        onUndo();
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[1], ids[2]]);
+    });
+
+    it('falls back to "Mule removed from roster" when the name is empty', () => {
       const { result } = renderHook(() => useMuleActions());
       let id = '';
       act(() => {
@@ -85,8 +134,12 @@ describe('useMuleActions', () => {
       act(() => {
         result.current.deleteMule(id);
       });
-      expect(sonnerMock.toast.success).toHaveBeenCalledTimes(1);
-      expect(sonnerMock.toast.success).toHaveBeenCalledWith('Successfully deleted!', undefined);
+      expect(sonnerMock.toast.success).toHaveBeenCalledWith(
+        'Successfully deleted',
+        expect.objectContaining({
+          description: 'Mule removed from roster',
+        }),
+      );
     });
   });
 
@@ -109,7 +162,7 @@ describe('useMuleActions', () => {
       expect(result.current.mules.map((m) => m.id)).toEqual([ids[1]]);
     });
 
-    it('fires toast.success exactly once (not per mule)', () => {
+    it('fires toast.success exactly once with a pluralized description and an Undo action', () => {
       const { result } = renderHook(() => useMuleActions());
       const ids: string[] = [];
       act(() => {
@@ -119,10 +172,66 @@ describe('useMuleActions', () => {
         ids.push(result.current.addMule('heroic-kronos'));
       });
       act(() => {
-        result.current.deleteMules(ids);
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        result.current.deleteMules([ids[0], ids[1], ids[2]]);
       });
       expect(sonnerMock.toast.success).toHaveBeenCalledTimes(1);
-      expect(sonnerMock.toast.success).toHaveBeenCalledWith('Successfully deleted!', undefined);
+      expect(sonnerMock.toast.success).toHaveBeenCalledWith(
+        'Successfully deleted',
+        expect.objectContaining({
+          description: '3 mules removed',
+          action: expect.objectContaining({
+            label: 'Undo',
+            onClick: expect.any(Function),
+          }),
+        }),
+      );
+    });
+
+    it('uses singular "1 mule removed" when only one id is deleted via the batch API', () => {
+      const { result } = renderHook(() => useMuleActions());
+      let id = '';
+      act(() => {
+        id = result.current.addMule('heroic-kronos');
+      });
+      act(() => {
+        result.current.deleteMules([id]);
+      });
+      expect(sonnerMock.toast.success).toHaveBeenCalledWith(
+        'Successfully deleted',
+        expect.objectContaining({
+          description: '1 mule removed',
+        }),
+      );
+    });
+
+    it('Undo restores every bulk-deleted mule at its original position', () => {
+      const { result } = renderHook(() => useMuleActions());
+      const ids: string[] = [];
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        result.current.deleteMules([ids[1], ids[3]]);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[2]]);
+      const call = sonnerMock.toast.success.mock.calls.at(-1);
+      const onUndo = call?.[1]?.action?.onClick as () => void;
+      act(() => {
+        onUndo();
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[1], ids[2], ids[3]]);
     });
 
     it('does not toast when ids is empty', () => {

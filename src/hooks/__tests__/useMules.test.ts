@@ -253,6 +253,115 @@ describe('useMules', () => {
     });
   });
 
+  describe('restoreMule', () => {
+    it('inserts the mule back at the given index', () => {
+      const { result } = renderHook(() => useMules());
+      const ids: string[] = [];
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      const snapshot = result.current.mules[1];
+      act(() => {
+        result.current.deleteMule(ids[1]);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[2]]);
+      act(() => {
+        result.current.restoreMule(snapshot, 1);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[1], ids[2]]);
+    });
+
+    it('clamps an out-of-range index to the end of the roster', () => {
+      const { result } = renderHook(() => useMules());
+      let id = '';
+      act(() => {
+        id = result.current.addMule('heroic-kronos');
+      });
+      const snapshot = result.current.mules[0];
+      act(() => {
+        result.current.deleteMule(id);
+      });
+      act(() => {
+        result.current.restoreMule(snapshot, 999);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([id]);
+    });
+  });
+
+  describe('restoreMules (batch)', () => {
+    it('restores snapshots at their original indexes when fed in ascending order', () => {
+      const { result } = renderHook(() => useMules());
+      const ids: string[] = [];
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      const snapshots = [
+        { mule: result.current.mules[1], index: 1 },
+        { mule: result.current.mules[3], index: 3 },
+      ];
+      act(() => {
+        result.current.deleteMules([ids[1], ids[3]]);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[2]]);
+      act(() => {
+        result.current.restoreMules(snapshots);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[1], ids[2], ids[3]]);
+    });
+
+    it('handles snapshots provided out of order (sorts by original index)', () => {
+      const { result } = renderHook(() => useMules());
+      const ids: string[] = [];
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      act(() => {
+        ids.push(result.current.addMule('heroic-kronos'));
+      });
+      const snapshots = [
+        { mule: result.current.mules[2], index: 2 },
+        { mule: result.current.mules[0], index: 0 },
+      ];
+      act(() => {
+        result.current.deleteMules([ids[0], ids[2]]);
+      });
+      act(() => {
+        result.current.restoreMules(snapshots);
+      });
+      expect(result.current.mules.map((m) => m.id)).toEqual([ids[0], ids[1], ids[2]]);
+    });
+
+    it('is a no-op on an empty snapshots array', () => {
+      const { result } = renderHook(() => useMules());
+      act(() => {
+        result.current.addMule('heroic-kronos');
+      });
+      const before = result.current.mules;
+      act(() => {
+        result.current.restoreMules([]);
+      });
+      expect(result.current.mules).toBe(before);
+    });
+  });
+
   describe('reorderMules', () => {
     it('moves a mule from oldIndex to newIndex', () => {
       const { result } = renderHook(() => useMules());
@@ -326,7 +435,7 @@ describe('useMules', () => {
   });
 
   describe('outward API unchanged', () => {
-    it('returns { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules }', () => {
+    it('returns { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules, restoreMule, restoreMules }', () => {
       const { result } = renderHook(() => useMules());
       const keys = Object.keys(result.current).sort();
       expect(keys).toEqual([
@@ -335,6 +444,8 @@ describe('useMules', () => {
         'deleteMules',
         'mules',
         'reorderMules',
+        'restoreMule',
+        'restoreMules',
         'updateMule',
       ]);
     });

@@ -137,6 +137,13 @@ html[data-theme-swap] *::after {
   --accent-numeric: #d97757;
   --glow: 0 0 28px -4px rgba(217, 119, 87, 0.2);
 
+  /* Semantic success (toast, future: confirmations). Aliased to --chart-4
+   * so both palettes' sage-green stays single-sourced; soft/glow derive
+   * their opacity via color-mix. */
+  --success: var(--chart-4);
+  --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+  --success-glow: color-mix(in srgb, var(--success) 25%, transparent);
+
   --radius: 0.875rem;
 
   --sidebar: #fffaf0;
@@ -208,6 +215,11 @@ html[data-theme-swap] *::after {
   --accent-secondary: #7fb7ff;
   --accent-numeric: #f0b44a;
   --glow: 0 0 28px -4px rgba(240, 180, 74, 0.25);
+
+  /* Semantic success — inherits brighter mint --chart-4 in dark mode; lift
+   * soft/glow opacities so the accent bar reads clearly against deep amber. */
+  --success-soft: color-mix(in srgb, var(--success) 18%, transparent);
+  --success-glow: color-mix(in srgb, var(--success) 30%, transparent);
 
   --sidebar: #15161d;
   --sidebar-foreground: #eeecda;
@@ -688,6 +700,78 @@ html[data-theme-swap] *::after {
       );
     }
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Toast (sonner) — Design #3 shell with Design #1's left accent. Rules live
+ * in plain CSS (not Tailwind on the classNames API) because sonner stamps
+ * [data-sonner-toast][data-styled='true'] at two-attribute specificity and
+ * that beats Tailwind's single-class selectors silently. Co-locating the
+ * overrides here lets us match sonner's specificity without important hacks.
+ * ────────────────────────────────────────────────────────────────────────── */
+[data-sonner-toast].mule-toast[data-styled='true'] {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Design #1 technique: 1px frame on all sides so the 3px left border has
+   * a neighbour to transition into at the rounded corners — the accent no
+   * longer tapers into empty space. Padding trims border widths so the
+   * visible content gap is 14px L/R and 12px T/B regardless of which side
+   * is 1px vs 3px. */
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--success);
+  padding: 11px 13px 11px 11px;
+  min-width: 320px;
+  max-width: 380px;
+  background: var(--surface);
+  color: var(--foreground);
+  border-radius: var(--radius);
+  box-shadow:
+    0 16px 36px -20px var(--success-glow),
+    0 2px 8px -4px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+[data-sonner-toast].mule-toast[data-styled='true'] [data-icon] {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--success-soft);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  flex-shrink: 0;
+}
+[data-sonner-toast].mule-toast[data-styled='true'] [data-icon] > svg {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+[data-sonner-toast].mule-toast[data-styled='true'] [data-content] {
+  min-width: 0;
+  flex: 1;
+}
+/* Action button (Undo) — mirrors design #3's .t-link: mono, uppercase,
+ * 11px with wide tracking, accent-colored text with accent-soft hover. */
+[data-sonner-toast].mule-toast[data-styled='true'] [data-button] {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  height: auto;
+  margin: 0;
+  cursor: pointer;
+  transition: background 120ms;
+}
+[data-sonner-toast].mule-toast[data-styled='true'] [data-button]:hover {
+  background: var(--accent-soft);
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

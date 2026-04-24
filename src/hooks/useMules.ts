@@ -90,5 +90,38 @@ export function useMules() {
     setMules((prev) => arrayMove(prev, oldIndex, newIndex));
   }, []);
 
-  return { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules };
+  /**
+   * Batch restore. Snapshots must carry their original index. We sort by
+   * index ascending and splice in that order — each later insert naturally
+   * shifts earlier-inserted items right, so every mule lands at its
+   * original slot.
+   */
+  const restoreMules = useCallback((snapshots: Array<{ mule: Mule; index: number }>) => {
+    if (snapshots.length === 0) return;
+    setMules((prev) => {
+      const sorted = [...snapshots].sort((a, b) => a.index - b.index);
+      const next = [...prev];
+      for (const { mule, index } of sorted) {
+        const clamped = Math.min(Math.max(index, 0), next.length);
+        next.splice(clamped, 0, mule);
+      }
+      return next;
+    });
+  }, []);
+
+  const restoreMule = useCallback(
+    (mule: Mule, index: number) => restoreMules([{ mule, index }]),
+    [restoreMules],
+  );
+
+  return {
+    mules,
+    addMule,
+    updateMule,
+    deleteMule,
+    deleteMules,
+    reorderMules,
+    restoreMule,
+    restoreMules,
+  };
 }
