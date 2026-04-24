@@ -181,7 +181,7 @@ export function AppContent() {
 
   const isSelected = useCallback((id: string) => toDeleteRef.current.has(id), []);
 
-  const dragPaintHandlers = useBulkDragPaint({
+  const { handlers: dragPaintHandlers, isPaintEngaged } = useBulkDragPaint({
     enabled: bulkMode,
     orderRef,
     isSelected,
@@ -255,6 +255,7 @@ export function AppContent() {
                       bulkMode={bulkMode}
                       selected={toDelete.has(mule.id)}
                       onToggleSelect={toggleDelete}
+                      isPaintEngaged={isPaintEngaged}
                     />
                   ))}
                   {!bulkMode && <AddCard onClick={handleAddMule} />}

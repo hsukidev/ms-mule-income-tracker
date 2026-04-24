@@ -1,4 +1,4 @@
-import { memo, useState, type CSSProperties } from 'react';
+import { memo, useEffect, useState, type CSSProperties } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Check, Trash2 } from 'lucide-react';
@@ -15,6 +15,9 @@ interface MuleCharacterCardProps {
   bulkMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  // Clears press-scale on engagement — the finger doesn't lift during a
+  // paint drag, so `onTouchEnd` can't release `isPressed` on its own.
+  isPaintEngaged?: boolean;
 }
 
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
@@ -176,6 +179,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
   bulkMode = false,
   selected = false,
   onToggleSelect,
+  isPaintEngaged = false,
 }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mule.id,
@@ -184,6 +188,10 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (isPaintEngaged) setIsPressed(false);
+  }, [isPaintEngaged]);
 
   const style: React.CSSProperties = isDragging
     ? { opacity: 0 }

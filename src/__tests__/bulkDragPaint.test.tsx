@@ -563,6 +563,40 @@ describe('useBulkDragPaint (touch long-press gate)', () => {
 
     expect(boundary.getAttribute('data-paint-engaged')).not.toBe('true');
   });
+
+  it('touch: start card scale(1.04) is released the moment paint engages', () => {
+    // Pre-engagement: touchstart scales the anchor card up to 1.04 as haptic
+    // feedback. Once the 250ms long-press engages the paint, the scale must
+    // snap back to the resting transform — the paint gesture continues, but
+    // the "holding" visual shouldn't stick for the whole drag (the finger
+    // doesn't lift, so onTouchEnd can't clear it on its own).
+    seedMules(testMules);
+    const { container } = render(<App />);
+    enterBulk();
+    restoreHitTest = mockElementFromPoint(container, testMules);
+
+    const cardA = getCardWrapper(container, 'mule-a');
+    const panelA = cardA.querySelector('.panel') as HTMLElement;
+
+    fireEvent.touchStart(panelA, { touches: [{ clientX: centerXFor(0), clientY: 150 }] });
+    pointerDown(cardA, centerXFor(0), 150, 'touch');
+
+    // Pre-engagement baseline — the scale should be visible during the
+    // long-press window.
+    expect(panelA.style.transform).toBe('scale(1.04)');
+
+    act(() => {
+      vi.advanceTimersByTime(260);
+    });
+
+    // Post-engagement — scale must be gone. Paint is active (anchor card is
+    // selected as part of the initial range), but the card no longer looks
+    // "held".
+    expect(panelA.style.transform).not.toContain('scale');
+    expect(isCardSelected(container, 'mule-a')).toBe(true);
+
+    pointerUp(document, centerXFor(0), 150, 'touch');
+  });
 });
 
 describe('useBulkDragPaint (scroll preventer)', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * iPhone Photos-style drag-to-select gesture for Bulk Delete Mode.
@@ -44,9 +44,14 @@ interface PaintedRange {
   hi: number;
 }
 
-interface Handlers {
-  onPointerDown: (e: React.PointerEvent<HTMLElement>) => void;
-  onClickCapture: (e: React.MouseEvent<HTMLElement>) => void;
+interface BulkDragPaint {
+  // Nested so callers can spread `{...handlers}` onto the boundary without
+  // `isPaintEngaged` leaking through as a DOM attribute.
+  handlers: {
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => void;
+    onClickCapture: (e: React.MouseEvent<HTMLElement>) => void;
+  };
+  isPaintEngaged: boolean;
 }
 
 function cardIdFromTarget(target: EventTarget | null): string | null {
@@ -68,7 +73,12 @@ function cardIdFromPoint(x: number, y: number): string | null {
   return card.getAttribute('data-mule-card');
 }
 
-export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }: Args): Handlers {
+export function useBulkDragPaint({
+  enabled,
+  orderRef,
+  isSelected,
+  setSelected,
+}: Args): BulkDragPaint {
   const startIdRef = useRef<string | null>(null);
   const startIdxRef = useRef<number | null>(null);
   const pointerIdRef = useRef<number | null>(null);
@@ -85,6 +95,9 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
   const lastClientRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const detachDocListenersRef = useRef<(() => void) | null>(null);
   const detachTouchMoveRef = useRef<(() => void) | null>(null);
+  // State (not ref) because consumers must re-render on engagement; every
+  // other per-gesture bit stays in refs to keep the hot path render-free.
+  const [isPaintEngaged, setIsPaintEngaged] = useState(false);
 
   const clearPressTimer = useCallback(() => {
     if (pressTimerRef.current !== null) {
@@ -122,6 +135,7 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
       detachTouchMoveRef.current();
       detachTouchMoveRef.current = null;
     }
+    setIsPaintEngaged(false);
   }, [clearPressTimer, stopAutoscrollLoop]);
 
   const revertAll = useCallback(() => {
@@ -219,6 +233,7 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
     if (boundaryRef.current) {
       boundaryRef.current.setAttribute('data-paint-engaged', 'true');
     }
+    setIsPaintEngaged(true);
   }, [applyRangeDiff, isSelected, orderRef]);
 
   const handleMove = useCallback(
@@ -376,7 +391,7 @@ export function useBulkDragPaint({ enabled, orderRef, isSelected, setSelected }:
   }, [resetGesture]);
 
   return {
-    onPointerDown,
-    onClickCapture,
+    handlers: { onPointerDown, onClickCapture },
+    isPaintEngaged,
   };
 }
