@@ -1,11 +1,7 @@
 import {
   DndContext,
-  DragOverlay,
   closestCenter,
-  defaultDropAnimationSideEffects,
   type DragEndEvent,
-  type DragStartEvent,
-  type DropAnimation,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
@@ -19,7 +15,6 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 
 import { ThemeProvider } from './context/ThemeProvider';
 import { DensityProvider } from './context/DensityProvider';
@@ -27,7 +22,7 @@ import { WorldProvider, useWorld } from './context/WorldProvider';
 import { IncomeProvider } from './modules/income';
 import { useMules } from './hooks/useMules';
 import { useBulkDragPaint } from './hooks/useBulkDragPaint';
-import { MuleCharacterCard, MuleCharacterCardOverlay } from './components/MuleCharacterCard';
+import { MuleCharacterCard } from './components/MuleCharacterCard';
 import { MuleDetailDrawer } from './components/MuleDetailDrawer';
 import { AddCard } from './components/AddCard';
 import { Header } from './components/Header';
@@ -50,14 +45,6 @@ const dragBoundaryActiveStyle: React.CSSProperties = {
   borderColor: 'color-mix(in hsl, var(--accent-primary) 45%, transparent)',
 };
 
-const dropAnimation: DropAnimation = {
-  duration: 220,
-  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-  sideEffects: defaultDropAnimationSideEffects({
-    styles: { active: { opacity: '0' } },
-  }),
-};
-
 export function AppContent() {
   const { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules } = useMules();
   const { world } = useWorld();
@@ -71,14 +58,12 @@ export function AppContent() {
   // live — stale mules on drop causes FLIP to target the wrong layout.
   const deferredMulesInWorld = useDeferredValue(mulesInWorld);
   const [selectedMuleId, setSelectedMuleId] = useState<string | null>(null);
-  const [activeMuleId, setActiveMuleId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
   const [toDelete, setToDelete] = useState<Set<string>>(() => new Set());
   const [showWorldNeededBanner, setShowWorldNeededBanner] = useState(false);
 
   const selectedMule = mules.find((m) => m.id === selectedMuleId) ?? null;
-  const activeMule = activeMuleId ? (mules.find((m) => m.id === activeMuleId) ?? null) : null;
-  const isDragging = activeMuleId !== null;
 
   // Stable ids array for SortableContext — `mulesInWorld` is already memoized
   // on `[mules, world]`, and `mules` identity only changes on add / delete /
@@ -95,13 +80,13 @@ export function AppContent() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveMuleId(String(event.active.id));
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
   }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActiveMuleId(null);
+      setIsDragging(false);
       const { active, over } = event;
       if (over && active.id !== over.id) {
         const oldIndex = mules.findIndex((m) => m.id === active.id);
@@ -113,7 +98,7 @@ export function AppContent() {
   );
 
   const handleDragCancel = useCallback(() => {
-    setActiveMuleId(null);
+    setIsDragging(false);
   }, []);
 
   const handleAddMule = useCallback(() => {
@@ -262,12 +247,6 @@ export function AppContent() {
                 </div>
               </div>
             </SortableContext>
-            {createPortal(
-              <DragOverlay dropAnimation={dropAnimation}>
-                {activeMule ? <MuleCharacterCardOverlay mule={activeMule} /> : null}
-              </DragOverlay>,
-              document.body,
-            )}
           </DndContext>
         </section>
       </main>

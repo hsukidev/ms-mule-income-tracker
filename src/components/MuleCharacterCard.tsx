@@ -24,9 +24,12 @@ interface MuleCharacterCardProps {
 // `color-mix` to get alpha variants without introducing #e05040 literals.
 const DESTRUCTIVE = 'var(--destructive)';
 
-// Shared press/drag scale — the in-place card on touch-hold and the drag
-// overlay must use the same value so the engagement transition is seamless.
+// Lift applied to the inner `.panel` on touch-hold. Keeping the scale on the
+// inner element (not the outer `setNodeRef` div) means the sortable node's
+// rect stays layout-accurate for `useSortable`'s drag-delta math — no second
+// DOM node / overlay is needed; the in-place card is the drag visual itself.
 const PRESS_SCALE = 'scale(1.04)';
+const DEFAULT_PANEL_SHADOW = '0 0 0 1px var(--border)';
 const destructiveAlpha = (pct: number) =>
   `color-mix(in oklab, var(--destructive) ${pct}%, transparent)`;
 
@@ -153,29 +156,6 @@ const MuleCardInner = memo(function MuleCardInner({
   );
 });
 
-export const MuleCharacterCardOverlay = memo(function MuleCharacterCardOverlay({
-  mule,
-}: {
-  mule: Mule;
-}) {
-  return (
-    <div
-      className="panel cursor-grabbing"
-      style={{
-        padding: 'var(--card-pad, 16px)',
-        minHeight: 'var(--roster-card-min-height, 260px)',
-        display: 'flex',
-        flexDirection: 'column',
-        transform: PRESS_SCALE,
-        boxShadow: '0 12px 40px -8px var(--accent-glow), 0 0 0 1px var(--border)',
-        opacity: mule.active ? 1 : 0.55,
-      }}
-    >
-      <MuleCardInner mule={mule} />
-    </div>
-  );
-});
-
 export const MuleCharacterCard = memo(function MuleCharacterCard({
   mule,
   onClick,
@@ -197,13 +177,12 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
     if (isPaintEngaged) setIsPressed(false);
   }, [isPaintEngaged]);
 
-  const style: React.CSSProperties = isDragging
-    ? { opacity: 0 }
-    : {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: mule.active ? 1 : 0.55,
-      };
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: mule.active ? 1 : 0.55,
+    zIndex: isDragging ? 1 : undefined,
+  };
 
   function handleActivate() {
     if (bulkMode) {
@@ -239,7 +218,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
       ? 'none'
       : hoverActive
         ? '0 8px 32px -8px var(--accent-glow)'
-        : '0 0 0 1px var(--border)';
+        : DEFAULT_PANEL_SHADOW;
 
   // Press-and-hold wins over hover-lift: touch start scales the card to 1.04
   // for 200ms, finishing just before the 250ms TouchSensor engages drag.
