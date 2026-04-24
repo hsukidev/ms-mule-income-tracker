@@ -20,7 +20,7 @@ export function WorldMissingBanner() {
     >
       <Info size={16} style={{ color: info, flexShrink: 0 }} aria-hidden />
       <span style={{ color: info, fontWeight: 500, fontSize: 14, letterSpacing: '-0.01em' }}>
-        Please select a world first.
+        Please select a world first
       </span>
     </div>
   );

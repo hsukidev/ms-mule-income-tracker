@@ -196,7 +196,7 @@ describe('App', () => {
       fireEvent.click(screen.getByRole('button', { name: /add mule/i }));
 
       expect(container.querySelector('[data-world-missing-banner]')).toBeTruthy();
-      expect(screen.getByText(/please select a world first\./i)).toBeTruthy();
+      expect(screen.getByText(/please select a world first/i)).toBeTruthy();
       expect(container.querySelectorAll('[data-mule-card]')).toHaveLength(0);
       expect(screen.queryByRole('heading', { name: 'Unnamed Mule' })).toBeNull();
     });

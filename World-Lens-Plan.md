@@ -4,7 +4,7 @@
 
 Mules are currently world-agnostic. The header already exposes a **World Select** (`src/components/WorldSelect.tsx`) that persists a single `WorldId` to `localStorage['world']` via `WorldProvider`, but nothing else in the app reads it — the roster, `KpiCard`, and `PieChartCard` all aggregate across _every_ mule, which is incoherent because crystal cadence, weekly crystal cap (180), and income in MapleStory are scoped per world.
 
-This change introduces the **World Lens**: selecting a world filters the roster and KPIs to mules belonging to that world. Each mule gains a `worldId` field at creation time (immutable) and only appears in its own world's view. On first-run — no world selected, click **Add Mule** — an in-flow blue **info banner** slides in at the top of the roster with "Please select a world first." and auto-dismisses once the user picks a world.
+This change introduces the **World Lens**: selecting a world filters the roster and KPIs to mules belonging to that world. Each mule gains a `worldId` field at creation time (immutable) and only appears in its own world's view. On first-run — no world selected, click **Add Mule** — an in-flow blue **info banner** slides in at the top of the roster with "Please select a world first" and auto-dismisses once the user picks a world.
 
 ## Decisions (locked during grilling)
 
@@ -114,7 +114,7 @@ export function WorldMissingBanner() {
     >
       <Info size={16} style={{ color: info, flexShrink: 0 }} aria-hidden />
       <span style={{ color: info, fontWeight: 500, fontSize: 14, letterSpacing: '-0.01em' }}>
-        Please select a world first.
+        Please select a world first
       </span>
     </div>
   );

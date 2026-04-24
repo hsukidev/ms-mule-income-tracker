@@ -271,7 +271,7 @@ Dropdown panel is a base-ui `Select` grouped into two `World Group` sections —
 
 ### [WorldMissingBanner](src/components/WorldMissingBanner.tsx)
 
-Info-tinted blue banner that slides in above the **Roster Header** when the user clicks **Add Card** with no **Selected World**. Reuses the `bulk-slide` keyframe but uses `--accent-secondary` instead of `--destructive`. Copy: "Please select a world first." Auto-dismisses (unmounts) the moment the user picks any **World** from the **WorldSelect** — no close button, no timer.
+Info-tinted blue banner that slides in above the **Roster Header** when the user clicks **Add Card** with no **Selected World**. Reuses the `bulk-slide` keyframe but uses `--accent-secondary` instead of `--destructive`. Copy: "Please select a world first" Auto-dismisses (unmounts) the moment the user picks any **World** from the **WorldSelect** — no close button, no timer.
 
 ### [RosterHeader](src/components/RosterHeader.tsx)
 

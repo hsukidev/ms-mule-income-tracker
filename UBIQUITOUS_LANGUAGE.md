@@ -455,7 +455,7 @@
 > **Dev:** "Why is **World Provider** outside **Income Provider**?"
 > **Domain expert:** "Because the **World Lens** feeds **Crystal Values** that depend on **World Group** (**Heroic** vs **Interactive** have different crystal economies). Income needs to read `useWorld()`, so **World Provider** has to sit above **Income Provider** in the tree."
 > **Dev:** "And if I click **Add Card** on a fresh install with no **World** picked?"
-> **Domain expert:** "The **World Missing Banner** slides in above the **Roster Header**. Blue info-variant styling, same `bulk-slide` keyframe as the **Bulk Action Bar**, text reads 'Please select a world first.' No **Mule** is appended. Pick any **World** from the **World Select** and the banner unmounts — unmount is the dismiss, no close button, no timer."
+> **Domain expert:** "The **World Missing Banner** slides in above the **Roster Header**. Blue info-variant styling, same `bulk-slide` keyframe as the **Bulk Action Bar**, text reads 'Please select a world first' No **Mule** is appended. Pick any **World** from the **World Select** and the banner unmounts — unmount is the dismiss, no close button, no timer."
 > **Dev:** "Can I move a **Mule** from Kronos to Hyperion later if I picked wrong?"
 > **Domain expert:** "No — **Mule World Id** is immutable. The game's own world-transfer is a rare out-of-game event, so the tracker mirrors it: wrong world means delete and recreate. The **Drawer** has no world editor."
 > **Dev:** "The **KPI Card** shows WEEKLY CAP as `X/180` but the **Crystal Tally** shows `X/14` — same word, different cap?"

@@ -7,7 +7,7 @@ describe('WorldMissingBanner', () => {
     render(<WorldMissingBanner />);
     const banner = screen.getByRole('status');
     expect(banner.hasAttribute('data-world-missing-banner')).toBe(true);
-    expect(banner.textContent).toMatch(/please select a world first\./i);
+    expect(banner.textContent).toMatch(/please select a world first/i);
   });
 
   it('uses the info-blue accent token for the border, background, and text', () => {
