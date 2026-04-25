@@ -5,6 +5,7 @@ import type { Mule } from '../../types';
 import { isChallengerWorld } from '../../data/worlds';
 import { useCharacterLookup } from '../../hooks/useCharacterLookup';
 import { toast } from '../../lib/toast';
+import { CHARACTER_LOOKUP_COPY } from './characterLookupCopy';
 
 interface Props {
   mule: Mule;
@@ -46,22 +47,21 @@ export function CharacterLookupButton({ mule, draftName, onUpdate }: Props) {
         muleClass: result.data.className,
         avatarUrl: result.data.avatarUrl,
       });
-      toast.success('Character found', {
+      toast.success(CHARACTER_LOOKUP_COPY.success.title, {
         description: `${result.data.name} · Lv.${result.data.level} ${result.data.className}`,
       });
       return;
     }
 
     if (result.kind === 'not-found') {
-      toast.error('Character not found', {
-        description:
-          'The character must have been logged in within the last week to appear in the weekly ranking.',
+      toast.error(CHARACTER_LOOKUP_COPY.notFound.title, {
+        description: CHARACTER_LOOKUP_COPY.notFound.description,
       });
       return;
     }
 
-    toast.error('Lookup failed', {
-      description: 'Could not reach the lookup service. Please try again.',
+    toast.error(CHARACTER_LOOKUP_COPY.lookupFailed.title, {
+      description: CHARACTER_LOOKUP_COPY.lookupFailed.description,
     });
   }, [mule.id, onUpdate, run, trimmed, worldId]);
 
