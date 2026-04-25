@@ -1,6 +1,18 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
+
+const sonnerMock = vi.hoisted(() => ({
+  toast: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  }),
+}));
+
+vi.mock('sonner', () => sonnerMock);
+
 import { CharacterLookupButton } from '../CharacterLookupButton';
+import { CHARACTER_LOOKUP_COPY } from '../characterLookupCopy';
 import type { Mule } from '../../../types';
 
 const ORIGINAL_FETCH = globalThis.fetch;
@@ -17,6 +29,10 @@ const baseMule: Mule = {
 
 beforeEach(() => {
   globalThis.fetch = vi.fn() as unknown as typeof fetch;
+  sonnerMock.toast.mockClear();
+  sonnerMock.toast.success.mockClear();
+  sonnerMock.toast.error.mockClear();
+  sonnerMock.toast.info.mockClear();
 });
 
 afterEach(() => {
@@ -164,5 +180,49 @@ describe('CharacterLookupButton — click behavior', () => {
     );
     await new Promise((r) => setTimeout(r, 0));
     expect(onUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe('CharacterLookupButton — toast copy', () => {
+  it('emits the not-found copy from the shared constants on a 404', async () => {
+    globalThis.fetch = vi.fn(
+      async () => new Response(null, { status: 404 }),
+    ) as unknown as typeof fetch;
+    render(<CharacterLookupButton mule={baseMule} draftName="notfound" onUpdate={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('character-lookup-button'));
+    await waitFor(() => {
+      expect(sonnerMock.toast.error).toHaveBeenCalledWith(
+        CHARACTER_LOOKUP_COPY.notFound.title,
+        expect.objectContaining({ description: CHARACTER_LOOKUP_COPY.notFound.description }),
+      );
+    });
+  });
+
+  it('emits the generic lookup-failed copy on a 502 (distinct from not-found)', async () => {
+    globalThis.fetch = vi.fn(
+      async () => new Response(null, { status: 502 }),
+    ) as unknown as typeof fetch;
+    render(<CharacterLookupButton mule={baseMule} draftName="Alice" onUpdate={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('character-lookup-button'));
+    await waitFor(() => {
+      expect(sonnerMock.toast.error).toHaveBeenCalledWith(
+        CHARACTER_LOOKUP_COPY.lookupFailed.title,
+        expect.objectContaining({ description: CHARACTER_LOOKUP_COPY.lookupFailed.description }),
+      );
+    });
+  });
+
+  it('emits the generic lookup-failed copy on a network error (distinct from not-found)', async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError('network failed');
+    }) as unknown as typeof fetch;
+    render(<CharacterLookupButton mule={baseMule} draftName="Alice" onUpdate={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('character-lookup-button'));
+    await waitFor(() => {
+      expect(sonnerMock.toast.error).toHaveBeenCalledWith(
+        CHARACTER_LOOKUP_COPY.lookupFailed.title,
+        expect.objectContaining({ description: CHARACTER_LOOKUP_COPY.lookupFailed.description }),
+      );
+    });
   });
 });
