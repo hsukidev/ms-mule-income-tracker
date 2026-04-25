@@ -67,12 +67,9 @@ describe('worldIdMap', () => {
   });
 
   it('assigns a unique numeric worldID within each reboot bucket', () => {
-    const heroicIds = SUPPORTED_WORLD_IDS.filter((id) => toUpstreamKey(id).rebootIndex === 1).map(
-      (id) => toUpstreamKey(id).worldID,
-    );
-    const interactiveIds = SUPPORTED_WORLD_IDS.filter(
-      (id) => toUpstreamKey(id).rebootIndex === 0,
-    ).map((id) => toUpstreamKey(id).worldID);
+    const keys = SUPPORTED_WORLD_IDS.map(toUpstreamKey);
+    const heroicIds = keys.filter((k) => k.rebootIndex === 1).map((k) => k.worldID);
+    const interactiveIds = keys.filter((k) => k.rebootIndex === 0).map((k) => k.worldID);
     expect(new Set(heroicIds).size).toBe(heroicIds.length);
     expect(new Set(interactiveIds).size).toBe(interactiveIds.length);
   });
@@ -86,12 +83,10 @@ describe('worldIdMap', () => {
     // A Heroic numeric id queried with rebootIndex=0 must NOT resolve to the
     // Heroic WorldId — and vice versa — even if the numeric values overlap.
     const kronos = toUpstreamKey('heroic-kronos');
-    const reverse = fromUpstreamKey(0, kronos.worldID);
-    expect(reverse === 'heroic-kronos').toBe(false);
+    expect(fromUpstreamKey(0, kronos.worldID)).not.toBe('heroic-kronos');
 
     const bera = toUpstreamKey('interactive-bera');
-    const reverseBera = fromUpstreamKey(1, bera.worldID);
-    expect(reverseBera === 'interactive-bera').toBe(false);
+    expect(fromUpstreamKey(1, bera.worldID)).not.toBe('interactive-bera');
   });
 
   it('narrows isSupportedWorldId to the six non-CW worlds in scope', () => {
