@@ -1,1 +1,14 @@
 pnpm exec lint-staged
+
+# Fail fast if a package.json change isn't accompanied by a matching
+# pnpm-lock.yaml update. Sandcastle sandboxes set CI=true and so use
+# --frozen-lockfile by default — drift here aborts every subsequent
+# iteration's planner before it can run.
+if git diff --cached --name-only | grep -qE '(^|/)package\.json$'; then
+  if ! pnpm install --frozen-lockfile --lockfile-only >/dev/null; then
+    echo
+    echo "ERROR: pnpm-lock.yaml is out of sync with a staged package.json change."
+    echo "Run 'pnpm install' and 'git add pnpm-lock.yaml' before committing."
+    exit 1
+  fi
+fi
