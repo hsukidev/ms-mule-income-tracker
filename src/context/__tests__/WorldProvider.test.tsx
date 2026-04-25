@@ -15,9 +15,6 @@ function WorldConsumer() {
       <button data-testid="set-bera" onClick={() => setWorld('interactive-bera')}>
         Set Bera
       </button>
-      <button data-testid="set-cw-heroic" onClick={() => setWorld('heroic-challenger')}>
-        Set CW (Heroic)
-      </button>
     </div>
   );
 }
@@ -90,25 +87,6 @@ describe('WorldProvider', () => {
     );
     fireEvent.click(screen.getByTestId('set-bera'));
     expect(localStorage.getItem('world')).toBe('interactive-bera');
-  });
-
-  it('setWorld round-trips through localStorage', () => {
-    const { unmount } = render(
-      <WorldProvider>
-        <WorldConsumer />
-      </WorldProvider>,
-    );
-    fireEvent.click(screen.getByTestId('set-cw-heroic'));
-    expect(screen.getByTestId('world-id').textContent).toBe('heroic-challenger');
-    unmount();
-
-    render(
-      <WorldProvider>
-        <WorldConsumer />
-      </WorldProvider>,
-    );
-    expect(screen.getByTestId('world-id').textContent).toBe('heroic-challenger');
-    expect(screen.getByTestId('world-label').textContent).toBe('CW (Heroic)');
   });
 
   it('defaultWorld prop overrides the localStorage read', () => {

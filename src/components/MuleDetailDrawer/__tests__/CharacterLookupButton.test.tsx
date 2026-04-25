@@ -60,21 +60,7 @@ describe('CharacterLookupButton — disabled rules', () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it('disables when the mule is on a Heroic Challenger World', () => {
-    const mule = { ...baseMule, worldId: 'heroic-challenger' as const };
-    render(<CharacterLookupButton mule={mule} draftName="Alice" onUpdate={vi.fn()} />);
-    const btn = screen.getByTestId('character-lookup-button') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-  });
-
-  it('disables when the mule is on an Interactive Challenger World', () => {
-    const mule = { ...baseMule, worldId: 'interactive-challenger' as const };
-    render(<CharacterLookupButton mule={mule} draftName="Alice" onUpdate={vi.fn()} />);
-    const btn = screen.getByTestId('character-lookup-button') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-  });
-
-  it('enables when draft name is non-empty and worldId is a non-CW world', () => {
+  it('enables when draft name is non-empty and a world is selected', () => {
     render(<CharacterLookupButton mule={baseMule} draftName="Alice" onUpdate={vi.fn()} />);
     const btn = screen.getByTestId('character-lookup-button') as HTMLButtonElement;
     expect(btn.disabled).toBe(false);

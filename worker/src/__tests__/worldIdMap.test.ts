@@ -14,10 +14,8 @@ import {
  * isn't bijective, and the per-id checks guard against accidentally
  * collapsing two worlds onto the same numeric id within a reboot bucket.
  *
- * Slice 3 expands the supported set from the three Heroic worlds to all
- * six non-CW worlds (Heroic: Kronos/Hyperion/Solis at `rebootIndex=1`;
- * Interactive: Bera/Scania/Luna at `rebootIndex=0`). Challenger Worlds
- * remain out of scope.
+ * The supported set is the six worlds: Heroic (Kronos/Hyperion/Solis) at
+ * `rebootIndex=1` and Interactive (Bera/Scania/Luna) at `rebootIndex=0`.
  */
 
 describe('worldIdMap', () => {
@@ -89,7 +87,7 @@ describe('worldIdMap', () => {
     expect(fromUpstreamKey(1, bera.worldID)).not.toBe('interactive-bera');
   });
 
-  it('narrows isSupportedWorldId to the six non-CW worlds in scope', () => {
+  it('narrows isSupportedWorldId to the six supported worlds', () => {
     expect(isSupportedWorldId('heroic-kronos')).toBe(true);
     expect(isSupportedWorldId('heroic-hyperion')).toBe(true);
     expect(isSupportedWorldId('heroic-solis')).toBe(true);
@@ -98,9 +96,8 @@ describe('worldIdMap', () => {
     expect(isSupportedWorldId('interactive-luna')).toBe(true);
   });
 
-  it('rejects Challenger WorldIds and garbage', () => {
-    expect(isSupportedWorldId('heroic-challenger')).toBe(false);
-    expect(isSupportedWorldId('interactive-challenger')).toBe(false);
+  it('rejects unknown garbage values', () => {
+    expect(isSupportedWorldId('not-a-world')).toBe(false);
     expect(isSupportedWorldId('')).toBe(false);
     expect(isSupportedWorldId(null)).toBe(false);
     expect(isSupportedWorldId(undefined)).toBe(false);

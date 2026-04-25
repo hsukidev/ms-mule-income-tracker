@@ -100,7 +100,7 @@ describe('Header WorldSelect integration', () => {
     );
   });
 
-  it('renders all eight worlds grouped correctly when the panel is open', async () => {
+  it('renders all six worlds grouped correctly when the panel is open', async () => {
     render(<Header />, { defaultWorld: null });
     fireEvent.click(screen.getByLabelText('Select world'));
 
@@ -111,11 +111,9 @@ describe('Header WorldSelect integration', () => {
     expect(screen.getByRole('option', { name: 'Kronos' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Hyperion' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Solis' })).toBeTruthy();
-    expect(screen.getByRole('option', { name: 'CW (Heroic)' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Scania' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Bera' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Luna' })).toBeTruthy();
-    expect(screen.getByRole('option', { name: 'CW (Interactive)' })).toBeTruthy();
   });
 
   it('selecting an option updates the trigger label', async () => {

@@ -1,6 +1,5 @@
 /**
- * Character-lookup Worker. Slice 3 expands the supported-world surface
- * to all six non-CW worlds. The Worker exposes:
+ * Character-lookup Worker. Exposes:
  *
  *   GET /api/character/:name?worldId=<SupportedWorldId>
  *
@@ -9,7 +8,7 @@
  * Interactive, 1 for Heroic), filters `ranks[]` by the expected numeric
  * `worldID`, and returns the matching rank reshaped into the documented
  * response contract. Successful responses cache for ~6h; 404s cache for
- * ~1h. Challenger Worlds remain out of scope and respond 400.
+ * ~1h. Unknown / unsupported worldIds respond 400.
  *
  * The handler is exported with an injectable `HandlerDeps` parameter so
  * the test suite can drive it with a stubbed adapter and an in-memory

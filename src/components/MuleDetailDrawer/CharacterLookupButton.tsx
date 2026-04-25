@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Mule } from '../../types';
-import { isChallengerWorld } from '../../data/worlds';
 import { useCharacterLookup } from '../../hooks/useCharacterLookup';
 import { toast } from '../../lib/toast';
 import { CHARACTER_LOOKUP_COPY } from './characterLookupCopy';
@@ -20,8 +19,6 @@ interface Props {
  *
  *   - the character name (live draft) is empty
  *   - the mule has no `worldId`
- *   - the mule's world is a Challenger World (CW lookup is out of scope
- *     for slice 1; CW mules continue to be hand-edited)
  *
  * On click, the underlying `useCharacterLookup` hook drives the
  * `lookupCharacter` library. Success populates name / class / level /
@@ -33,7 +30,7 @@ export function CharacterLookupButton({ mule, draftName, onUpdate }: Props) {
 
   const trimmed = draftName.trim();
   const worldId = mule.worldId;
-  const disabled = trimmed === '' || !worldId || isChallengerWorld(worldId) || loading;
+  const disabled = trimmed === '' || !worldId || loading;
 
   const onClick = useCallback(async () => {
     if (!worldId || trimmed === '') return;

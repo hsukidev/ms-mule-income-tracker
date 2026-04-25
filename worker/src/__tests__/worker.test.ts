@@ -66,21 +66,8 @@ describe('worker handler — input validation', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 for a Heroic Challenger worldId (still out of scope)', async () => {
-    const res = await handleLookup(get('/api/character/Alice?worldId=heroic-challenger'), deps());
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for an Interactive Challenger worldId (still out of scope)', async () => {
-    const res = await handleLookup(
-      get('/api/character/Alice?worldId=interactive-challenger'),
-      deps(),
-    );
-    expect(res.status).toBe(400);
-  });
-
   it('returns 400 for an unknown worldId', async () => {
-    const res = await handleLookup(get('/api/character/Alice?worldId=not-a-world'), deps());
+    const res = await handleLookup(get('/api/character/Alice?worldId=unknown-world'), deps());
     expect(res.status).toBe(400);
   });
 

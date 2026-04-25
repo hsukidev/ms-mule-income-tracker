@@ -3,10 +3,7 @@
  * header World Select offers.
  *
  * MapleStory GMS partitions worlds into two World Groups: Heroic (Kronos,
- * Hyperion, Solis, Challenger World (Heroic)) and Interactive (Scania, Bera,
- * Luna, Challenger World (Interactive)). Challenger World exists in both
- * groups and is disambiguated at the label level — `CW (Heroic)` /
- * `CW (Interactive)` — while its `WorldId` keeps the two entries distinct.
+ * Hyperion, Solis) and Interactive (Scania, Bera, Luna).
  *
  * See issue #194 §Approach for the locked shape.
  */
@@ -17,11 +14,9 @@ export type WorldId =
   | 'heroic-kronos'
   | 'heroic-hyperion'
   | 'heroic-solis'
-  | 'heroic-challenger'
   | 'interactive-scania'
   | 'interactive-bera'
-  | 'interactive-luna'
-  | 'interactive-challenger';
+  | 'interactive-luna';
 
 export interface World {
   id: WorldId;
@@ -33,11 +28,9 @@ export const WORLDS: readonly World[] = [
   { id: 'heroic-kronos', label: 'Kronos', group: 'Heroic' },
   { id: 'heroic-hyperion', label: 'Hyperion', group: 'Heroic' },
   { id: 'heroic-solis', label: 'Solis', group: 'Heroic' },
-  { id: 'heroic-challenger', label: 'CW (Heroic)', group: 'Heroic' },
   { id: 'interactive-scania', label: 'Scania', group: 'Interactive' },
   { id: 'interactive-bera', label: 'Bera', group: 'Interactive' },
   { id: 'interactive-luna', label: 'Luna', group: 'Interactive' },
-  { id: 'interactive-challenger', label: 'CW (Interactive)', group: 'Interactive' },
 ];
 
 export const WORLD_IDS: ReadonlySet<WorldId> = new Set(WORLDS.map((w) => w.id));
@@ -76,14 +69,4 @@ export const FALLBACK_WORLD_GROUP: WorldGroup = 'Heroic';
  */
 export function resolveWorldGroup(worldId: string | null | undefined): WorldGroup {
   return findWorld(worldId ?? null)?.group ?? FALLBACK_WORLD_GROUP;
-}
-
-/**
- * Challenger Worlds are explicitly excluded from character lookup —
- * the upstream rankings split them across both reboot-index buckets in
- * a way the slice-1 contract doesn't address, so CW mules continue to
- * be hand-edited.
- */
-export function isChallengerWorld(worldId: string | null | undefined): boolean {
-  return worldId === 'heroic-challenger' || worldId === 'interactive-challenger';
 }

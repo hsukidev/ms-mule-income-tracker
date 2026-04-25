@@ -1,11 +1,9 @@
 /**
  * World ID map — owns the bidirectional translation between the SPA's
  * `WorldId` strings and the upstream Nexon API's `{ rebootIndex, worldID }`
- * tuple. Slice 3 covers all six non-CW worlds: Heroic (Kronos, Hyperion,
- * Solis) at `rebootIndex=1` and Interactive (Bera, Scania, Luna) at
- * `rebootIndex=0`. Challenger Worlds remain out of scope — they are split
- * across both reboot-index buckets in a way the slice contract doesn't
- * address, so CW mules continue to be hand-edited.
+ * tuple. Covers all six supported worlds: Heroic (Kronos, Hyperion, Solis)
+ * at `rebootIndex=1` and Interactive (Bera, Scania, Luna) at
+ * `rebootIndex=0`.
  *
  * The numeric `worldID`s below were derived empirically by querying
  *
