@@ -21,10 +21,8 @@ export function CharacterAvatar({
   alt = '',
   'data-testid': testId,
 }: CharacterAvatarProps) {
-  const initialSrc = avatarUrl || blankCharacterPng;
-  const [displayedSrc, setDisplayedSrc] = useState(initialSrc);
+  const [displayedSrc, setDisplayedSrc] = useState(avatarUrl || blankCharacterPng);
   const isPlaceholder = displayedSrc === blankCharacterPng;
-  const decorative = alt === '';
 
   const wrapperStyle: CSSProperties = {
     width: size,
@@ -33,7 +31,7 @@ export function CharacterAvatar({
     flexShrink: 0,
   };
 
-  const imgStyle: CSSProperties = {
+  const imgStyle = {
     width: size,
     height: size,
     objectFit: 'contain',
@@ -48,7 +46,7 @@ export function CharacterAvatar({
       <img
         src={displayedSrc}
         alt={alt}
-        aria-hidden={decorative ? true : undefined}
+        aria-hidden={alt === '' ? true : undefined}
         draggable={false}
         data-testid={testId}
         onError={() => {
