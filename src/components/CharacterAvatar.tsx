@@ -22,7 +22,7 @@ interface CharacterAvatarProps {
   'data-testid'?: string;
 }
 
-function CharacterAvatarImpl({
+export const CharacterAvatar = memo(function CharacterAvatar({
   avatarUrl,
   size,
   figureScale = 1,
@@ -90,6 +90,4 @@ function CharacterAvatarImpl({
       />
     </div>
   );
-}
-
-export const CharacterAvatar = memo(CharacterAvatarImpl);
+});
