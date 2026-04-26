@@ -75,10 +75,10 @@ export function usePresetPill({
   const notifyWeeklyToggle = useCallback(() => setCustomClicked(false), []);
   const notifyReset = useCallback(() => setCustomClicked(false), []);
 
-  // The four callbacks have empty `useCallback` deps and are guaranteed
-  // stable, so they're omitted from the memo deps. Object identity becomes
-  // stable iff `activePill` is stable, which is the contract `useSlateActions`
-  // and `BossMatrix.memo` rely on to avoid spurious callback churn.
+  // Stable identity is part of the contract: `useSlateActions` and
+  // `BossMatrix.memo` rely on it to avoid spurious callback churn.
+  // The four callbacks have empty deps so they're already referentially
+  // stable; listing them keeps the memo correct if that ever changes.
   return useMemo(
     () => ({
       activePill,
@@ -87,7 +87,6 @@ export function usePresetPill({
       notifyWeeklyToggle,
       notifyReset,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activePill],
+    [activePill, clickCustom, clickCanonical, notifyWeeklyToggle, notifyReset],
   );
 }
