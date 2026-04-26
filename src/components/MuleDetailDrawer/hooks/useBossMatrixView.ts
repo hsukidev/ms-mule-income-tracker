@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate, type SlateFamily } from '../../../data/muleBossSlate';
-import { conform, isPresetActive, type CanonicalPresetKey } from '../../../data/bossPresets';
+import { conform, isPresetActive } from '../../../data/bossPresets';
 import { resolveWorldGroup } from '../../../data/worlds';
 import type { CadenceFilter, PresetKey } from '../../MatrixToolbar';
-
-const CANONICAL_PRESETS: readonly CanonicalPresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
+import { usePresetPill } from './usePresetPill';
 
 const PARTY_SIZE_MIN = 1;
 const PARTY_SIZE_MAX = 6;
@@ -26,19 +25,16 @@ function filterFamiliesByCadence(families: SlateFamily[], filter: CadenceFilter)
  *
  * - Search + cadence-filter composition with the `MuleBossSlate.view`
  *   projection.
- * - **Preset Pill** semantics — `activePill` is derived each render via
- *   **Same-Cadence Equality**; at most one canonical preset lights up, or
- *   `null` when no canonical preset matches. `applyPreset` runs **Conform**
- *   and short-circuits when the clicked preset is already the **Active
- *   Pill**. Clicking **Custom Preset** sets a transient override that
- *   wins over a canonical match so the pill visibly confirms the click,
- *   without touching the selection. The override clears on: mule switch
- *   (drawer close/reopen), selection emptying out (reset or deselect-all),
- *   any canonical pill click, or a **weekly** **Slate Key** toggle (the
- *   modified weekly selection now speaks for what pill should light).
- *   Daily toggles leave the override intact, since daily keys can't change
- *   canonical match status. Clicking Custom on an already-empty matrix
- *   lights the pill — the override beats the empty-weekly short-circuit.
+ * - **Preset Pill** semantics — delegated to `usePresetPill`. The hook
+ *   owns the `customClicked` override, the `activePill` derivation, the
+ *   **Mule Switch** auto-reset, and the selection-empty auto-reset.
+ *   `useBossMatrixView` only routes user actions: `applyPreset('CUSTOM')`
+ *   → `pill.clickCustom()`; canonical clicks → `pill.clickCanonical()`
+ *   followed by **Conform** (when not already the **Active Pill**); a
+ *   `toggleKey` whose `next.weeklyCount` differs from the current
+ *   `slate.weeklyCount` → `pill.notifyWeeklyToggle()` (daily toggles leave
+ *   the override intact since they can't change canonical match status);
+ *   `resetBosses` → `pill.notifyReset()`.
  * - Party-Size Clamp to [1, 6] on write.
  * - Toggle / reset dispatches routed through `onUpdate`. All dispatchers
  *   no-op when `muleId === null`.
@@ -82,25 +78,15 @@ export function useBossMatrixView({
 } {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CadenceFilter>('All');
-  const [customClicked, setCustomClicked] = useState(false);
 
   // Reset search + filter on Mule Switch via the render-time pattern (same
-  // shape as useDraftField's Draft Source Resync).
+  // shape as useMuleIdentityDraft's Draft Source Resync). The preset-pill side
+  // of the Mule Switch reset lives in usePresetPill.
   const [lastMuleId, setLastMuleId] = useState<string | null>(muleId);
   if (lastMuleId !== muleId) {
     setLastMuleId(muleId);
     setSearch('');
     setFilter('All');
-    setCustomClicked(false);
-  }
-
-  // Clear the Custom override when selection transitions to empty so a
-  // rebuild to a canonical match doesn't carry the override forward.
-  const selectionEmpty = selectedBosses.length === 0;
-  const [wasSelectionEmpty, setWasSelectionEmpty] = useState(selectionEmpty);
-  if (wasSelectionEmpty !== selectionEmpty) {
-    setWasSelectionEmpty(selectionEmpty);
-    if (selectionEmpty) setCustomClicked(false);
   }
 
   const worldGroup = resolveWorldGroup(worldId);
@@ -116,15 +102,11 @@ export function useBossMatrixView({
     [slate, search, filter],
   );
 
-  const activePill = useMemo<PresetKey | null>(() => {
-    // A Custom click wins unconditionally — even on an empty matrix — so the
-    // pill confirms the user's click regardless of selection state.
-    if (customClicked) return 'CUSTOM';
-    // With no weekly selection and no Custom click, no pill lights.
-    if (slate.weeklyCount === 0) return null;
-    const canonical = CANONICAL_PRESETS.find((p) => isPresetActive(p, selectedBosses));
-    return canonical ?? 'CUSTOM';
-  }, [selectedBosses, slate, customClicked]);
+  const pill = usePresetPill({
+    muleId,
+    selectedBosses,
+    weeklyCount: slate.weeklyCount,
+  });
 
   const stablePartySizes = useMemo(() => partySizes ?? {}, [partySizes]);
 
@@ -136,10 +118,10 @@ export function useBossMatrixView({
       // override (which only exists to confirm a click) is no longer
       // needed — let the derivation decide which pill lights. Daily
       // toggles never change match status, so the override persists.
-      if (next.weeklyCount !== slate.weeklyCount) setCustomClicked(false);
+      if (next.weeklyCount !== slate.weeklyCount) pill.notifyWeeklyToggle();
       onUpdate(muleId, { selectedBosses: next.keys as string[] });
     },
-    [muleId, slate, onUpdate],
+    [muleId, slate, onUpdate, pill],
   );
 
   const applyPreset = useCallback(
@@ -149,11 +131,11 @@ export function useBossMatrixView({
         // **Custom Preset** has no entries — the click doesn't touch the
         // selection, but it flips the override so the pill confirms the
         // click (visually winning over any canonical match).
-        setCustomClicked(true);
+        pill.clickCustom();
         return;
       }
       // Canonical click clears the override; the derivation takes over.
-      setCustomClicked(false);
+      pill.clickCanonical();
       // Already conforms: no state churn, no persist fire. Use
       // `isPresetActive` directly since the CUSTOM override would otherwise
       // hide a real canonical match from `activePill`.
@@ -163,7 +145,7 @@ export function useBossMatrixView({
         selectedBosses: MuleBossSlate.from(next).keys as string[],
       });
     },
-    [muleId, slate, selectedBosses, onUpdate],
+    [muleId, slate, selectedBosses, onUpdate, pill],
   );
 
   const setPartySize = useCallback(
@@ -181,9 +163,9 @@ export function useBossMatrixView({
     if (!muleId) return;
     // Reset is authoritative: always clear the Custom override, even when the
     // selection is already empty (the transition effect wouldn't fire).
-    setCustomClicked(false);
+    pill.notifyReset();
     onUpdate(muleId, { selectedBosses: [], partySizes: {} });
-  }, [muleId, onUpdate]);
+  }, [muleId, onUpdate, pill]);
 
   return {
     search,
@@ -194,7 +176,7 @@ export function useBossMatrixView({
     weeklyCount: slate.weeklyCount,
     dailyCount: slate.dailyCount,
     monthlyCount: slate.monthlyCount,
-    activePill,
+    activePill: pill.activePill,
     stablePartySizes,
     toggleKey,
     applyPreset,

@@ -19,6 +19,7 @@ import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } f
 import { ThemeProvider } from './context/ThemeProvider';
 import { DensityProvider } from './context/DensityProvider';
 import { WorldProvider, useWorld } from './context/WorldProvider';
+import { lensMules } from './data/worlds';
 import { IncomeProvider } from './modules/income';
 import { useMuleActions } from './hooks/useMuleActions';
 import { Toaster } from './components/ui/sonner';
@@ -51,10 +52,7 @@ export function AppContent() {
   const { world } = useWorld();
   // Unfiltered `mules` is intentionally kept for drag-reorder index math and
   // the selected/active lookups, which must address the full array.
-  const mulesInWorld = useMemo(
-    () => (world ? mules.filter((m) => m.worldId === world.id) : []),
-    [mules, world],
-  );
+  const mulesInWorld = useMemo(() => lensMules(mules, world), [mules, world]);
   // KpiCard/PieChartCard defer to absorb boss-matrix burst updates. Roster stays
   // live — stale mules on drop causes FLIP to target the wrong layout.
   const deferredMulesInWorld = useDeferredValue(mulesInWorld);

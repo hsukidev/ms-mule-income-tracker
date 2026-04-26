@@ -8,6 +8,8 @@
  * See issue #194 §Approach for the locked shape.
  */
 
+import type { Mule } from '../types';
+
 export type WorldGroup = 'Heroic' | 'Interactive';
 
 export type WorldId =
@@ -69,4 +71,19 @@ export const FALLBACK_WORLD_GROUP: WorldGroup = 'Heroic';
  */
 export function resolveWorldGroup(worldId: string | null | undefined): WorldGroup {
   return findWorld(worldId ?? null)?.group ?? FALLBACK_WORLD_GROUP;
+}
+
+/**
+ * **World Lens** predicate — scopes a `Mule[]` to the **Selected World**.
+ *
+ * Pure, React-agnostic, so it can be reused outside components (export
+ * scripts, the Cloudflare Worker) without dragging in `useWorld`.
+ *
+ * Returns `[]` when `world` is `null` (placeholder state — nothing is in
+ * scope). Otherwise keeps mules whose `worldId` matches `world.id`; mules
+ * with a missing or non-matching `worldId` are excluded.
+ */
+export function lensMules(mules: Mule[], world: World | null): Mule[] {
+  if (world === null) return [];
+  return mules.filter((m) => m.worldId === world.id);
 }
