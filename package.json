@@ -19,7 +19,7 @@
     "deploy": "pnpm run deploy:prod && pnpm run deploy:staging",
     "deploy:prod": "bash deploy.sh prod",
     "deploy:staging": "bash deploy.sh staging",
-    "worktree:prune": "git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D",
+    "worktree:prune": "rm -rf .sandcastle/logs/ && rm -rf .sandcastle/worktrees/ && git worktree prune && git branch | grep -vE \"^(main|master)$\" | xargs git branch -D",
     "prepare": "husky",
     "sandcastle": "pnpm exec tsx .sandcastle/main.ts",
     "sandcastle:build-image": "pnpm exec sandcastle build-image",

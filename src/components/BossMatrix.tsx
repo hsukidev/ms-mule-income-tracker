@@ -25,7 +25,7 @@ const TIER_HEADER_LABEL: Record<BossTier, string> = {
 const GRID_TEMPLATE = 'max-content repeat(5, 1fr)';
 
 const STEPPER_BTN_CLASS =
-  'grid place-items-center w-5 self-stretch text-sm leading-none text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed';
+  'grid place-items-center w-5 self-stretch text-sm leading-none text-[var(--muted-raw,var(--muted-foreground))] cursor-pointer hover:bg-[var(--surface-2)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed';
 
 interface BossMatrixProps {
   /**

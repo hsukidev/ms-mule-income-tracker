@@ -15,6 +15,9 @@ interface CharacterAvatarProps {
   avatarUrl: string | null | undefined;
   // Number → px. String → CSS value (e.g. `"100%"` to fill the parent box).
   size: number | string;
+  // Multiplies the inner figure scale without changing the wrapper box, so a
+  // caller can make the figure look bigger without nudging surrounding layout.
+  figureScale?: number;
   alt?: string;
   'data-testid'?: string;
 }
@@ -22,6 +25,7 @@ interface CharacterAvatarProps {
 export function CharacterAvatar({
   avatarUrl,
   size,
+  figureScale = 1,
   alt = '',
   'data-testid': testId,
 }: CharacterAvatarProps) {
@@ -35,6 +39,10 @@ export function CharacterAvatar({
   const isPlaceholder = displayedSrc === blankCharacterPng;
 
   const isFluid = typeof size === 'string';
+  // When the figure is scaled past 1× the wrapper, the inner img grows beyond
+  // the layout box. Clipping it would crop the character; instead let it bleed
+  // visually while the wrapper retains its original size for layout purposes.
+  const overflow = figureScale > 1 ? 'visible' : 'hidden';
 
   const wrapperStyle: CSSProperties = isFluid
     ? {
@@ -42,13 +50,13 @@ export function CharacterAvatar({
         maxWidth: '100%',
         maxHeight: '100%',
         aspectRatio: '1',
-        overflow: 'hidden',
+        overflow,
         flexShrink: 0,
       }
     : {
         width: size,
         height: size,
-        overflow: 'hidden',
+        overflow,
         flexShrink: 0,
       };
 
@@ -57,8 +65,8 @@ export function CharacterAvatar({
     height: '100%',
     objectFit: 'contain',
     transform: isPlaceholder
-      ? `translateY(5%) scale(${PLACEHOLDER_SCALE})`
-      : `scale(${REAL_AVATAR_SCALE})`,
+      ? `translateY(5%) scale(${PLACEHOLDER_SCALE * figureScale})`
+      : `scale(${REAL_AVATAR_SCALE * figureScale})`,
     transformOrigin: 'center',
     WebkitUserDrag: 'none',
     userDrag: 'none',

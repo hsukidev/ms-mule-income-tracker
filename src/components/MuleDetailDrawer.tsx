@@ -109,6 +109,7 @@ export function MuleDetailDrawer({
                   key={mule.id}
                   avatarUrl={mule.avatarUrl}
                   size={132}
+                  figureScale={1.2}
                   alt={mule.name || 'Mule avatar'}
                   data-testid="drawer-avatar"
                 />
