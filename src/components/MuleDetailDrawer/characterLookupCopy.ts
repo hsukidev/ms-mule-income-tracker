@@ -1,11 +1,3 @@
-/**
- * Toast copy for the character lookup flow.
- *
- * The not-found description names the weekly-ranking constraint inherited
- * from Nexon's `id=weekly` index — a character must have logged in within
- * the rolling weekly window to appear. Without this, users with stale or
- * brand-new mules assume the lookup itself is broken.
- */
 export const CHARACTER_LOOKUP_COPY = {
   success: {
     title: 'Character found',

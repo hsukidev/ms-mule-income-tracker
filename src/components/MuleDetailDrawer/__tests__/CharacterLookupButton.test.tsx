@@ -6,6 +6,8 @@ const sonnerMock = vi.hoisted(() => ({
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
+    dismiss: vi.fn(),
+    getToasts: vi.fn(() => [] as Array<{ id: string | number }>),
   }),
 }));
 
