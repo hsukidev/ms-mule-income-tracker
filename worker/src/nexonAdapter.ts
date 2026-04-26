@@ -1,24 +1,34 @@
 /**
  * Nexon adapter — the single module that owns the upstream contract.
- * `fetchByName` constructs the verified ranking URL, calls Nexon, parses
- * the JSON, and returns the raw rank list. Callers (the Worker handler,
- * the test suite) never touch the upstream URL or response shape directly.
+ * `fetchByName` constructs the verified per-region ranking URL, calls
+ * Nexon, parses the JSON, and returns the raw rank list. Callers (the
+ * Worker handler, the test suite) never touch the upstream URL or
+ * response shape directly.
  *
- * The contract was empirically validated end-to-end:
+ * The contract was empirically validated end-to-end on the NA datacenter:
  *
- *   GET https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na
+ *   GET https://www.nexon.com/api/maplestory/no-auth/ranking/v2/<region>
  *     ?type=overall&id=weekly
  *     &reboot_index=<0|1>
  *     &page_index=1
  *     &character_name=<name>
  *
- * The response carries `ranks[]` where each entry includes `characterName`,
- * `level`, `jobName`, `characterImgURL`, and a numeric `worldID`. Because
- * the upstream does not accept a world filter param, the Worker
- * post-filters `ranks[]` by the expected numeric `worldID`.
+ * Nexon hosts worlds across two regional datacenters (`na`, `eu`); the
+ * caller passes the world's region (looked up via `worldIdMap.toUpstreamKey`)
+ * and the adapter selects the matching base URL from
+ * `NEXON_RANKING_BASE_URLS`. The response carries `ranks[]` where each
+ * entry includes `characterName`, `level`, `jobName`, `characterImgURL`,
+ * and a numeric `worldID`. Because the upstream does not accept a world
+ * filter param, the Worker post-filters `ranks[]` by the expected numeric
+ * `worldID`.
  */
 
-export const NEXON_RANKING_BASE_URL = 'https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na';
+import type { Region } from './worldIdMap';
+
+export const NEXON_RANKING_BASE_URLS: Record<Region, string> = {
+  na: 'https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na',
+  eu: 'https://www.nexon.com/api/maplestory/no-auth/ranking/v2/eu',
+};
 
 export interface NexonRankEntry {
   rank: number;
@@ -53,7 +63,7 @@ export class UpstreamError extends Error {
   }
 }
 
-function buildUrl(name: string, rebootIndex: number): string {
+function buildUrl(name: string, region: Region, rebootIndex: number): string {
   const params = new URLSearchParams({
     type: 'overall',
     id: 'weekly',
@@ -61,11 +71,15 @@ function buildUrl(name: string, rebootIndex: number): string {
     page_index: '1',
     character_name: name,
   });
-  return `${NEXON_RANKING_BASE_URL}?${params.toString()}`;
+  return `${NEXON_RANKING_BASE_URLS[region]}?${params.toString()}`;
 }
 
-export async function fetchByName(name: string, rebootIndex: number): Promise<NexonRankEntry[]> {
-  const url = buildUrl(name, rebootIndex);
+export async function fetchByName(
+  name: string,
+  region: Region,
+  rebootIndex: number,
+): Promise<NexonRankEntry[]> {
+  const url = buildUrl(name, region, rebootIndex);
   let response: Response;
   try {
     response = await fetch(url);

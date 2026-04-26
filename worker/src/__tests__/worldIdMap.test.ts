@@ -11,11 +11,13 @@ import {
  * Round-trip tests for the World ID map. The numeric `worldID` values are
  * reverse-engineered empirically and a typo here would silently misroute
  * lookups to the wrong world — the round-trip catches any mapping that
- * isn't bijective, and the per-id checks guard against accidentally
- * collapsing two worlds onto the same numeric id within a reboot bucket.
+ * isn't bijective, and the per-bucket uniqueness check guards against
+ * accidentally collapsing two worlds onto the same numeric id within a
+ * `(region, rebootIndex)` bucket.
  *
- * The supported set is the six worlds: Heroic (Kronos/Hyperion/Solis) at
- * `rebootIndex=1` and Interactive (Bera/Scania/Luna) at `rebootIndex=0`.
+ * The supported set is the six worlds: Heroic (Kronos/Hyperion on NA,
+ * Solis on EU) at `rebootIndex=1` and Interactive (Bera/Scania on NA,
+ * Luna on EU) at `rebootIndex=0`.
  */
 
 describe('worldIdMap', () => {
@@ -56,35 +58,68 @@ describe('worldIdMap', () => {
     }
   });
 
+  it('tags each WorldId with the correct region (Solis + Luna live on EU; the rest on NA)', () => {
+    expect(toUpstreamKey('heroic-kronos').region).toBe('na');
+    expect(toUpstreamKey('heroic-hyperion').region).toBe('na');
+    expect(toUpstreamKey('heroic-solis').region).toBe('eu');
+    expect(toUpstreamKey('interactive-bera').region).toBe('na');
+    expect(toUpstreamKey('interactive-scania').region).toBe('na');
+    expect(toUpstreamKey('interactive-luna').region).toBe('eu');
+  });
+
   it('round-trips every supported WorldId via toUpstreamKey → fromUpstreamKey', () => {
     for (const id of SUPPORTED_WORLD_IDS) {
       const key = toUpstreamKey(id);
-      const reverse = fromUpstreamKey(key.rebootIndex, key.worldID);
+      const reverse = fromUpstreamKey(key.region, key.rebootIndex, key.worldID);
       expect(reverse).toBe(id);
     }
   });
 
-  it('assigns a unique numeric worldID within each reboot bucket', () => {
+  it('round-trips the EU pins explicitly (Solis at eu/1/46, Luna at eu/0/30)', () => {
+    expect(fromUpstreamKey('eu', 1, 46)).toBe('heroic-solis');
+    expect(fromUpstreamKey('eu', 0, 30)).toBe('interactive-luna');
+  });
+
+  it('assigns a unique numeric worldID within each (region, rebootIndex) bucket', () => {
     const keys = SUPPORTED_WORLD_IDS.map(toUpstreamKey);
-    const heroicIds = keys.filter((k) => k.rebootIndex === 1).map((k) => k.worldID);
-    const interactiveIds = keys.filter((k) => k.rebootIndex === 0).map((k) => k.worldID);
-    expect(new Set(heroicIds).size).toBe(heroicIds.length);
-    expect(new Set(interactiveIds).size).toBe(interactiveIds.length);
+    const buckets = new Map<string, number[]>();
+    for (const key of keys) {
+      const bucket = `${key.region}:${key.rebootIndex}`;
+      const list = buckets.get(bucket) ?? [];
+      list.push(key.worldID);
+      buckets.set(bucket, list);
+    }
+    for (const [, ids] of buckets) {
+      expect(new Set(ids).size).toBe(ids.length);
+    }
   });
 
   it('returns null from fromUpstreamKey for an unknown numeric worldID', () => {
-    expect(fromUpstreamKey(1, 9999)).toBeNull();
-    expect(fromUpstreamKey(0, 9999)).toBeNull();
+    expect(fromUpstreamKey('na', 1, 9999)).toBeNull();
+    expect(fromUpstreamKey('na', 0, 9999)).toBeNull();
+    expect(fromUpstreamKey('eu', 1, 9999)).toBeNull();
+    expect(fromUpstreamKey('eu', 0, 9999)).toBeNull();
   });
 
-  it('keeps Heroic and Interactive buckets disjoint — same numeric id in the wrong bucket does not resolve', () => {
+  it('keeps regional buckets disjoint — an NA numeric id queried as EU does not resolve to the NA WorldId', () => {
+    // Same numeric id queried in the wrong region must NOT resolve to the
+    // NA WorldId. Kronos (na/1/45) queried as eu/1/45 should not collapse
+    // to 'heroic-kronos'.
+    const kronos = toUpstreamKey('heroic-kronos');
+    expect(fromUpstreamKey('eu', kronos.rebootIndex, kronos.worldID)).not.toBe('heroic-kronos');
+
+    const luna = toUpstreamKey('interactive-luna');
+    expect(fromUpstreamKey('na', luna.rebootIndex, luna.worldID)).not.toBe('interactive-luna');
+  });
+
+  it('keeps Heroic and Interactive buckets disjoint — same numeric id in the wrong reboot bucket does not resolve', () => {
     // A Heroic numeric id queried with rebootIndex=0 must NOT resolve to the
     // Heroic WorldId — and vice versa — even if the numeric values overlap.
     const kronos = toUpstreamKey('heroic-kronos');
-    expect(fromUpstreamKey(0, kronos.worldID)).not.toBe('heroic-kronos');
+    expect(fromUpstreamKey(kronos.region, 0, kronos.worldID)).not.toBe('heroic-kronos');
 
     const bera = toUpstreamKey('interactive-bera');
-    expect(fromUpstreamKey(1, bera.worldID)).not.toBe('interactive-bera');
+    expect(fromUpstreamKey(bera.region, 1, bera.worldID)).not.toBe('interactive-bera');
   });
 
   it('narrows isSupportedWorldId to the six supported worlds', () => {

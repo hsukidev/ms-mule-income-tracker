@@ -3,12 +3,13 @@
  *
  *   GET /api/character/:name?worldId=<SupportedWorldId>
  *
- * For each supported world it calls the upstream ranking endpoint via
- * `nexonAdapter.fetchByName` with the bucket's `rebootIndex` (0 for
- * Interactive, 1 for Heroic), filters `ranks[]` by the expected numeric
- * `worldID`, and returns the matching rank reshaped into the documented
- * response contract. Successful responses cache for ~6h; 404s cache for
- * ~1h. Unknown / unsupported worldIds respond 400.
+ * For each supported world it looks up the world's `(region, rebootIndex,
+ * worldID)` triple via `worldIdMap.toUpstreamKey`, calls the upstream
+ * ranking endpoint via `nexonAdapter.fetchByName` against the matching
+ * regional datacenter (NA or EU), filters `ranks[]` by the expected
+ * numeric `worldID`, and returns the matching rank reshaped into the
+ * documented response contract. Successful responses cache for ~6h;
+ * 404s cache for ~1h. Unknown / unsupported worldIds respond 400.
  *
  * The handler is exported with an injectable `HandlerDeps` parameter so
  * the test suite can drive it with a stubbed adapter and an in-memory
@@ -85,8 +86,8 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
   }
 
   try {
-    const { rebootIndex, worldID: expectedWorldID } = toUpstreamKey(worldId);
-    const ranks = await adapter(name, rebootIndex);
+    const { region, rebootIndex, worldID: expectedWorldID } = toUpstreamKey(worldId);
+    const ranks = await adapter(name, region, rebootIndex);
     const rank = ranks.find((r) => r.worldID === expectedWorldID);
 
     if (!rank) {
@@ -102,7 +103,7 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
     // Sanity-check: confirm the matched rank's worldID maps back to the
     // requested WorldId. Catches an accidental id collision in the World
     // ID map (the round-trip is also pinned in worldIdMap.test.ts).
-    if (fromUpstreamKey(rebootIndex, rank.worldID) !== worldId) {
+    if (fromUpstreamKey(region, rebootIndex, rank.worldID) !== worldId) {
       return jsonResponse(502, {
         error: 'upstream-mismatch',
         message: 'worldID disagreed with map',
