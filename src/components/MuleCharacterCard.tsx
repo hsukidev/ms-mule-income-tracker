@@ -76,11 +76,20 @@ const MuleCardInner = memo(function MuleCardInner({
         </div>
       )}
 
-      <div style={{ display: 'grid', placeItems: 'center', padding: '16px 0 8px', flex: 1 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px 0 8px',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         <CharacterAvatar
           key={mule.id}
           avatarUrl={mule.avatarUrl}
-          size={112}
+          size="100%"
           alt=""
           data-testid="card-avatar"
         />

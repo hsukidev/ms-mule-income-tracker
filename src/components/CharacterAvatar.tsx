@@ -1,16 +1,20 @@
 import { useState, type CSSProperties } from 'react';
 import blankCharacterPng from '../assets/blank-character.png';
 
-// Nexon character avatar PNGs include significant transparent padding around
-// the figure, so with `object-fit: contain` the character occupies only a
-// fraction of the box. The placeholder PNG is tightly cropped to the figure,
-// so it fills the box. We compensate with a CSS scale on real-avatar art only;
-// the placeholder renders un-scaled. Tune by eye if a class of avatars clips.
-const REAL_AVATAR_SCALE = 1.45;
+// Nexon character avatar PNGs are square (e.g. 96×96) with the figure padded
+// inside. The placeholder PNG ships tall (43×68). To keep both renderings
+// aligned we pin the wrapper to a 1:1 box in fluid mode — the placeholder then
+// letterboxes inside the same square frame a real avatar fills, so both share
+// identical bounding-box dimensions in the layout (e.g. 179.5×179.5 in cards).
+// The placeholder figure is tightly cropped, so we scale it down to roughly
+// match the relative figure size of a real avatar (which has its own padding).
+const REAL_AVATAR_SCALE = 0.9;
+const PLACEHOLDER_SCALE = 0.7;
 
 interface CharacterAvatarProps {
   avatarUrl: string | null | undefined;
-  size: number;
+  // Number → px. String → CSS value (e.g. `"100%"` to fill the parent box).
+  size: number | string;
   alt?: string;
   'data-testid'?: string;
 }
@@ -24,18 +28,31 @@ export function CharacterAvatar({
   const [displayedSrc, setDisplayedSrc] = useState(avatarUrl || blankCharacterPng);
   const isPlaceholder = displayedSrc === blankCharacterPng;
 
-  const wrapperStyle: CSSProperties = {
-    width: size,
-    height: size,
-    overflow: 'hidden',
-    flexShrink: 0,
-  };
+  const isFluid = typeof size === 'string';
+
+  const wrapperStyle: CSSProperties = isFluid
+    ? {
+        width: size,
+        maxWidth: '100%',
+        maxHeight: '100%',
+        aspectRatio: '1',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }
+    : {
+        width: size,
+        height: size,
+        overflow: 'hidden',
+        flexShrink: 0,
+      };
 
   const imgStyle = {
-    width: size,
-    height: size,
+    width: '100%',
+    height: '100%',
     objectFit: 'contain',
-    transform: isPlaceholder ? undefined : `scale(${REAL_AVATAR_SCALE})`,
+    transform: isPlaceholder
+      ? `translateY(5%) scale(${PLACEHOLDER_SCALE})`
+      : `scale(${REAL_AVATAR_SCALE})`,
     transformOrigin: 'center',
     WebkitUserDrag: 'none',
     userDrag: 'none',

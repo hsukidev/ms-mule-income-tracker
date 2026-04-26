@@ -37,18 +37,18 @@ describe('CharacterAvatar', () => {
     expect(img.style.transform).toMatch(/scale\(/);
   });
 
-  it('does not apply a scale transform when rendering the placeholder', () => {
+  it('applies a scale transform when rendering the placeholder (sized down to match real-avatar figure)', () => {
     render(<CharacterAvatar avatarUrl={null} size={112} data-testid="avatar" />);
     const img = screen.getByTestId('avatar') as HTMLImageElement;
-    expect(img.style.transform || '').not.toMatch(/scale\(/);
+    expect(img.style.transform).toMatch(/scale\(/);
   });
 
-  it('removes the scale transform after an image load error falls back to the placeholder', () => {
+  it('keeps a scale transform after an image load error falls back to the placeholder', () => {
     render(<CharacterAvatar avatarUrl={REAL_URL} size={112} data-testid="avatar" />);
     const img = screen.getByTestId('avatar') as HTMLImageElement;
     expect(img.style.transform).toMatch(/scale\(/);
     fireEvent.error(img);
-    expect(img.style.transform || '').not.toMatch(/scale\(/);
+    expect(img.style.transform).toMatch(/scale\(/);
   });
 
   it('marks the image aria-hidden when alt is empty (default)', () => {
