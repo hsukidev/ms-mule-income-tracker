@@ -5,13 +5,18 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/
 import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
 import { formatMeso } from '../utils/meso';
+import { MuleBossSlate } from '../data/muleBossSlate';
+import { resolveWorldGroup } from '../data/worlds';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar } from './MatrixToolbar';
 import { CharacterAvatar } from './CharacterAvatar';
-import { useBossMatrixView } from './MuleDetailDrawer/hooks/useBossMatrixView';
 import { useDeleteConfirm } from './MuleDetailDrawer/hooks/useDeleteConfirm';
 import { useMuleIdentityDraft } from './MuleDetailDrawer/hooks/useMuleIdentityDraft';
+import { useMatrixFilter } from './MuleDetailDrawer/hooks/useMatrixFilter';
+import { usePartySizes } from './MuleDetailDrawer/hooks/usePartySizes';
+import { usePresetPill } from './MuleDetailDrawer/hooks/usePresetPill';
+import { useSlateActions } from './MuleDetailDrawer/hooks/useSlateActions';
 import { CrystalTally } from './MuleDetailDrawer/CrystalTally';
 import { MuleIdentityFields } from './MuleDetailDrawer/MuleIdentityFields';
 
@@ -43,15 +48,35 @@ export function MuleDetailDrawer({
   const { raw: potentialIncomeRaw } = useIncome(incomeSource);
   const potentialIncome = formatMeso(potentialIncomeRaw, true);
 
-  const matrix = useBossMatrixView({
-    muleId: mule?.id ?? null,
-    selectedBosses: mule?.selectedBosses ?? [],
+  const muleId = mule?.id ?? null;
+  const selectedBosses = useMemo(() => mule?.selectedBosses ?? [], [mule?.selectedBosses]);
+  const worldGroup = resolveWorldGroup(mule?.worldId);
+  const slate = useMemo(
+    () => MuleBossSlate.from(selectedBosses, worldGroup),
+    [selectedBosses, worldGroup],
+  );
+
+  const matrixFilter = useMatrixFilter({ muleId, slate });
+  const partySizes = usePartySizes({
+    muleId,
     partySizes: mule?.partySizes,
-    worldId: mule?.worldId,
     onUpdate,
   });
+  const pill = usePresetPill({
+    muleId,
+    selectedBosses,
+    weeklyCount: slate.weeklyCount,
+  });
+  const slateActions = useSlateActions({
+    muleId,
+    selectedBosses,
+    slate,
+    pill,
+    onUpdate,
+  });
+
   const del = useDeleteConfirm({
-    muleId: mule?.id ?? null,
+    muleId,
     onDelete,
     onAfterDelete: onClose,
   });
@@ -156,9 +181,9 @@ export function MuleDetailDrawer({
 
               <div className="shrink-0 self-stretch @min-[600px]/drawer:self-end @min-[600px]/drawer:mr-6">
                 <CrystalTally
-                  weeklyCount={matrix.weeklyCount}
-                  dailyCount={matrix.dailyCount}
-                  monthlyCount={matrix.monthlyCount}
+                  weeklyCount={slate.weeklyCount}
+                  dailyCount={slate.dailyCount}
+                  monthlyCount={slate.monthlyCount}
                 />
               </div>
 
@@ -194,20 +219,20 @@ export function MuleDetailDrawer({
 
               <div>
                 <MatrixToolbar
-                  filter={matrix.filter}
-                  onFilterChange={matrix.setFilter}
-                  activePill={matrix.activePill}
-                  onApplyPreset={matrix.applyPreset}
-                  onReset={matrix.resetBosses}
+                  filter={matrixFilter.filter}
+                  onFilterChange={matrixFilter.setFilter}
+                  activePill={pill.activePill}
+                  onApplyPreset={slateActions.applyPreset}
+                  onReset={slateActions.resetBosses}
                 />
                 <div className="mt-2">
-                  <BossSearch fused value={matrix.search} onChange={matrix.setSearch} />
+                  <BossSearch fused value={matrixFilter.search} onChange={matrixFilter.setSearch} />
                   <BossMatrix
-                    families={matrix.visibleBosses}
+                    families={matrixFilter.visibleBosses}
                     fusedTop
-                    onToggleKey={matrix.toggleKey}
-                    partySizes={matrix.stablePartySizes}
-                    onChangePartySize={matrix.setPartySize}
+                    onToggleKey={slateActions.toggleKey}
+                    partySizes={partySizes.stablePartySizes}
+                    onChangePartySize={partySizes.setPartySize}
                   />
                 </div>
               </div>

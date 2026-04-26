@@ -34,7 +34,10 @@ function renderDrawer(overrides: Partial<Parameters<typeof MuleDetailDrawer>[0]>
 
 /**
  * Thin smoke test — detailed behavior lives in the per-hook test files:
- *   - MuleDetailDrawer/hooks/__tests__/useBossMatrixView.test.tsx
+ *   - MuleDetailDrawer/hooks/__tests__/useMatrixFilter.test.tsx
+ *   - MuleDetailDrawer/hooks/__tests__/usePartySizes.test.tsx
+ *   - MuleDetailDrawer/hooks/__tests__/usePresetPill.test.ts
+ *   - MuleDetailDrawer/hooks/__tests__/useSlateActions.test.tsx
  *   - MuleDetailDrawer/hooks/__tests__/useDeleteConfirm.test.tsx
  *   - MuleDetailDrawer/hooks/__tests__/useMuleIdentityDraft.test.tsx
  *
