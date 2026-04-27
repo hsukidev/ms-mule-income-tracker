@@ -12,8 +12,8 @@ import type { NexonRankEntry } from '../nexonAdapter';
  * adapter contract itself is covered exhaustively in nexonAdapter.test.ts.
  */
 
-function get(path: string): Request {
-  return new Request(`http://example.com${path}`);
+function get(path: string, headers?: HeadersInit): Request {
+  return new Request(`http://example.com${path}`, headers ? { headers } : undefined);
 }
 
 function rankEntry(overrides: Partial<NexonRankEntry> = {}): NexonRankEntry {
@@ -60,6 +60,47 @@ function deps(overrides: Partial<HandlerDeps> = {}): HandlerDeps {
   };
 }
 
+describe('worker handler — proxy-auth gate', () => {
+  it('returns 404 when proxySecret is configured but the header is missing', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get('/api/character/Alice?worldId=heroic-kronos'),
+      deps({ fetchByName: adapter, proxySecret: 'expected' }),
+    );
+    expect(res.status).toBe(404);
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when proxySecret is configured but the header does not match', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get('/api/character/Alice?worldId=heroic-kronos', { 'x-proxy-auth': 'wrong' }),
+      deps({ fetchByName: adapter, proxySecret: 'expected' }),
+    );
+    expect(res.status).toBe(404);
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('passes through to validation when the header matches the secret', async () => {
+    const adapter = vi.fn(async () => [rankEntry({ worldID: 45 })]);
+    const res = await handleLookup(
+      get('/api/character/Alice?worldId=heroic-kronos', { 'x-proxy-auth': 'expected' }),
+      deps({ fetchByName: adapter, proxySecret: 'expected' }),
+    );
+    expect(res.status).toBe(200);
+    expect(adapter).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the gate entirely when proxySecret is undefined (existing tests rely on this)', async () => {
+    const adapter = vi.fn(async () => [rankEntry({ worldID: 45 })]);
+    const res = await handleLookup(
+      get('/api/character/Alice?worldId=heroic-kronos'),
+      deps({ fetchByName: adapter }),
+    );
+    expect(res.status).toBe(200);
+  });
+});
+
 describe('worker handler — input validation', () => {
   it('returns 400 for a missing worldId', async () => {
     const res = await handleLookup(get('/api/character/Alice'), deps());
@@ -74,6 +115,50 @@ describe('worker handler — input validation', () => {
   it('returns 404 for a non-character route', async () => {
     const res = await handleLookup(get('/api/something-else'), deps());
     expect(res.status).toBe(404);
+  });
+
+  it('returns 400 for a name with non-alphanumeric chars (rejects before Nexon)', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get('/api/character/Alice!?worldId=heroic-kronos'),
+      deps({ fetchByName: adapter }),
+    );
+    expect(res.status).toBe(400);
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a name shorter than 2 chars', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get('/api/character/A?worldId=heroic-kronos'),
+      deps({ fetchByName: adapter }),
+    );
+    expect(res.status).toBe(400);
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a name longer than 13 chars', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get('/api/character/AliceTheVeryLongName?worldId=heroic-kronos'),
+      deps({ fetchByName: adapter }),
+    );
+    expect(res.status).toBe(400);
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('caches 400 invalid-name responses with a ~1 hour Cache-Control max-age', async () => {
+    const cache = inMemoryCache();
+    const adapter = vi.fn(async () => []);
+    await handleLookup(get('/api/character/Alice!?worldId=heroic-kronos'), {
+      cache: cache as unknown as Cache,
+      fetchByName: adapter,
+    });
+    expect(cache.put).toHaveBeenCalledTimes(1);
+    const cachedResponse = cache.put.mock.calls[0][1] as Response;
+    expect(cachedResponse.status).toBe(400);
+    const cc = cachedResponse.headers.get('cache-control') ?? '';
+    expect(cc).toMatch(/max-age=3600/);
   });
 });
 

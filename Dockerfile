@@ -14,8 +14,14 @@ RUN pnpm build
 FROM nginx:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# SPA fallback: all routes go to index.html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Place the nginx config as a template — the official nginx image's
+# entrypoint runs envsubst over /etc/nginx/templates/*.template at start
+# and writes the result to /etc/nginx/conf.d/<basename without .template>.
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Restrict envsubst to only substitute PROXY_SECRET so nginx's own
+# variables ($uri, $proxy_pass targets, etc.) are left alone.
+ENV NGINX_ENVSUBST_FILTER=^PROXY_SECRET$
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

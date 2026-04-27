@@ -100,6 +100,16 @@ describe('nexonAdapter.fetchByName', () => {
     expect(ranks.map((r) => r.worldID).sort((a, b) => a - b)).toEqual([0, 1, 19]);
   });
 
+  it('sends a self-identifying User-Agent so Nexon ops can recognize this traffic', async () => {
+    const fetchSpy = stubFetchOnce(foundFixture);
+    await fetchByName('AliceK', 'na', 1);
+    const init = fetchSpy.mock.calls[0][1] as RequestInit | undefined;
+    const headers = new Headers(init?.headers);
+    expect(headers.get('user-agent')).toMatch(
+      /^ms-mule-income-tracker\/[\d.]+ \(\+https:\/\/github\.com\//,
+    );
+  });
+
   it('throws an UpstreamError when the API returns a non-2xx status', async () => {
     stubFetchOnce({}, 500);
     await expect(fetchByName('Alice', 'na', 1)).rejects.toMatchObject({

@@ -74,6 +74,12 @@ function buildUrl(name: string, region: Region, rebootIndex: number): string {
   return `${NEXON_RANKING_BASE_URLS[region]}?${params.toString()}`;
 }
 
+// Self-identifying UA so Nexon can recognize and (if ever needed) contact
+// this integration instead of treating it as anonymous scraper traffic.
+// The repo URL is the public, non-PII contact channel.
+const USER_AGENT =
+  'ms-mule-income-tracker/1.0 (+https://github.com/hsukidev/ms-mule-income-tracker)';
+
 export async function fetchByName(
   name: string,
   region: Region,
@@ -82,7 +88,7 @@ export async function fetchByName(
   const url = buildUrl(name, region, rebootIndex);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: { 'user-agent': USER_AGENT } });
   } catch (err) {
     throw new UpstreamError(`network error: ${(err as Error).message}`);
   }

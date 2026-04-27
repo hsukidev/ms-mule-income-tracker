@@ -27,6 +27,12 @@ import {
 
 const SUCCESS_TTL_SECONDS = 21600; // 6 hours
 const NOT_FOUND_TTL_SECONDS = 3600; // 1 hour
+const INVALID_NAME_TTL_SECONDS = 3600; // 1 hour
+
+// MapleStory NA character names: 2–13 ASCII alphanumeric chars. Validating
+// here short-circuits guaranteed-miss requests before they reach Nexon and
+// caps log/cache pollution from random-Unicode flooding.
+const VALID_NAME = /^[A-Za-z0-9]{2,13}$/;
 
 interface CharacterLookupResponse {
   name: string;
@@ -42,6 +48,18 @@ export interface HandlerDeps {
   cache?: Cache;
   /** Adapter swap point for tests. */
   fetchByName?: typeof defaultFetchByName;
+  /**
+   * Shared secret expected on `x-proxy-auth`. When set, requests without a
+   * matching header are rejected with 404 (chosen over 401 to avoid
+   * confirming the route exists to a probing attacker). When undefined the
+   * gate is disabled — production code paths always set it; tests opt in
+   * only when exercising the gate.
+   */
+  proxySecret?: string;
+}
+
+export interface Env {
+  PROXY_SECRET: string;
 }
 
 function jsonResponse(status: number, body: unknown, headers: HeadersInit = {}): Response {
@@ -59,6 +77,15 @@ function defaultCache(): Cache | undefined {
 }
 
 export async function handleLookup(request: Request, deps: HandlerDeps = {}): Promise<Response> {
+  // Shared-secret gate: if the deployment configured a secret, require a
+  // matching header. Returning 404 (not 401) hides the existence of the
+  // route from anyone hitting *.workers.dev directly.
+  if (deps.proxySecret) {
+    if (request.headers.get('x-proxy-auth') !== deps.proxySecret) {
+      return jsonResponse(404, { error: 'not-found', message: 'route not found' });
+    }
+  }
+
   const url = new URL(request.url);
 
   const routeMatch = url.pathname.match(/^\/api\/character\/([^/]+)\/?$/);
@@ -83,6 +110,20 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
   if (cache) {
     const cached = await cache.match(request);
     if (cached) return cached;
+  }
+
+  // Validate name shape after the cache check so repeat invalid requests
+  // are served from cache without re-running validation. The 400 itself is
+  // cached for an hour so a name-flooder pays one Worker invocation per
+  // unique malformed name, never an upstream call.
+  if (!VALID_NAME.test(name)) {
+    const res = jsonResponse(
+      400,
+      { error: 'invalid-name', message: 'name must be 2–13 alphanumeric chars' },
+      { 'cache-control': `public, max-age=${INVALID_NAME_TTL_SECONDS}` },
+    );
+    if (cache) await cache.put(request, res.clone());
+    return res;
   }
 
   try {
@@ -132,7 +173,15 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
 }
 
 export default {
-  fetch(request: Request): Promise<Response> {
-    return handleLookup(request);
+  fetch(request: Request, env: Env): Promise<Response> {
+    // Fail-loud if the secret was forgotten — better a visible 503 in logs
+    // than a silently-open Worker.
+    if (!env.PROXY_SECRET) {
+      console.error(JSON.stringify({ event: 'proxy-secret-missing' }));
+      return Promise.resolve(
+        jsonResponse(503, { error: 'misconfigured', message: 'service unavailable' }),
+      );
+    }
+    return handleLookup(request, { proxySecret: env.PROXY_SECRET });
   },
 };
