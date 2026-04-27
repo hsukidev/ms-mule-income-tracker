@@ -21,11 +21,14 @@ import { formatMeso } from '../utils/meso';
 export type SlateKey = string;
 
 /**
- * MapleStory's weekly boss crystal sale limit. Advisory as a selection-count
- * reference in the **Crystal Tally** (the tally renders `15/14` in red
- * without clamping), and enforced as the **Top-14 Weekly Cut** inside
- * `MuleBossSlate.totalCrystalValue` (only the 14 highest **Computed Values**
- * among Weekly Cadence selections contribute).
+ * MapleStory's weekly boss crystal sale limit. Enforced as a data-layer
+ * invariant: every `MuleBossSlate` carries at most `WEEKLY_CRYSTAL_CAP`
+ * **Weekly Cadence** **Slate Keys** by construction — `MuleBossSlate.from`
+ * trims excess weeklies after the **Selection Invariant** dedupe, dropping
+ * the lowest-`crystalValue` entries first (ties broken by insertion order
+ * in favour of the earlier-inserted key). Daily and monthly **Slate Keys**
+ * are not affected by the trim. The **Crystal Tally** displays **Weekly
+ * Count** against this cap as `X/14`.
  */
 export const WEEKLY_CRYSTAL_CAP = 14;
 
@@ -155,6 +158,39 @@ function validateBossSelection(keys: string[], worldGroup: WorldGroup): string[]
   }
   const winnerKeys = new Set(Array.from(winner.values(), (w) => w.key));
   return resolved.filter((r) => winnerKeys.has(r.key)).map((r) => r.key);
+}
+
+/**
+ * Enforce `WEEKLY_CRYSTAL_CAP` on a post-validation key array. Trims
+ * weeklies past the cap by dropping the lowest-`crystalValue` entries
+ * first; ties break in favour of the earlier-inserted key. Surviving keys
+ * stay in their original insertion order. Daily and monthly keys pass
+ * through untouched.
+ */
+function trimWeeklies(keys: string[], worldGroup: WorldGroup): string[] {
+  interface WeeklyEntry {
+    key: string;
+    index: number;
+    crystalValue: number;
+  }
+  const weeklies: WeeklyEntry[] = [];
+  for (let i = 0; i < keys.length; i++) {
+    const r = resolveKey(keys[i]);
+    if (r && r.diff.cadence === 'weekly') {
+      weeklies.push({ key: keys[i], index: i, crystalValue: priceFor(r.diff, worldGroup) });
+    }
+  }
+  if (weeklies.length <= WEEKLY_CRYSTAL_CAP) return keys;
+
+  // Keep the WEEKLY_CRYSTAL_CAP highest by crystalValue; on tie, the
+  // earlier-inserted (lower index) key wins.
+  weeklies.sort((a, b) => b.crystalValue - a.crystalValue || a.index - b.index);
+  const keepWeeklyKeys = new Set(weeklies.slice(0, WEEKLY_CRYSTAL_CAP).map((w) => w.key));
+  return keys.filter((k) => {
+    const r = resolveKey(k);
+    if (r?.diff.cadence === 'weekly') return keepWeeklyKeys.has(k);
+    return true;
+  });
 }
 
 function toggleBoss(keys: string[], bossId: string, tier: BossTier): string[] {
@@ -385,7 +421,8 @@ export class MuleBossSlate {
     if (keys.length === 0) return MuleBossSlate.emptyFor(worldGroup);
     const validated = validateBossSelection(keys as string[], worldGroup);
     if (validated.length === 0) return MuleBossSlate.emptyFor(worldGroup);
-    return new MuleBossSlate(validated, worldGroup);
+    const trimmed = trimWeeklies(validated, worldGroup);
+    return new MuleBossSlate(trimmed, worldGroup);
   }
 
   /**
@@ -462,16 +499,16 @@ export class MuleBossSlate {
    * Value**: Daily Cadence → `crystalValue × 7` (Party Size ignored,
    * matching BossMatrix's cell rule); Weekly Cadence → `crystalValue /
    * partySize` with Party Size defaulting to 1; Monthly Cadence → 0
-   * (deferred to a dedicated monthly readout). Only the **Top-14 Weekly
-   * Cut** contributes — the `WEEKLY_CRYSTAL_CAP` highest **Computed
-   * Values** among Weekly Cadence keys, ties broken by insertion order
-   * (stable sort). The basis for **Potential Income** before the
-   * **Active-Flag Filter**. Prices are resolved against this slate's bound
-   * **World Group**.
+   * (deferred to a dedicated monthly readout). Every Weekly Cadence key
+   * contributes — the **Weekly Crystal Cap** is enforced upstream by
+   * `MuleBossSlate.from`, so any slate this method sees already has at
+   * most `WEEKLY_CRYSTAL_CAP` weeklies by construction. The basis for
+   * **Potential Income** before the **Active-Flag Filter**. Prices are
+   * resolved against this slate's bound **World Group**.
    */
   totalCrystalValue(partySizes: Record<string, number> = {}): number {
-    const weeklies: number[] = [];
     let dailyTotal = 0;
+    let weeklyTotal = 0;
     for (const key of this.keys) {
       const parsed = parseKey(key);
       if (!parsed) continue;
@@ -483,15 +520,9 @@ export class MuleBossSlate {
         dailyTotal += price * 7;
       } else {
         const party = partySizes[boss.family] ?? 1;
-        weeklies.push(price / party);
+        weeklyTotal += price / party;
       }
     }
-    // Stable sort preserves insertion order on ties, so earlier selections
-    // win the last slot when Computed Values are equal.
-    const top14Sum = [...weeklies]
-      .sort((a, b) => b - a)
-      .slice(0, WEEKLY_CRYSTAL_CAP)
-      .reduce((s, v) => s + v, 0);
-    return dailyTotal + top14Sum;
+    return dailyTotal + weeklyTotal;
   }
 }

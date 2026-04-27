@@ -332,7 +332,7 @@ describe('MuleBossSlate.weeklyCount', () => {
     expect(slate.weeklyCount).toBe(1);
   });
 
-  it('can exceed 14 (no clamp at Weekly Crystal Cap)', () => {
+  it('is clamped at Weekly Crystal Cap by the from-trim invariant', () => {
     const weeklyKeys: string[] = [];
     for (const b of bosses) {
       for (const d of b.difficulty) {
@@ -344,7 +344,133 @@ describe('MuleBossSlate.weeklyCount', () => {
       if (weeklyKeys.length === 16) break;
     }
     expect(weeklyKeys.length).toBe(16);
-    expect(MuleBossSlate.from(weeklyKeys).weeklyCount).toBe(16);
+    expect(MuleBossSlate.from(weeklyKeys).weeklyCount).toBe(14);
+  });
+});
+
+describe('MuleBossSlate.from — Weekly Crystal Cap invariant', () => {
+  /**
+   * Pick `count` distinct-family Weekly Cadence keys with their Heroic
+   * `crystalValue`, in the order `bosses[]` declares them. Local helper —
+   * the totalCrystalValue suite has its own near-duplicate `pickWeeklies`
+   * scoped inside that describe; both are intentional to keep the tests
+   * readable next to their assertions.
+   */
+  function pickDistinctWeeklies(count: number): { slateKey: SlateKey; value: number }[] {
+    const picks: { slateKey: SlateKey; value: number }[] = [];
+    for (const b of bosses) {
+      const diff = b.difficulty.find((d) => d.cadence === 'weekly');
+      if (!diff) continue;
+      picks.push({ slateKey: key(b.id, diff.tier), value: diff.crystalValue.Heroic });
+      if (picks.length === count) break;
+    }
+    if (picks.length < count) {
+      throw new Error(`Only found ${picks.length} weekly-capable families`);
+    }
+    return picks;
+  }
+
+  it('trims a 16-weekly input to 14, dropping the two lowest-crystalValue weeklies', () => {
+    const picks = pickDistinctWeeklies(16);
+    const slate = MuleBossSlate.from(picks.map((p) => p.slateKey));
+    expect(slate.weeklyCount).toBe(14);
+    // The two lowest by crystalValue must be absent.
+    const sortedAsc = [...picks].sort((a, b) => a.value - b.value);
+    const droppedKeys = new Set(sortedAsc.slice(0, 2).map((p) => p.slateKey));
+    for (const k of slate.keys) {
+      expect(droppedKeys.has(k)).toBe(false);
+    }
+  });
+
+  it('trims a 15-weekly input to 14, dropping the lowest', () => {
+    const picks = pickDistinctWeeklies(15);
+    const slate = MuleBossSlate.from(picks.map((p) => p.slateKey));
+    expect(slate.weeklyCount).toBe(14);
+    const lowest = [...picks].sort((a, b) => a.value - b.value)[0].slateKey;
+    expect(slate.keys).not.toContain(lowest);
+  });
+
+  it('passes a 14-weekly input through unchanged (boundary identity on keys)', () => {
+    const picks = pickDistinctWeeklies(14);
+    const inputKeys = picks.map((p) => p.slateKey);
+    const slate = MuleBossSlate.from(inputKeys);
+    expect(slate.weeklyCount).toBe(14);
+    expect(slate.keys).toEqual(inputKeys);
+  });
+
+  it('preserves the original insertion order of the surviving weeklies', () => {
+    // Order picks in a value sequence that does NOT match the original index
+    // order, then assert the trimmed slate emits survivors in the original
+    // insertion order — not the sorted-by-value order.
+    const picks = pickDistinctWeeklies(16);
+    // Reverse so the array goes from highest-by-original to lowest-by-original
+    // — this guarantees insertion order ≠ value-sorted order.
+    const reordered = [...picks].reverse();
+    const slate = MuleBossSlate.from(reordered.map((p) => p.slateKey));
+    const surviving = new Set(slate.keys);
+    const expected = reordered.map((p) => p.slateKey).filter((k) => surviving.has(k));
+    expect(slate.keys).toEqual(expected);
+  });
+
+  it('breaks crystalValue ties in favour of the earlier-inserted key', () => {
+    // Three weeklies tied at 81M (princess-no normal, zakum chaos, pierre
+    // chaos). With 13 strictly-higher-valued weeklies ahead of them we have
+    // 16 inputs total; the trim must keep the first-inserted of the tied
+    // triplet and drop the other two.
+    const TIED_VALUE = 81_000_000;
+    const highs = pickDistinctWeeklies(20)
+      .filter((p) => p.value > TIED_VALUE)
+      .slice(0, 13);
+    expect(highs).toHaveLength(13);
+    const princessNo = key(idForFamily('princess-no'), 'normal');
+    const zakum = key(idForFamily('zakum'), 'chaos');
+    const pierre = key(idForFamily('pierre'), 'chaos');
+    const slate = MuleBossSlate.from([...highs.map((p) => p.slateKey), princessNo, zakum, pierre]);
+    expect(slate.weeklyCount).toBe(14);
+    expect(slate.keys).toContain(princessNo);
+    expect(slate.keys).not.toContain(zakum);
+    expect(slate.keys).not.toContain(pierre);
+  });
+
+  it('does not trim Daily Cadence keys regardless of weekly count', () => {
+    const weeklies = pickDistinctWeeklies(16).map((p) => p.slateKey);
+    const dailyKeys = [
+      key(VELLUM, 'normal'), // daily
+      key(HORNTAIL, 'chaos'), // daily
+      key(PAPULATUS, 'normal'), // daily
+    ];
+    const slate = MuleBossSlate.from([...weeklies, ...dailyKeys]);
+    expect(slate.weeklyCount).toBe(14);
+    for (const k of dailyKeys) {
+      expect(slate.keys).toContain(k);
+    }
+  });
+
+  it('does not trim Monthly Cadence keys regardless of weekly count', () => {
+    const weeklies = pickDistinctWeeklies(16).map((p) => p.slateKey);
+    const monthly = `${BLACK_MAGE}:extreme:monthly`;
+    const slate = MuleBossSlate.from([...weeklies, monthly]);
+    expect(slate.weeklyCount).toBe(14);
+    expect(slate.monthlyCount).toBe(1);
+    expect(slate.keys).toContain(monthly);
+  });
+
+  it('an empty input still returns the cached EMPTY singleton after the trim step', () => {
+    expect(MuleBossSlate.from([])).toBe(MuleBossSlate.EMPTY);
+  });
+
+  it('totalCrystalValue parity — 16-weekly trimmed slate equals the pre-trim Top-14 sum', () => {
+    // The simplified totalCrystalValue is a plain sum; the pre-trim Top-14
+    // sum is the old sort-and-slice. Both must agree for any slate the live
+    // system can produce (since the trim now guarantees ≤14 weeklies).
+    const picks = pickDistinctWeeklies(16);
+    const top14Sum = [...picks]
+      .map((p) => p.value)
+      .sort((a, b) => b - a)
+      .slice(0, 14)
+      .reduce((s, v) => s + v, 0);
+    const slate = MuleBossSlate.from(picks.map((p) => p.slateKey));
+    expect(slate.totalCrystalValue()).toBe(top14Sum);
   });
 });
 
@@ -411,21 +537,21 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     return picks;
   }
 
-  it('applies the Top-14 Weekly Cut — 15th weekly is the lowest and drops out', () => {
+  it('totals match the pre-invariant Top-14 cut for a 15-weekly input (lowest is dropped at construction)', () => {
     const picks = pickWeeklies(15);
     const sortedDesc = [...picks].map((p) => p.value).sort((a, b) => b - a);
     const top14Sum = sortedDesc.slice(0, 14).reduce((s, v) => s + v, 0);
     const slate = MuleBossSlate.from(picks.map((p) => p.slateKey));
-    expect(slate.weeklyCount).toBe(15);
+    expect(slate.weeklyCount).toBe(14);
     expect(slate.totalCrystalValue()).toBe(top14Sum);
   });
 
-  it('handles Computed Value ties at the boundary — includes only one copy of a tied value', () => {
+  it('handles Crystal Value ties at the trim boundary — sums exactly one copy of the tied value', () => {
     // Princess-no (normal), Zakum (chaos), and Pierre (chaos) all weekly @
-    // crystalValue 81,000,000. That's three bosses tied at the same Computed
-    // Value under party=1. With 13 higher-valued weeklies ahead of them we
-    // have 16 total; the top 14 must include all 13 highs plus exactly ONE
-    // of the tied triplet, not two or three.
+    // crystalValue 81,000,000. That's three bosses tied at the same value.
+    // With 13 strictly-higher-valued weeklies ahead of them we have 16
+    // total; the trim keeps the first-inserted of the tied triplet plus the
+    // 13 highs, so the total is highSum + ONE TIED_VALUE, not two or three.
     const TIED_VALUE = 81_000_000;
     const highs = pickWeeklies(20)
       .filter((p) => p.value > TIED_VALUE)
@@ -435,7 +561,7 @@ describe('MuleBossSlate.totalCrystalValue', () => {
     const zakum = key(idForFamily('zakum'), 'chaos');
     const pierre = key(idForFamily('pierre'), 'chaos');
     const slate = MuleBossSlate.from([...highs.map((p) => p.slateKey), princessNo, zakum, pierre]);
-    expect(slate.weeklyCount).toBe(16);
+    expect(slate.weeklyCount).toBe(14);
     const highSum = highs.reduce((s, p) => s + p.value, 0);
     expect(slate.totalCrystalValue()).toBe(highSum + TIED_VALUE);
   });
