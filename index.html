@@ -2,15 +2,72 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="https://mules.henesys.io/" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fdf6ec" media="(prefers-color-scheme: light)" />
+
+    <title>MapleStory Mule Income Tracker — Boss Crystal Calculator</title>
+    <meta
+      name="description"
+      content="Free MapleStory Heroic/Interactive mule tracker. Plan weekly boss crystal income across your roster, calculate top-14 cuts per mule, manage CRA / Lomien / Ctene presets, and track meso totals per world."
+    />
+    <meta
+      name="keywords"
+      content="MapleStory, GMS Reboot, Heroic, Interactive, mule tracker, boss crystal calculator, meso income, weekly boss, CRA, Lomien, Ctene, Maple income planner"
+    />
+    <meta name="robots" content="index,follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MS Mule Income Tracker" />
+    <meta property="og:url" content="https://mules.henesys.io/" />
+    <meta property="og:title" content="MapleStory Mule Income Tracker — Boss Crystal Calculator" />
+    <meta
+      property="og:description"
+      content="Plan weekly boss crystal income across your mule roster. Top-14 cuts, world pricing, CRA / Lomien / Ctene presets, and share percentage."
+    />
+    <meta property="og:image" content="https://mules.henesys.io/logo.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="908" />
+    <meta property="og:image:alt" content="MS Mule Income Tracker dashboard" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MapleStory Mule Income Tracker — Boss Crystal Calculator" />
+    <meta
+      name="twitter:description"
+      content="Plan weekly boss crystal income across your mule roster. Top-14 cuts, world pricing, CRA / Lomien / Ctene presets, and share percentage."
+    />
+    <meta name="twitter:image" content="https://mules.henesys.io/logo.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MS Mule Income Tracker",
+        "url": "https://mules.henesys.io/",
+        "description": "Free MapleStory Heroic/Interactive mule tracker. Plan weekly boss crystal income across your roster, calculate top-14 cuts, manage CRA / Lomien / Ctene presets, and track meso totals per world.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "about": {
+          "@type": "VideoGame",
+          "name": "MapleStory"
+        }
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <title>Mules</title>
     <script>
       try {
         var t = localStorage.getItem('theme');
@@ -23,7 +80,15 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <noscript>
+        <h1>MapleStory Mule Income Tracker</h1>
+        <p>
+          A free planning tool for MapleStory Heroic/Interactive players to track weekly boss
+          crystal income across a roster of mule characters. JavaScript is required to use the app.
+        </p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
