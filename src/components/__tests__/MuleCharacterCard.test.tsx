@@ -126,6 +126,21 @@ describe('MuleCharacterCard', () => {
     expect(screen.getByText('504,000,000')).toBeTruthy();
   });
 
+  // Regression: the card used to call useIncome without `worldId`, so
+  // `Income.of` fell back to Heroic pricing for every mule — Interactive
+  // mules on the roster displayed Heroic crystal values.
+  it('prices INCOME against the mule’s World Group (Interactive)', () => {
+    renderCard({ selectedBosses: [HARD_LUCID], worldId: 'interactive-scania' });
+    expect(screen.getByText('100.8M')).toBeTruthy();
+    expect(screen.queryByText('504M')).toBeNull();
+  });
+
+  it('prices INCOME against the mule’s World Group (Heroic)', () => {
+    renderCard({ selectedBosses: [HARD_LUCID], worldId: 'heroic-kronos' });
+    expect(screen.getByText('504M')).toBeTruthy();
+    expect(screen.queryByText('100.8M')).toBeNull();
+  });
+
   it('keeps an active mule card at opacity 1 when not dragging', () => {
     const { container } = renderCard({ active: true });
     const cardWrapper = container.querySelector('[data-mule-card]') as HTMLElement;

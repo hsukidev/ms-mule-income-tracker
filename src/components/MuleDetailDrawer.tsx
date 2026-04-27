@@ -42,8 +42,12 @@ export function MuleDetailDrawer({
   // Format Preference. The source object is memoized so per-keystroke drawer
   // re-renders (from the lifted identity draft) don't blow the income cache.
   const incomeSource = useMemo(
-    () => ({ selectedBosses: mule?.selectedBosses ?? [], partySizes: mule?.partySizes }),
-    [mule?.selectedBosses, mule?.partySizes],
+    () => ({
+      selectedBosses: mule?.selectedBosses ?? [],
+      partySizes: mule?.partySizes,
+      worldId: mule?.worldId,
+    }),
+    [mule?.selectedBosses, mule?.partySizes, mule?.worldId],
   );
   const { raw: potentialIncomeRaw } = useIncome(incomeSource);
   const potentialIncome = formatMeso(potentialIncomeRaw, true);

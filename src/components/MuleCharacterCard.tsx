@@ -48,6 +48,7 @@ const MuleCardInner = memo(function MuleCardInner({
   const { formatted: potentialIncome } = useIncome({
     selectedBosses: mule.selectedBosses,
     partySizes: mule.partySizes,
+    worldId: mule.worldId,
   });
   const hasBosses = mule.selectedBosses.length > 0;
   const incomeColor =

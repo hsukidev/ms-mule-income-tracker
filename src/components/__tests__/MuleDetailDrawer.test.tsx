@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@/test/test-utils';
+import { render, screen, fireEvent, within } from '@/test/test-utils';
 
 import { MuleDetailDrawer } from '../MuleDetailDrawer';
 import type { Mule } from '../../types';
@@ -129,6 +129,36 @@ describe('MuleDetailDrawer (smoke)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByText('Delete?')).toBeNull();
     expect(props.onDelete).not.toHaveBeenCalled();
+  });
+
+  // Regression: the drawer used to build its IncomeSource without `worldId`,
+  // so `Income.of` fell back to Heroic pricing for every mule — Interactive
+  // mules in the Weekly chip displayed Heroic crystal values. Scope queries
+  // to the chip itself because the BossMatrix cells render the same price.
+  it('prices the Weekly chip against the mule’s World Group (Interactive)', () => {
+    renderDrawer({
+      mule: {
+        ...baseMule,
+        selectedBosses: [HARD_LUCID],
+        worldId: 'interactive-scania',
+      },
+    });
+    const chip = screen.getByText('mesos').parentElement!;
+    expect(within(chip).getByText('100.8M')).toBeTruthy();
+    expect(within(chip).queryByText('504M')).toBeNull();
+  });
+
+  it('prices the Weekly chip against the mule’s World Group (Heroic)', () => {
+    renderDrawer({
+      mule: {
+        ...baseMule,
+        selectedBosses: [HARD_LUCID],
+        worldId: 'heroic-kronos',
+      },
+    });
+    const chip = screen.getByText('mesos').parentElement!;
+    expect(within(chip).getByText('504M')).toBeTruthy();
+    expect(within(chip).queryByText('100.8M')).toBeNull();
   });
 
   it('renders mule.avatarUrl in the drawer header when present', () => {
