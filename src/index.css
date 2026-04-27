@@ -170,8 +170,13 @@ html[data-theme-swap] *::after {
   --coffee-bg: rgba(93, 58, 31, 0.05);
   --coffee-border: rgba(93, 58, 31, 0.18);
   --coffee-bg-hover: rgba(93, 58, 31, 0.1);
-  --coffee-border-hover: rgba(93, 58, 31, 0.4);
+  --coffee-border-hover: var(--accent-raw);
   --coffee-glow: rgba(93, 58, 31, 0.18);
+
+  /* Shared hover border for panel-style surfaces (KPI, PieChart, MuleCard,
+   * WorldSelect chip). Light keeps the accent treatment; dark borrows the
+   * cream coffee-hover so the warm CTA palette spreads across the dashboard. */
+  --panel-border-hover: var(--accent-raw);
 }
 
 .dark {
@@ -249,6 +254,8 @@ html[data-theme-swap] *::after {
   --coffee-bg-hover: rgba(230, 200, 154, 0.12);
   --coffee-border-hover: rgba(230, 200, 154, 0.42);
   --coffee-glow: rgba(230, 200, 154, 0.22);
+
+  --panel-border-hover: var(--coffee-border-hover);
 }
 
 [data-density='comfy'] {
@@ -399,7 +406,7 @@ html[data-theme-swap] *::after {
   }
   @media (hover: hover) {
     .panel:hover {
-      border-color: var(--accent-raw, var(--accent));
+      border-color: var(--panel-border-hover);
     }
   }
   .panel-glow {
@@ -408,7 +415,7 @@ html[data-theme-swap] *::after {
   @media (hover: hover) {
     .panel-glow:hover {
       box-shadow:
-        0 20px 60px -30px var(--accent-glow),
+        0 20px 60px -30px color-mix(in oklab, var(--accent-glow) 75%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.02);
     }
     body.light .panel-glow:hover {

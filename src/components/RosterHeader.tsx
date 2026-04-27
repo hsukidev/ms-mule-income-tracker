@@ -105,9 +105,6 @@ export function RosterHeader({
           }}
         />
         <h2 className="font-display text-2xl font-bold tracking-tight">Roster</h2>
-        <span className="eyebrow-plain">
-          {muleCount} {muleCount === 1 ? 'MULE' : 'MULES'}
-        </span>
         <DensityToggle />
       </div>
       <div className="flex items-center gap-3">

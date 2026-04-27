@@ -27,7 +27,7 @@ export function WorldSelect() {
       <Select.Trigger
         aria-label="Select world"
         data-slot="world-select-trigger"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-(--surface-2) px-2.5 py-1 text-xs text-muted-foreground cursor-pointer transition-colors hover:border-(--accent-raw)"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-(--surface-2) px-2.5 py-1 text-xs text-muted-foreground cursor-pointer transition-colors hover:border-(--panel-border-hover)"
       >
         {world ? (
           <span>{world.label}</span>
