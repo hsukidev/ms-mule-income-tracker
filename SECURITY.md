@@ -208,116 +208,283 @@ secret should be a 60-second operation:
 
 ## Action checklist
 
-Order matters: items earlier on the list don't depend on later ones, but
-later items reference earlier ones (e.g. the Worker logging in #6 covers the
-secret rejection branch added in #2).
+Each section is split into **Code** (already-landed changes with commit
+references) and **Runtime** (steps you execute against Cloudflare or the
+VPS — these don't live in the repo). Tick the runtime boxes as you go.
 
 ### 1. Caddy rate limit
 
-- [ ] Install the `caddyserver/caddy-ratelimit` plugin in your Caddy build
-      (or switch to a Caddy image that includes it).
-- [ ] Add a rate-limit block to the Caddyfile for the `/api/*` path:
-      `30r/m` per `{remote_host}`, action: respond with `429`.
-- [ ] `caddy reload` and verify with `for i in {1..50}; do curl -s -o
-  /dev/null -w "%{http_code}\n" https://your-host/api/character/test?worldId=…; done`
-      — the last requests in the burst should return 429.
+**Code.** None — Caddy is runtime config only.
+
+**Runtime (on VPS, in `~/app/`):**
+
+1. [ ] Create custom Caddy image with the rate-limit module:
+
+   ```bash
+   mkdir -p caddy
+   cat > caddy/Dockerfile <<'EOF'
+   FROM caddy:builder AS builder
+   RUN xcaddy build --with github.com/mholt/caddy-ratelimit
+
+   FROM caddy:latest
+   COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+   EOF
+   ```
+
+2. [ ] Update the `caddy` service in `~/app/docker-compose.yml` —
+       replace `image: caddy:latest` with:
+   ```yaml
+   build:
+     context: ./caddy
+   image: caddy-with-ratelimit:latest
+   ```
+3. [ ] Add the `rate_limit` directive to `~/app/Caddyfile` for both sites
+       (separate zones so prod and staging buckets don't collide):
+
+   ```caddyfile
+   mules.henesys.io {
+       @api path /api/*
+       rate_limit @api {
+           zone api_per_ip { key {client.ip}; events 30; window 1m }
+       }
+       reverse_proxy mules:80
+   }
+
+   snow-yeti.henesys.io {
+       @api path /api/*
+       rate_limit @api {
+           zone api_per_ip_staging { key {client.ip}; events 30; window 1m }
+       }
+       reverse_proxy snow-yeti:80
+   }
+   ```
+
+4. [ ] Build, validate, apply:
+   ```bash
+   docker compose build caddy
+   docker compose run --rm caddy caddy validate --config /etc/caddy/Caddyfile
+   docker compose up -d caddy
+   ```
+5. [ ] Confirm the rate-limit module is loaded:
+       `docker compose exec caddy caddy list-modules | grep rate_limit`
+6. [ ] Verify 429s fire from a local machine (not the VPS):
+   ```bash
+   for i in $(seq 1 50); do
+     curl -s -o /dev/null -w "%{http_code} " \
+       https://mules.henesys.io/api/character/AliceK?worldId=heroic-kronos
+   done; echo
+   ```
+   Expect ~30 successes followed by 429s.
 
 ### 2. Worker shared-secret gate
 
-- [ ] Generate a secret: `openssl rand -hex 32`.
-- [ ] `cd worker && wrangler secret put PROXY_SECRET` — paste the value.
-- [ ] In `worker/src/worker.ts`, add at the top of `handleLookup` (before the
-      route match at line 64):
-      `ts
-  if (request.headers.get('x-proxy-auth') !== env.PROXY_SECRET) {
-    return jsonResponse(404, { error: 'not-found', message: 'route not found' });
-  }
-  `
-      Update the `fetch` handler signature to receive `env`:
-      `fetch(request: Request, env: { PROXY_SECRET: string }): Promise<Response>`
-      and pass `env` to `handleLookup`. Add `PROXY_SECRET` to a new
-      `Env` interface; pass it through `HandlerDeps` so tests can inject.
-- [ ] In `nginx.conf`, inside `location /api/`:
-      `proxy_set_header X-Proxy-Auth $proxy_secret;`
-      and read `$proxy_secret` from an env var via the nginx `envsubst`
-      template pattern at container start. **Do not commit the value.**
-- [ ] In your Docker / compose config, plumb `PROXY_SECRET` from a
-      `.env` file (gitignored) or GitHub Actions secret into the nginx
-      container.
-- [ ] Verify: `curl https://*.workers.dev/api/character/foo?worldId=…`
-      should return `404` (no header), while traffic through your domain
-      should still work.
+**Code.** Committed in `29898a5` (gate + `Env` interface + 4 gate tests +
+fail-loud production handler) and `c5902fd` (`${WORKER_HOST}` variable
+extraction).
+
+- `worker/src/worker.ts` — `HandlerDeps.proxySecret`, `Env`, gate check at
+  top of `handleLookup`, 503 fail-loud when `env.PROXY_SECRET` is unset.
+- `worker/src/__tests__/worker.test.ts` — 4 gate tests; `get()` helper
+  extended to accept headers.
+- `nginx.conf` → `nginx.conf.template` — `proxy_set_header X-Proxy-Auth
+"${PROXY_SECRET}";`, `proxy_pass https://${WORKER_HOST}/api/;`.
+- `Dockerfile` — copies template into `/etc/nginx/templates/` and pins
+  `NGINX_ENVSUBST_FILTER=^(PROXY_SECRET|WORKER_HOST)$`.
+
+**Runtime:**
+
+1. [ ] Generate a secret (run once locally — copy the 64-char hex output):
+   ```bash
+   openssl rand -hex 32
+   ```
+2. [ ] Push it to the Worker and deploy:
+   ```bash
+   cd worker
+   pnpm exec wrangler secret put PROXY_SECRET   # paste when prompted
+   pnpm exec wrangler deploy
+   ```
+3. [ ] Create / update `~/app/.env` on the VPS (chmod 600):
+   ```
+   PROXY_SECRET=<paste the same 64-char value>
+   WORKER_HOST=ms-mule-income-tracker-worker.mules-henesys.workers.dev
+   ```
+4. [ ] Apply on the VPS — nginx restarts with the new template values:
+   ```bash
+   cd ~/app
+   docker compose up -d
+   ```
+5. [ ] Verify direct hit to workers.dev is rejected:
+   ```bash
+   curl -i https://ms-mule-income-tracker-worker.mules-henesys.workers.dev/api/character/Alice?worldId=heroic-kronos
+   ```
+   Expect `404`.
+6. [ ] Verify proxied lookup still works in the browser at
+       `https://mules.henesys.io`.
 
 ### 3. Input validation + cached 400
 
-- [ ] In `worker/src/worker.ts`, after `decodeURIComponent` at line 68:
-      ``ts
-  if (!/^[A-Za-z0-9]{2,13}$/.test(name)) {
-    const res = jsonResponse(
-      400,
-      { error: 'invalid-name', message: 'name must be 2–13 alphanumeric chars' },
-      { 'cache-control': `public, max-age=3600` },
-    );
-    if (cache) await cache.put(request, res.clone());
-    return res;
-  }
-  ``
-- [ ] Note: this lives _after_ the cache lookup, so repeat junk from the
-      same URL gets served from cache without re-running validation.
-      (Move it before `cache.match` only if you want validation to run on
-      every cache hit — not necessary.)
-- [ ] Add a unit test in `worker/src/worker.test.ts` covering: rejects
-      invalid charset, rejects too-short, rejects too-long, accepts valid.
+**Code.** Committed in `29898a5`.
+
+- `worker/src/worker.ts` — `VALID_NAME = /^[A-Za-z0-9]{2,13}$/`,
+  `INVALID_NAME_TTL_SECONDS = 3600`, validation block placed after the
+  cache lookup (so repeat invalid requests are served from cache without
+  re-running the regex).
+- `worker/src/__tests__/worker.test.ts` — 4 tests: invalid charset,
+  too-short, too-long, cached-400.
+
+**Runtime:**
+
+1. [ ] Ships with the same `wrangler deploy` you ran in section 2.
+2. [ ] Sanity-check (replace `$PROXY_SECRET` with the real value):
+   ```bash
+   curl -i -H "x-proxy-auth: $PROXY_SECRET" \
+     "https://mules.henesys.io/api/character/x?worldId=heroic-kronos"
+   ```
+   Expect `400` with `{"error":"invalid-name", ...}` (single char fails
+   the `{2,13}` length rule).
 
 ### 4. Security headers in nginx
 
-- [ ] In `nginx.conf` `server { … }` block (outside any `location`), add:
-      `     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://msavatar1.nexon.net https://nxfs.nexon.com; connect-src 'self'; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
-  add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
-  add_header X-Content-Type-Options "nosniff" always;
-  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-  add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
-  `
-- [ ] Build, run locally, click through every screen with DevTools Console
-      open. Resolve any `Refused to load …` violations by either fixing the
-      offending code or relaxing the specific directive.
-- [ ] Verify in prod with `curl -I https://your-host/` — all headers should
-      appear in the response.
+**Code.** Committed in `29898a5`.
+
+- `nginx.conf.template` — full CSP plus HSTS, `nosniff`, `Referrer-Policy`,
+  and `Permissions-Policy`, all with the `always` flag. CSP includes a
+  SHA-256 hash for the inline theme-bootstrap `<script>` in `index.html`
+  (lines 14–23) so we don't need `'unsafe-inline'` in `script-src`.
+
+**Runtime:**
+
+1. [ ] Verify all five headers in production:
+   ```bash
+   curl -I https://mules.henesys.io/ | grep -iE \
+     'content-security|strict-transport|x-content|referrer|permissions'
+   ```
+2. [ ] Click through the deployed app with DevTools Console open — confirm
+       zero `Refused to load …` or `Refused to apply inline style …`
+       violations.
+3. [ ] **If the inline theme script in `index.html` is ever edited**,
+       recompute the CSP hash and update `nginx.conf.template`:
+   ```bash
+   python3 -c "
+   import re, hashlib, base64
+   html = open('dist/index.html').read()
+   m = re.search(r'<script>(.*?)</script>', html, re.DOTALL)
+   h = hashlib.sha256(m.group(1).encode()).digest()
+   print('sha256-' + base64.b64encode(h).decode())
+   "
+   ```
 
 ### 5. User-Agent on Nexon calls
 
-- [ ] In `worker/src/nexonAdapter.ts:85`, replace `await fetch(url)` with:
-      `ts
-  response = await fetch(url, {
-    headers: {
-      'user-agent': 'ms-mule-income-tracker/1.0 (+https://github.com/hsukidev/ms-mule-income-tracker)',
-    },
-  });
-  `
-- [ ] Update or add an adapter test that asserts the `user-agent` header
-      is sent.
+**Code.** Committed in `29898a5`.
+
+- `worker/src/nexonAdapter.ts` — `USER_AGENT` constant
+  (`ms-mule-income-tracker/1.0 (+https://github.com/hsukidev/ms-mule-income-tracker)`)
+  threaded into the outbound `fetch`.
+- `worker/src/__tests__/nexonAdapter.test.ts` — test asserts the header is
+  sent.
+
+**Runtime:**
+
+1. [ ] Ships with the same `wrangler deploy` from section 2 — no separate
+       step required.
 
 ### 6. Telemetry
 
-- [ ] Confirm Caddy access logs are written to a mounted volume in
-      `docker-compose.yml`, not just stdout. Logs should survive a
-      container restart.
-- [ ] In the Cloudflare dashboard, set a Workers usage alert at 50% of
-      the free tier (50,000 requests/day). Emails go to your account email.
-- [ ] In `worker/src/worker.ts`, add structured logs at the three rejection
-      branches:
-      `ts
-  // After proxy-auth check
-  console.log(JSON.stringify({ event: 'proxy-auth-fail' }));
-  // After invalid-name check
-  console.log(JSON.stringify({ event: 'invalid-name', name: name.slice(0, 20) }));
-  // In the catch block at line 126
-  console.log(JSON.stringify({ event: 'upstream-failed', status: err instanceof UpstreamError ? err.status : undefined }));
-  `
-- [ ] Practice the secret-rotation runbook once on staging:
-      `openssl rand -hex 32` → `wrangler secret put PROXY_SECRET` →
-      update VPS env var → `docker compose up -d` → verify lookup still
-      works end-to-end.
+#### 6a. Worker structured logs
+
+**Code.** Committed in `eaca084`. Adds `console.log(JSON.stringify({...}))`
+at three rejection branches in `worker/src/worker.ts`: `proxy-auth-fail`,
+`invalid-name` (with `name` truncated to 20 chars to prevent log
+injection), and `upstream-failed` (with upstream `status` and `message`).
+The fourth event, `proxy-secret-missing`, was already in `29898a5`.
+
+**Runtime:**
+
+1. [ ] Deploy: `cd worker && pnpm exec wrangler deploy`.
+2. [ ] Verify each event fires. In one terminal:
+
+   ```bash
+   cd worker && pnpm exec wrangler tail
+   ```
+
+   In another, trigger each branch (replace `$SECRET` with the real value):
+
+   ```bash
+   # proxy-auth-fail
+   curl https://ms-mule-income-tracker-worker.mules-henesys.workers.dev/api/character/Alice?worldId=heroic-kronos
+
+   # invalid-name
+   curl -H "x-proxy-auth: $SECRET" \
+     "https://ms-mule-income-tracker-worker.mules-henesys.workers.dev/api/character/x?worldId=heroic-kronos"
+   ```
+
+   Expect one JSON event line per request in the tail.
+
+#### 6b. Caddy access logs persisted
+
+**Runtime (on VPS):**
+
+1. [ ] Add a `log` block to each site in `~/app/Caddyfile`:
+   ```caddyfile
+   log {
+       output file /var/log/caddy/<site>-access.log {
+           roll_size 10MiB
+           roll_keep 5
+           roll_keep_for 720h
+       }
+       format json
+   }
+   ```
+   (Use distinct filenames per site, e.g. `mules-access.log` and
+   `snow-yeti-access.log`.)
+2. [ ] In `~/app/docker-compose.yml`, add the volume mount to the `caddy`
+       service:
+   ```yaml
+   volumes:
+     - ./Caddyfile:/etc/caddy/Caddyfile
+     - caddy_data:/data
+     - caddy_config:/config
+     - caddy_logs:/var/log/caddy
+   ```
+   And declare it at the bottom of the file:
+   ```yaml
+   volumes:
+     caddy_data:
+     caddy_config:
+     caddy_logs:
+   ```
+3. [ ] Apply: `docker compose up -d caddy`.
+4. [ ] After a few requests, sanity-check:
+   ```bash
+   docker compose exec caddy tail /var/log/caddy/mules-access.log
+   ```
+
+#### 6c. Cloudflare Workers usage alert
+
+1. [ ] Cloudflare dashboard → **Workers & Pages → `ms-mule-income-tracker-worker` → Settings → Notifications**.
+2. [ ] Add a usage notification at **50,000 requests/day** (50% of the
+       100k free-tier ceiling).
+3. [ ] Confirm email destination is your account email.
+
+#### 6d. Secret-rotation runbook (practice once on staging)
+
+1.  [ ] Generate a fresh secret: `openssl rand -hex 32`.
+2.  [ ] Push to staging Worker:
+    ```bash
+    cd worker && pnpm exec wrangler secret put PROXY_SECRET
+    ```
+        (Add `--env staging` if you have a separate staging Worker.)
+3.  [ ] Update `~/app-staging/.env` on the VPS — paste new value into
+        `PROXY_SECRET=`.
+4.  [ ] Apply: `cd ~/app-staging && docker compose up -d`.
+5.  [ ] Verify staging lookup still works in the browser.
+6.  [ ] Confirm the **old** secret is now rejected:
+    ```bash
+    curl -i -H "x-proxy-auth: <OLD_VALUE>" \
+      "https://ms-mule-income-tracker-worker.mules-henesys.workers.dev/api/character/Alice?worldId=heroic-kronos"
+    ```
+    Expect `404` (and a `proxy-auth-fail` event in `wrangler tail`).
 
 ---
 
