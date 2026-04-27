@@ -1,3 +1,6 @@
 packages:
   - '.'
   - 'worker'
+
+onlyBuiltDependencies:
+  - puppeteer

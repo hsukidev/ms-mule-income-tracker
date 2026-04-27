@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prerender": "tsc -b && vite build && node scripts/prerender.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -70,6 +72,8 @@
     "postcss": "^8.5.9",
     "prettier": "^3.8.3",
     "prettier-eslint": "^16.4.2",
+    "puppeteer": "^24.42.0",
+    "sirv": "^3.0.2",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "~6.0.2",
