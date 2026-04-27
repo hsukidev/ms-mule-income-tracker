@@ -168,29 +168,20 @@ function validateBossSelection(keys: string[], worldGroup: WorldGroup): string[]
  * through untouched.
  */
 function trimWeeklies(keys: string[], worldGroup: WorldGroup): string[] {
-  interface WeeklyEntry {
-    key: string;
-    index: number;
-    crystalValue: number;
-  }
-  const weeklies: WeeklyEntry[] = [];
+  const weeklies: { index: number; crystalValue: number }[] = [];
   for (let i = 0; i < keys.length; i++) {
     const r = resolveKey(keys[i]);
-    if (r && r.diff.cadence === 'weekly') {
-      weeklies.push({ key: keys[i], index: i, crystalValue: priceFor(r.diff, worldGroup) });
+    if (r?.diff.cadence === 'weekly') {
+      weeklies.push({ index: i, crystalValue: priceFor(r.diff, worldGroup) });
     }
   }
   if (weeklies.length <= WEEKLY_CRYSTAL_CAP) return keys;
 
-  // Keep the WEEKLY_CRYSTAL_CAP highest by crystalValue; on tie, the
-  // earlier-inserted (lower index) key wins.
+  // Sort: highest crystalValue first; on tie, the earlier-inserted (lower
+  // index) key wins.
   weeklies.sort((a, b) => b.crystalValue - a.crystalValue || a.index - b.index);
-  const keepWeeklyKeys = new Set(weeklies.slice(0, WEEKLY_CRYSTAL_CAP).map((w) => w.key));
-  return keys.filter((k) => {
-    const r = resolveKey(k);
-    if (r?.diff.cadence === 'weekly') return keepWeeklyKeys.has(k);
-    return true;
-  });
+  const dropIndices = new Set(weeklies.slice(WEEKLY_CRYSTAL_CAP).map((w) => w.index));
+  return keys.filter((_, i) => !dropIndices.has(i));
 }
 
 function toggleBoss(keys: string[], bossId: string, tier: BossTier): string[] {
