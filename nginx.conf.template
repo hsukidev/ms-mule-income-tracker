@@ -28,20 +28,21 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # Same-origin proxy to the deployed character-lookup Worker. After a
-    # one-time `wrangler deploy`, paste the resulting `<slug>.workers.dev`
-    # URL in place of WORKER_HOST below. Keeping the SPA's API call at
-    # `/api/*` means no CORS, no preflights, and no environment-specific
-    # base URL in browser code.
+    # Same-origin proxy to the deployed character-lookup Worker. Keeping the
+    # SPA's API call at `/api/*` means no CORS, no preflights, and no
+    # environment-specific base URL in browser code.
+    #
+    # ${WORKER_HOST} and ${PROXY_SECRET} are both interpolated by the nginx
+    # image's envsubst entrypoint at container start. Production must set
+    # both env vars; if either is missing, nginx will substitute an empty
+    # string and the container will fail to start (or serve broken upstream
+    # calls), which is the desired fail-loud behaviour.
     location /api/ {
-        proxy_pass https://ms-mule-income-tracker-worker.mules-henesys.workers.dev/api/;
-        proxy_set_header Host ms-mule-income-tracker-worker.mules-henesys.workers.dev;
+        proxy_pass https://${WORKER_HOST}/api/;
+        proxy_set_header Host ${WORKER_HOST};
         proxy_ssl_server_name on;
-        # Shared-secret gate. The Worker rejects requests without this exact
-        # header, blocking direct hits to *.workers.dev. ${PROXY_SECRET} is
-        # interpolated by the nginx image's envsubst entrypoint at container
-        # start; production must set the PROXY_SECRET env var (and
-        # `wrangler secret put` the matching value on the Worker side).
+        # Shared-secret gate. The Worker rejects requests without this
+        # exact header, blocking direct hits to *.workers.dev.
         proxy_set_header X-Proxy-Auth "${PROXY_SECRET}";
     }
 

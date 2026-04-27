@@ -19,9 +19,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # and writes the result to /etc/nginx/conf.d/<basename without .template>.
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
-# Restrict envsubst to only substitute PROXY_SECRET so nginx's own
-# variables ($uri, $proxy_pass targets, etc.) are left alone.
-ENV NGINX_ENVSUBST_FILTER=^PROXY_SECRET$
+# Restrict envsubst to only substitute deployment-injected vars so nginx's
+# own variables ($uri etc.) are left alone.
+ENV NGINX_ENVSUBST_FILTER=^(PROXY_SECRET|WORKER_HOST)$
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
