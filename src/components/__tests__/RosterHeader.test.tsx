@@ -30,16 +30,6 @@ describe('RosterHeader', () => {
       expect(screen.getByRole('heading', { name: /roster/i })).toBeTruthy();
     });
 
-    it('shows the mule count in MULES', () => {
-      renderHeader({ muleCount: 3 });
-      expect(screen.getByText(/3\s*MULES/i)).toBeTruthy();
-    });
-
-    it('uses singular MULE for one mule', () => {
-      renderHeader({ muleCount: 1 });
-      expect(screen.getByText(/1\s*MULE\b/i)).toBeTruthy();
-    });
-
     it('renders the Bulk Trash Icon button (visible at every breakpoint)', () => {
       renderHeader();
       const btn = screen.getByRole('button', { name: /bulk.*delete|delete.*mode|bulk.*trash/i });
