@@ -452,7 +452,7 @@ describe('Bulk Delete Mode', () => {
     seedMules(testMules);
     render(<App />);
     enterBulk();
-    expect(screen.getByText(/select or drag mules to delete/i)).toBeTruthy();
+    expect(screen.getByText(/select or drag to delete/i)).toBeTruthy();
     expect(screen.getByText(/0\s*SELECTED/i)).toBeTruthy();
   });
 
@@ -514,7 +514,7 @@ describe('Bulk Delete Mode', () => {
     });
 
     // Mode exited — header returns to default
-    expect(screen.queryByText(/select or drag mules to delete/i)).toBeNull();
+    expect(screen.queryByText(/select or drag to delete/i)).toBeNull();
   });
 
   it('persists bulk deletion to localStorage', async () => {
@@ -551,7 +551,7 @@ describe('Bulk Delete Mode', () => {
     fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/select or drag mules to delete/i)).toBeNull();
+      expect(screen.queryByText(/select or drag to delete/i)).toBeNull();
     });
 
     // All three mules still in DOM

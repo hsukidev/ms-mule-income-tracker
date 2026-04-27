@@ -265,40 +265,89 @@ describe('MuleBossSlate.view', () => {
     const view = MuleBossSlate.EMPTY.view();
     const families = view.map((f) => f.family);
     const expected = [
-      'black-mage',
-      'baldrix',
-      'limbo',
       'kaling',
       'first-adversary',
       'kalos-the-guardian',
       'chosen-seren',
-      'darknell',
-      'verus-hilla',
-      'gloom',
-      'will',
-      'lucid',
-      'guardian-angel-slime',
-      'damien',
+      'baldrix',
+      'limbo',
       'lotus',
+      'verus-hilla',
+      'darknell',
+      'will',
+      'guardian-angel-slime',
+      'gloom',
+      'lucid',
+      'damien',
+      'akechi-mitsuhide',
       'papulatus',
       'vellum',
+      'magnus',
       'crimson-queen',
       'von-bon',
       'pierre',
-      'akechi-mitsuhide',
       'princess-no',
-      'magnus',
+      'zakum',
       'cygnus',
       'pink-bean',
       'hilla',
-      'zakum',
-      'arkarium',
       'mori-ranmaru',
-      'horntail',
+      'arkarium',
       'von-leon',
+      'horntail',
       'omni-cln',
+      'black-mage',
     ];
     expect(families).toEqual(expected);
+  });
+
+  it('places Black Mage last so it does not participate in the meso ranking', () => {
+    const view = MuleBossSlate.EMPTY.view();
+    const families = view.map((f) => f.family);
+    expect(families[families.length - 1]).toBe('black-mage');
+  });
+
+  it('orders all weekly-eligible families before any daily-only family (Black Mage excluded)', () => {
+    const view = MuleBossSlate.EMPTY.view().filter((f) => f.family !== 'black-mage');
+    const isDailyOnly = (family: string): boolean => {
+      const boss = bosses.find((b) => b.family === family)!;
+      return boss.difficulty.every((d) => d.cadence === 'daily');
+    };
+    const lastWeeklyIdx = view.findLastIndex((f) => !isDailyOnly(f.family));
+    const firstDailyIdx = view.findIndex((f) => isDailyOnly(f.family));
+    expect(lastWeeklyIdx).toBeLessThan(firstDailyIdx);
+  });
+
+  it('sorts weekly-eligible families by their highest-tier Heroic crystalValue, descending', () => {
+    const view = MuleBossSlate.EMPTY.view().filter((f) => f.family !== 'black-mage');
+    const isDailyOnly = (family: string): boolean => {
+      const boss = bosses.find((b) => b.family === family)!;
+      return boss.difficulty.every((d) => d.cadence === 'daily');
+    };
+    const maxHeroic = (family: string): number => {
+      const boss = bosses.find((b) => b.family === family)!;
+      return Math.max(...boss.difficulty.map((d) => d.crystalValue.Heroic));
+    };
+    const weekly = view.filter((f) => !isDailyOnly(f.family));
+    for (let i = 1; i < weekly.length; i++) {
+      expect(maxHeroic(weekly[i - 1].family)).toBeGreaterThanOrEqual(maxHeroic(weekly[i].family));
+    }
+  });
+
+  it('sorts daily-only families by their highest-tier Heroic crystalValue, descending', () => {
+    const view = MuleBossSlate.EMPTY.view();
+    const isDailyOnly = (family: string): boolean => {
+      const boss = bosses.find((b) => b.family === family)!;
+      return boss.difficulty.every((d) => d.cadence === 'daily');
+    };
+    const maxHeroic = (family: string): number => {
+      const boss = bosses.find((b) => b.family === family)!;
+      return Math.max(...boss.difficulty.map((d) => d.crystalValue.Heroic));
+    };
+    const daily = view.filter((f) => isDailyOnly(f.family));
+    for (let i = 1; i < daily.length; i++) {
+      expect(maxHeroic(daily[i - 1].family)).toBeGreaterThanOrEqual(maxHeroic(daily[i].family));
+    }
   });
 
   it('marks a Slate Row selected when its key is in the slate', () => {

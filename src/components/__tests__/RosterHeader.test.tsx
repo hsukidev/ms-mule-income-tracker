@@ -64,15 +64,15 @@ describe('RosterHeader', () => {
 
     it('does not render the Bulk Action Bar in default state', () => {
       renderHeader();
-      expect(screen.queryByText(/select or drag mules to delete/i)).toBeNull();
+      expect(screen.queryByText(/select or drag to delete/i)).toBeNull();
       expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
     });
   });
 
   describe('bulk state', () => {
-    it('renders the bulk title "Select or drag mules to delete"', () => {
+    it('renders the bulk title "Select or drag to delete"', () => {
       renderHeader({ bulkMode: true });
-      expect(screen.getByText(/select or drag mules to delete/i)).toBeTruthy();
+      expect(screen.getByText(/select or drag to delete/i)).toBeTruthy();
     });
 
     it('renders the Bulk Selection Pill with 0 SELECTED when no cards marked', () => {
@@ -137,10 +137,10 @@ describe('RosterHeader', () => {
       expect(btn.textContent?.trim()).toBe('Delete');
     });
 
-    it('hides "Select or drag mules to delete" text on small screens via max-[524.99px]:hidden', () => {
+    it('hides "Select or drag to delete" text on small screens via max-[524.99px]:hidden', () => {
       const { container } = renderHeader({ bulkMode: true });
       const textSpan = Array.from(container.querySelectorAll('span')).find(
-        (el) => el.textContent?.trim() === 'Select or drag mules to delete',
+        (el) => el.textContent?.trim() === 'Select or drag to delete',
       );
       expect(textSpan).toBeTruthy();
       expect(textSpan!.className).toContain('max-[524.99px]:hidden');

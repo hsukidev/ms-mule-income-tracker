@@ -117,10 +117,12 @@ describe('BossMatrix', () => {
       expect(names.some((n) => n.includes('Akechi'))).toBe(true);
     });
 
-    it('sorts family rows by top-tier crystalValue descending (Black Mage first)', () => {
+    it('renders family rows in the order produced by MuleBossSlate.view()', () => {
       renderMatrix();
       const rowHeaders = screen.getAllByRole('rowheader');
-      expect(rowHeaders[0].textContent).toContain('Black Mage');
+      const firstFamily = viewOf()[0];
+      const firstBoss = bosses.find((b) => b.family === firstFamily.family)!;
+      expect(rowHeaders[0].textContent).toContain(firstBoss.name);
     });
   });
 

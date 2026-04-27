@@ -63,7 +63,7 @@ export function RosterHeader({
               letterSpacing: '-0.01em',
             }}
           >
-            Select or drag mules to delete
+            Select or drag to delete
           </span>
           <span
             data-bulk-selection-pill

@@ -64,7 +64,7 @@ export function useSlateActions({
     (key: string) => {
       if (!muleId) return;
       if (!slate.canToggle(key)) {
-        toast.error('Weekly cap reached', { description: 'Remove a boss first.' });
+        toast.error('Weekly cap reached', { description: 'Remove a boss first' });
         return;
       }
       const next = slate.toggle(key);

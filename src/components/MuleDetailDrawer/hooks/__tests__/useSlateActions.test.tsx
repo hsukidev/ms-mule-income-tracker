@@ -218,7 +218,7 @@ describe('useSlateActions', () => {
       });
       expect(toastMock.toast.error).toHaveBeenCalledTimes(1);
       expect(toastMock.toast.error).toHaveBeenCalledWith('Weekly cap reached', {
-        description: 'Remove a boss first.',
+        description: 'Remove a boss first',
       });
       expect(onUpdate).not.toHaveBeenCalled();
       expect(pill.notifyWeeklyToggle).not.toHaveBeenCalled();

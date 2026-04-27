@@ -166,7 +166,7 @@ The app uses three responsive mechanisms, each suited to a different concern:
 | `BossMatrix`            | `@container/drawer` `600px`              | Tier label text hidden in tier-pip header (`<600px`); pip stays visible                                   |
 | `BossMatrix`            | `@container/drawer` `500px`              | Matrix sets `min-width: 500px` so very narrow drawers get horizontal scroll instead of column collapse    |
 | `RosterHeader`          | `sm`                                     | "drag to reorder" hint hidden below `sm`                                                                  |
-| `RosterHeader`          | `max-[524.99px]`                         | Bulk-action-bar copy "Select or drag mules to delete" hidden                                              |
+| `RosterHeader`          | `max-[524.99px]`                         | Bulk-action-bar copy "Select or drag to delete" hidden                                                    |
 | Roster grid             | CSS media queries (`index.css:246–288`)  | `--roster-cols` steps `1 → 2 → 3 → 4 → 5 → 6` at 480, 768, 1024, 1100, 1280px                             |
 | `DensityToggle`         | CSS media query (3-col threshold, 768px) | Hidden below 3-col grid (no point in choosing density on a 1-column phone layout)                         |
 
@@ -278,7 +278,7 @@ Info-tinted blue banner that slides in above the **Roster Header** when the user
 Row above the **Roster** with two visual states:
 
 - **Default**: `Roster` title + `N MULES` eyebrow → `DensityToggle` (3-col+ only) → "drag to reorder" muted hint (`hidden sm:block`) → **Bulk Trash Icon** on the right.
-- **Bulk Action Bar** (when **Bulk Delete Mode** is active): destructive-tinted bar, pulsing red dot (`bulk-pulse` keyframe), "Select or drag mules to delete" copy (hidden below 525px), `N SELECTED` pill, **Bulk Cancel** + **Bulk Confirm** (red, disabled when N=0).
+- **Bulk Action Bar** (when **Bulk Delete Mode** is active): destructive-tinted bar, pulsing red dot (`bulk-pulse` keyframe), "Select or drag to delete" copy (hidden below 525px), `N SELECTED` pill, **Bulk Cancel** + **Bulk Confirm** (red, disabled when N=0).
 
 Both states share a single slot; the swap is instant, no transition. Animates in via `bulk-slide` keyframe.
 

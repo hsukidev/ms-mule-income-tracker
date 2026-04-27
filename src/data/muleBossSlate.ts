@@ -207,43 +207,54 @@ function toggleBoss(keys: string[], bossId: string, tier: BossTier): string[] {
 }
 
 /**
- * Curated family order for the Matrix display. This is the single source of
- * truth for row order in BossMatrix and `getFamilies`; keep in sync with any
- * Boss added to `bosses`.
+ * Family order for the Matrix display. Single source of truth for row order
+ * in BossMatrix and `getFamilies`; keep in sync with any Boss added to
+ * `bosses`.
+ *
+ * Ranking rule:
+ *  1. Weekly-eligible families (any difficulty has cadence `weekly`) come
+ *     first, sorted by their highest-tier Heroic crystalValue descending.
+ *     Ties are broken by stable insertion order.
+ *  2. Daily-only families (every difficulty is daily) follow, sorted by
+ *     their highest-tier Heroic crystalValue descending — equivalent to
+ *     weekly-normalized (× 7) since the multiplier is uniform.
+ *  3. Black Mage sits at the end. It's monthly-only and is excluded from
+ *     the meso ranking; the matrix renderer also filters it out at
+ *     `useMatrixFilter` so its position here is purely a data-layer pin.
  */
 const DISPLAY_ORDER: readonly string[] = [
-  'black-mage',
-  'baldrix',
-  'limbo',
   'kaling',
   'first-adversary',
   'kalos-the-guardian',
   'chosen-seren',
-  'darknell',
-  'verus-hilla',
-  'gloom',
-  'will',
-  'lucid',
-  'guardian-angel-slime',
-  'damien',
+  'baldrix',
+  'limbo',
   'lotus',
+  'verus-hilla',
+  'darknell',
+  'will',
+  'guardian-angel-slime',
+  'gloom',
+  'lucid',
+  'damien',
+  'akechi-mitsuhide',
   'papulatus',
   'vellum',
+  'magnus',
   'crimson-queen',
   'von-bon',
   'pierre',
-  'akechi-mitsuhide',
   'princess-no',
-  'magnus',
+  'zakum',
   'cygnus',
   'pink-bean',
   'hilla',
-  'zakum',
-  'arkarium',
   'mori-ranmaru',
-  'horntail',
+  'arkarium',
   'von-leon',
+  'horntail',
   'omni-cln',
+  'black-mage',
 ];
 
 const bossesByDisplayOrder: readonly Boss[] = DISPLAY_ORDER.map((family) => {
