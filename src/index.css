@@ -742,24 +742,18 @@ html[data-theme-swap] *::after {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Toast (sonner) — Design #3 shell with Design #1's left accent. Rules live
- * in plain CSS (not Tailwind on the classNames API) because sonner stamps
- * [data-sonner-toast][data-styled='true'] at two-attribute specificity and
- * that beats Tailwind's single-class selectors silently. Co-locating the
- * overrides here lets us match sonner's specificity without important hacks.
+ * Toast (sonner). Rules live in plain CSS (not Tailwind on the classNames
+ * API) because sonner stamps [data-sonner-toast][data-styled='true'] at
+ * two-attribute specificity and that beats Tailwind's single-class selectors
+ * silently. Co-locating the overrides here lets us match sonner's specificity
+ * without important hacks.
  * ────────────────────────────────────────────────────────────────────────── */
 [data-sonner-toast].mule-toast[data-styled='true'] {
   display: flex;
   align-items: center;
   gap: 14px;
-  /* Design #1 technique: 1px frame on all sides so the 3px left border has
-   * a neighbour to transition into at the rounded corners — the accent no
-   * longer tapers into empty space. Padding trims border widths so the
-   * visible content gap is 14px L/R and 12px T/B regardless of which side
-   * is 1px vs 3px. */
   border: 1px solid var(--border);
-  border-left: 3px solid var(--success);
-  padding: 11px 13px 11px 11px;
+  padding: 11px 13px;
   /* No min-width: below 600px sonner forces `width: calc(100% - offsets)`
    * so each viewport fits the toast exactly. A min-width here would push
    * the toast past the right edge on phones. Desktop width is governed by
@@ -811,12 +805,9 @@ html[data-theme-swap] *::after {
 [data-sonner-toast].mule-toast[data-styled='true'] [data-button]:hover {
   background: var(--accent-soft);
 }
-/* Error variant: swap the left accent, icon tile, and outer glow to the
- * destructive token so failures (e.g. character-not-found) read with the
- * same red language as the bulk-delete action bar. */
-[data-sonner-toast].mule-toast[data-styled='true'][data-type='error'] {
-  border-left-color: var(--destructive);
-}
+/* Error variant: swap the icon tile to the destructive token so failures
+ * (e.g. character-not-found) read with the same red language as the
+ * bulk-delete action bar. */
 [data-sonner-toast].mule-toast[data-styled='true'][data-type='error'] [data-icon] {
   background: var(--destructive-soft);
   color: var(--destructive);
