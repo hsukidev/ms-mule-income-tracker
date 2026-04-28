@@ -46,11 +46,23 @@ NEW=$(echo "$CURRENT" | jq --argjson cf "$CF_ALL" '
 ')
 
 echo "[3/3] Pushing updated firewall config..."
-curl -fsSL -X PUT \
+echo "      Payload summary: $(echo "$NEW" | jq -c '{name, inbound_count: (.inbound_rules | length), droplet_ids, tags}')"
+
+HTTP_BODY_FILE=$(mktemp)
+HTTP_STATUS=$(curl -sS -o "$HTTP_BODY_FILE" -w "%{http_code}" -X PUT \
   -H "Authorization: Bearer $DO_TOKEN" \
   -H "Content-Type: application/json" \
   -d "$NEW" \
-  "https://api.digitalocean.com/v2/firewalls/$DO_FIREWALL_ID" \
-  > /dev/null
+  "https://api.digitalocean.com/v2/firewalls/$DO_FIREWALL_ID")
 
+if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+  echo "DO PUT failed with HTTP $HTTP_STATUS" >&2
+  echo "Response body:" >&2
+  cat "$HTTP_BODY_FILE" >&2
+  echo >&2
+  rm -f "$HTTP_BODY_FILE"
+  exit 1
+fi
+
+rm -f "$HTTP_BODY_FILE"
 echo "Firewall $DO_FIREWALL_ID updated with $(echo "$CF_ALL" | jq length) Cloudflare ranges"
