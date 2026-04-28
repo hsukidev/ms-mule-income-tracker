@@ -805,12 +805,14 @@ in seconds.
 **Code.** Committed in `<commit-hash>` (replace once committed).
 
 - `scripts/refresh-cf-firewall.sh` — fetches Cloudflare's published IPv4 +
-  IPv6 ranges, GETs the current DO firewall config, replaces
-  `sources.addresses` on TCP port 80/443 rules with the fresh list, and PUTs
-  the updated firewall. SSH (port 22) and any other rules are untouched.
-  Empty-list guard refuses to push if the Cloudflare fetch returns nothing
-  (would otherwise zero the allowlist and lock the firewall closed for
-  HTTP/HTTPS).
+  IPv6 ranges from `api.cloudflare.com/client/v4/ips` (the purpose-built
+  programmatic endpoint — the docs URL `cloudflare.com/ips-v4` sits behind
+  bot management and 403s CI runners), GETs the current DO firewall config,
+  replaces `sources.addresses` on TCP port 80/443 rules with the fresh list,
+  and PUTs the updated firewall. SSH (port 22) and any other rules are
+  untouched. Empty-list and `success != true` guards refuse to push if the
+  Cloudflare fetch returns unexpected data (would otherwise zero the
+  allowlist and lock the firewall closed for HTTP/HTTPS).
 - `.github/workflows/refresh-cf-firewall.yml` — runs the script monthly via
   cron (`0 4 1 * *`) and on `workflow_dispatch`. `DO_TOKEN` and
   `DO_FIREWALL_ID` come from GitHub Secrets, never touch the VPS.

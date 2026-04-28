@@ -6,16 +6,24 @@ set -euo pipefail
 : "${DO_TOKEN:?DO_TOKEN env var required}"
 : "${DO_FIREWALL_ID:?DO_FIREWALL_ID env var required}"
 
-CF_V4=$(curl -fsSL https://www.cloudflare.com/ips-v4/)
-CF_V6=$(curl -fsSL https://www.cloudflare.com/ips-v6/)
+# Use Cloudflare's API endpoint (purpose-built for programmatic access).
+# The public docs URLs (https://www.cloudflare.com/ips-v4/) sit behind
+# Cloudflare's bot management and can return 403 to CI runners.
+CF_RESPONSE=$(curl -fsSL https://api.cloudflare.com/client/v4/ips)
 
-# Sanity check: refuse to push if either list came back empty.
-if [[ -z "$CF_V4" || -z "$CF_V6" ]]; then
-  echo "Cloudflare IP fetch returned empty list — aborting" >&2
+if [[ "$(echo "$CF_RESPONSE" | jq -r '.success')" != "true" ]]; then
+  echo "Cloudflare IP API returned non-success response — aborting" >&2
+  echo "$CF_RESPONSE" >&2
   exit 1
 fi
 
-CF_ALL=$(printf '%s\n%s\n' "$CF_V4" "$CF_V6" | grep -v '^$' | jq -R . | jq -s .)
+CF_ALL=$(echo "$CF_RESPONSE" | jq '.result.ipv4_cidrs + .result.ipv6_cidrs')
+
+# Sanity check: refuse to push if the combined list is empty.
+if [[ "$(echo "$CF_ALL" | jq 'length')" -eq 0 ]]; then
+  echo "Cloudflare IP list is empty — aborting" >&2
+  exit 1
+fi
 
 CURRENT=$(curl -fsSL \
   -H "Authorization: Bearer $DO_TOKEN" \
