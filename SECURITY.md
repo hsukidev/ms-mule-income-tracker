@@ -858,11 +858,18 @@ in seconds.
        tailnet yet):
 
    ```bash
-   sudo tailscale up --ssh --hostname=mules-vps
+   sudo tailscale up --hostname=mules-vps
    ```
 
    Open the printed URL in a browser, log in to Tailscale, authorize
    the device.
+
+   **Do not pass `--ssh`.** That flag enables Tailscale SSH, which
+   intercepts tailnet SSH connections and authenticates by tailnet
+   identity instead of SSH keys. The GHA `appleboy/ssh-action` uses
+   standard SSH key auth, which Tailscale SSH closes mid-handshake
+   (`ssh: handshake failed: EOF`). With Tailscale SSH off, plain
+   `sshd` handles the connection normally over the tailnet.
 
 3. [ ] Verify and note the tailnet IP:
 
@@ -906,7 +913,7 @@ in seconds.
        `tag:server` exists:
 
    ```bash
-   sudo tailscale up --ssh --hostname=mules-vps --advertise-tags=tag:server
+   sudo tailscale up --hostname=mules-vps --advertise-tags=tag:server
    ```
 
 3. [ ] **Settings → OAuth clients → Generate OAuth client**:
