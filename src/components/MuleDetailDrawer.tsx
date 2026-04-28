@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
 import { formatMeso } from '../utils/meso';
@@ -86,6 +87,7 @@ export function MuleDetailDrawer({
   });
   const identity = useMuleIdentityDraft(mule, onUpdate);
   const liveLevel = Number(identity.level.draft) || 0;
+  const [activeInfoOpen, setActiveInfoOpen] = useState(false);
 
   return (
     <Sheet
@@ -147,7 +149,7 @@ export function MuleDetailDrawer({
                     </span>
                     <span className="font-display italic text-xs text-muted-foreground">mesos</span>
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-3 inline-flex items-center justify-center min-[425px]:justify-start">
                     <button
                       type="button"
                       data-testid="active-toggle"
@@ -180,6 +182,19 @@ export function MuleDetailDrawer({
                       )}
                       <span>{mule.active ? 'Active' : 'Inactive'}</span>
                     </button>
+                    <Tooltip open={activeInfoOpen} onOpenChange={setActiveInfoOpen}>
+                      <TooltipTrigger
+                        aria-label="Active toggle info"
+                        closeOnClick={false}
+                        onClick={() => setActiveInfoOpen(true)}
+                        className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <Info className="size-3.5" aria-hidden />
+                      </TooltipTrigger>
+                      <TooltipContent className="px-3.5 py-2.5">
+                        Click to toggle ACTIVE/INACTIVE
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>
