@@ -133,68 +133,72 @@ export function MuleDetailDrawer({
                       {liveLevel > 0 ? `Lv.${liveLevel}` : 'N/A'}
                     </span>
                   </div>
-                  <div
-                    className="mt-3 inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
-                    style={{
-                      background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
-                      boxShadow:
-                        'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
-                    }}
-                  >
-                    <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
-                      Weekly
-                    </span>
-                    <span className="font-mono-nums text-base text-(--accent-numeric)">
-                      {potentialIncome}
-                    </span>
-                    <span className="font-display italic text-xs text-muted-foreground">mesos</span>
-                  </div>
-                  <div className="mt-3 inline-flex items-center justify-center min-[425px]:justify-start">
-                    <button
-                      type="button"
-                      data-testid="active-toggle"
-                      aria-pressed={mule.active}
-                      onClick={() => onUpdate(mule.id, { active: !mule.active })}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
+                  <div className="mt-3 flex flex-col items-center gap-2.5 min-[425px]:items-start">
+                    <div
+                      className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
                       style={{
                         background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
                         boxShadow:
                           'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
-                        border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',
-                        color: mule.active ? 'var(--chart-4)' : 'var(--muted-foreground)',
-                        minWidth: 96,
-                        justifyContent: 'center',
-                        cursor: 'pointer',
                       }}
                     >
-                      {mule.active && (
-                        <span
-                          data-active-dot
-                          aria-hidden
-                          style={{
-                            display: 'inline-block',
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: 'var(--chart-4)',
-                          }}
-                        />
-                      )}
-                      <span>{mule.active ? 'Active' : 'Inactive'}</span>
-                    </button>
-                    <Tooltip open={activeInfoOpen} onOpenChange={setActiveInfoOpen}>
-                      <TooltipTrigger
-                        aria-label="Active toggle info"
-                        closeOnClick={false}
-                        onClick={() => setActiveInfoOpen(true)}
-                        className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      <span className="font-sans text-[9px] uppercase tracking-[0.26em] text-muted-foreground">
+                        Weekly
+                      </span>
+                      <span className="font-mono-nums text-base text-(--accent-numeric)">
+                        {potentialIncome}
+                      </span>
+                      <span className="font-display italic text-xs text-muted-foreground">
+                        mesos
+                      </span>
+                    </div>
+                    <div className="inline-flex items-center">
+                      <button
+                        type="button"
+                        data-testid="active-toggle"
+                        aria-pressed={mule.active}
+                        onClick={() => onUpdate(mule.id, { active: !mule.active })}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-sans uppercase tracking-[0.18em] transition-colors"
+                        style={{
+                          background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
+                          boxShadow:
+                            'inset 0 1px 0 color-mix(in srgb, white 6%, transparent), 0 1px 2px color-mix(in srgb, black 8%, transparent)',
+                          border: '1px solid color-mix(in srgb, var(--border) 60%, transparent)',
+                          color: mule.active ? 'var(--chart-4)' : 'var(--muted-foreground)',
+                          minWidth: 96,
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
                       >
-                        <Info className="size-3.5" aria-hidden />
-                      </TooltipTrigger>
-                      <TooltipContent className="px-3.5 py-2.5">
-                        Click to toggle ACTIVE/INACTIVE
-                      </TooltipContent>
-                    </Tooltip>
+                        {mule.active && (
+                          <span
+                            data-active-dot
+                            aria-hidden
+                            style={{
+                              display: 'inline-block',
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              background: 'var(--chart-4)',
+                            }}
+                          />
+                        )}
+                        <span>{mule.active ? 'Active' : 'Inactive'}</span>
+                      </button>
+                      <Tooltip open={activeInfoOpen} onOpenChange={setActiveInfoOpen}>
+                        <TooltipTrigger
+                          aria-label="Active toggle info"
+                          closeOnClick={false}
+                          onClick={() => setActiveInfoOpen(true)}
+                          className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                          <Info className="size-3.5" aria-hidden />
+                        </TooltipTrigger>
+                        <TooltipContent className="px-3.5 py-2.5">
+                          Click to toggle ACTIVE/INACTIVE
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
                 </div>
               </div>
