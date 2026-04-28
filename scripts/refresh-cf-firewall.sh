@@ -9,6 +9,7 @@ set -euo pipefail
 # Use Cloudflare's API endpoint (purpose-built for programmatic access).
 # The public docs URLs (https://www.cloudflare.com/ips-v4/) sit behind
 # Cloudflare's bot management and can return 403 to CI runners.
+echo "[1/3] Fetching Cloudflare IP ranges from api.cloudflare.com..."
 CF_RESPONSE=$(curl -fsSL https://api.cloudflare.com/client/v4/ips)
 
 if [[ "$(echo "$CF_RESPONSE" | jq -r '.success')" != "true" ]]; then
@@ -19,15 +20,19 @@ fi
 
 CF_ALL=$(echo "$CF_RESPONSE" | jq '.result.ipv4_cidrs + .result.ipv6_cidrs')
 
-# Sanity check: refuse to push if the combined list is empty.
 if [[ "$(echo "$CF_ALL" | jq 'length')" -eq 0 ]]; then
   echo "Cloudflare IP list is empty — aborting" >&2
   exit 1
 fi
 
+echo "      Got $(echo "$CF_ALL" | jq length) CIDR ranges from Cloudflare"
+
+echo "[2/3] Fetching current DO firewall config (firewall id: ${DO_FIREWALL_ID:0:8}...)..."
 CURRENT=$(curl -fsSL \
   -H "Authorization: Bearer $DO_TOKEN" \
   "https://api.digitalocean.com/v2/firewalls/$DO_FIREWALL_ID")
+
+echo "      Got firewall '$(echo "$CURRENT" | jq -r '.firewall.name')'"
 
 NEW=$(echo "$CURRENT" | jq --argjson cf "$CF_ALL" '
   .firewall
@@ -40,6 +45,7 @@ NEW=$(echo "$CURRENT" | jq --argjson cf "$CF_ALL" '
   | { name, inbound_rules, outbound_rules, droplet_ids, tags }
 ')
 
+echo "[3/3] Pushing updated firewall config..."
 curl -fsSL -X PUT \
   -H "Authorization: Bearer $DO_TOKEN" \
   -H "Content-Type: application/json" \
