@@ -30,10 +30,7 @@ const html = `<!doctype html>
     body {
       width: ${WIDTH}px;
       height: ${HEIGHT}px;
-      background:
-        radial-gradient(circle at 90% 10%, rgba(240, 180, 74, 0.18), transparent 55%),
-        radial-gradient(circle at 5% 95%, rgba(217, 119, 87, 0.14), transparent 55%),
-        linear-gradient(135deg, #f6efe4 0%, #efe5d2 100%);
+      background: #f6efe4;
       font-family: 'Geist', system-ui, -apple-system, sans-serif;
       color: #3b2f24;
       display: flex;
@@ -96,8 +93,8 @@ const html = `<!doctype html>
     </svg>
   </div>
   <div class="text">
-    <div class="word">YABI</div>
-    <div class="tag">Yet Another Boss Income Tracker</div>
+    <div class="word">YABI Tool</div>
+    <div class="tag">Maplestory's Yet Another Boss Income Tool</div>
     <div class="url">yabi.henesys.io</div>
   </div>
 </body>
