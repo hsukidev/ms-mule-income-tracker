@@ -93,7 +93,7 @@ const html = `<!doctype html>
     </svg>
   </div>
   <div class="text">
-    <div class="word">YABI Tool</div>
+    <div class="word">YABI</div>
     <div class="tag">Maplestory's Yet Another Boss Income Tool</div>
     <div class="url">yabi.henesys.io</div>
   </div>
