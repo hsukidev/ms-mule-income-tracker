@@ -21,4 +21,18 @@ describe('sanitizeMuleName', () => {
   it('strips symbols before applying the cap', () => {
     expect(sanitizeMuleName('H1ero@WorldTooLong')).toBe('H1eroWorldTo');
   });
+
+  it('preserves accented Latin letters', () => {
+    expect(sanitizeMuleName('Renée')).toBe('Renée');
+  });
+
+  it('strips non-Latin scripts', () => {
+    expect(sanitizeMuleName('Hero日本')).toBe('Hero');
+    expect(sanitizeMuleName('Привет')).toBe('');
+  });
+
+  it('normalizes decomposed (NFD) input to composed form', () => {
+    const nfd = 'Rene\u0301e';
+    expect(sanitizeMuleName(nfd)).toBe('Renée');
+  });
 });
