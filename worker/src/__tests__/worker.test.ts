@@ -137,14 +137,26 @@ describe('worker handler — input validation', () => {
     expect(adapter).not.toHaveBeenCalled();
   });
 
-  it('returns 400 for a name longer than 13 chars', async () => {
+  it('returns 400 for a name longer than 12 chars', async () => {
     const adapter = vi.fn(async () => []);
     const res = await handleLookup(
-      get('/api/character/AliceTheVeryLongName?worldId=heroic-kronos'),
+      get('/api/character/Abcdefghijklm?worldId=heroic-kronos'),
       deps({ fetchByName: adapter }),
     );
     expect(res.status).toBe(400);
     expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('accepts a name with accented Latin characters', async () => {
+    const adapter = vi.fn(async () => []);
+    const res = await handleLookup(
+      get(`/api/character/${encodeURIComponent('Zahîra')}?worldId=heroic-kronos`),
+      deps({ fetchByName: adapter }),
+    );
+    // Name is accepted by the validator; adapter is invoked. The 404 below
+    // is from the empty rank list, not from input validation.
+    expect(adapter).toHaveBeenCalledWith('Zahîra', 'na', 1);
+    expect(res.status).toBe(404);
   });
 
   it('caches 400 invalid-name responses with a ~1 hour Cache-Control max-age', async () => {

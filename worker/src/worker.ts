@@ -17,6 +17,11 @@
  * adapter via the defaults below.
  */
 
+import {
+  isValidMuleName,
+  MULE_NAME_MAX_LENGTH,
+  MULE_NAME_MIN_LENGTH,
+} from '../../src/utils/muleName';
 import { fetchByName as defaultFetchByName, UpstreamError } from './nexonAdapter';
 import {
   fromUpstreamKey,
@@ -28,11 +33,6 @@ import {
 const SUCCESS_TTL_SECONDS = 21600; // 6 hours
 const NOT_FOUND_TTL_SECONDS = 3600; // 1 hour
 const INVALID_NAME_TTL_SECONDS = 3600; // 1 hour
-
-// MapleStory NA character names: 2–13 ASCII alphanumeric chars. Validating
-// here short-circuits guaranteed-miss requests before they reach Nexon and
-// caps log/cache pollution from random-Unicode flooding.
-const VALID_NAME = /^[A-Za-z0-9]{2,13}$/;
 
 interface CharacterLookupResponse {
   name: string;
@@ -93,7 +93,9 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
   if (!routeMatch) {
     return jsonResponse(404, { error: 'not-found', message: 'route not found' });
   }
-  const name = decodeURIComponent(routeMatch[1]);
+  // NFC-normalize so an NFD-encoded request hits the upstream with the same
+  // canonical byte sequence the validator approved.
+  const name = decodeURIComponent(routeMatch[1]).normalize('NFC');
   const worldId = url.searchParams.get('worldId') ?? '';
 
   if (!isSupportedWorldId(worldId)) {
@@ -117,13 +119,16 @@ export async function handleLookup(request: Request, deps: HandlerDeps = {}): Pr
   // are served from cache without re-running validation. The 400 itself is
   // cached for an hour so a name-flooder pays one Worker invocation per
   // unique malformed name, never an upstream call.
-  if (!VALID_NAME.test(name)) {
+  if (!isValidMuleName(name)) {
     // Truncate name in logs — full attacker-controlled names risk log
     // injection / disk fill if Nexon-side bounds are wider than ours.
     console.log(JSON.stringify({ event: 'invalid-name', name: name.slice(0, 20) }));
     const res = jsonResponse(
       400,
-      { error: 'invalid-name', message: 'name must be 2–13 alphanumeric chars' },
+      {
+        error: 'invalid-name',
+        message: `name must be ${MULE_NAME_MIN_LENGTH}–${MULE_NAME_MAX_LENGTH} Latin letters or digits`,
+      },
       { 'cache-control': `public, max-age=${INVALID_NAME_TTL_SECONDS}` },
     );
     if (cache) await cache.put(request, res.clone());

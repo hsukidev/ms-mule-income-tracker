@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import type { Mule } from '../../types';
 import { ClassAutocomplete } from '../ClassAutocomplete';
 import { GMS_CLASSES } from '../../constants/classes';
+import { MULE_NAME_MAX_LENGTH } from '../../utils/muleName';
 import type { useMuleIdentityDraft } from './hooks/useMuleIdentityDraft';
 import { CharacterLookupButton } from './CharacterLookupButton';
 
@@ -32,7 +33,7 @@ export function MuleIdentityFields({ mule, identity, onUpdate }: Props) {
             id="mule-name"
             placeholder="Enter name"
             value={identity.name.draft}
-            maxLength={12}
+            maxLength={MULE_NAME_MAX_LENGTH}
             onChange={identity.name.onChange}
             onBlur={identity.name.onBlur}
             className={`${FIELD_INPUT_CLASS} flex-1`}
