@@ -25,4 +25,11 @@ describe('Router smoke', () => {
       expect(link!.getAttribute('href')).toBe('/');
     });
   });
+
+  it('mounts the changelog page at "/changelog"', async () => {
+    await renderApp({ initialPath: '/changelog' });
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: /changelog/i })).toBeTruthy();
+    });
+  });
 });
