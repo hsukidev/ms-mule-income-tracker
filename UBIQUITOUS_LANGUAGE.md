@@ -361,7 +361,7 @@
 - A **World** belongs to exactly one **World Group** (**Heroic** or **Interactive**); **World Ids** are globally unique across both groups
 - A **World** belongs to exactly one **Region** (**NA Region** or **EU Region**); **Region** is orthogonal to **World Group**, so each `(World Group, Region)` combination is independent — **Solis** is `(Heroic, EU)`, **Luna** is `(Interactive, EU)`, the other four **Worlds** are `(_, NA)`
 - The **Selected World** persists to localStorage under the `'world'` key; an unrecognised stored **World Id** falls back to `null` rather than crashing
-- **World Provider** sits outside **Income Provider** in the component tree (`ThemeProvider > DensityProvider > WorldProvider > IncomeProvider > AppContent`) so income consumers can read `useWorld()` without restructuring
+- **World Provider** sits outside **Income Provider** in the component tree (`ThemeProvider > DensityProvider > WorldProvider > IncomeProvider > Dashboard`) so income consumers can read `useWorld()` without restructuring
 - A **Mule** belongs to exactly one **World**, identified by **Mule World Id**; the binding is set at creation and immutable — the only way to move a **Mule** between **Worlds** is to delete and recreate it
 - The **World Lens** predicate is `mule.worldId === selectedWorld.id`; a **Mule** with no **Mule World Id** (legacy pre-lens persistence) never matches any lens and is therefore invisible across every **Selected World** until deleted or rewritten
 - The **Roster**, **KPI Card**, **PieChart Card**, **Total Weekly Income**, **Weekly Count**, **Daily Count**, and **Monthly Count** all operate on the **World Lens**-filtered **Mule** list; they never see **Mules** outside the **Selected World**

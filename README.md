@@ -77,7 +77,8 @@ pnpm worker:test
 
 | Path                                   | Purpose                                          |
 | -------------------------------------- | ------------------------------------------------ |
-| `src/App.tsx`                          | Layout shell, dnd-kit setup, bulk-mode wiring    |
+| `src/routes/__root.tsx`                | Provider stack + sticky header (router root)     |
+| `src/components/Dashboard.tsx`         | Layout shell, dnd-kit setup, bulk-mode wiring    |
 | `src/data/bosses.ts`                   | Boss reference data + `calculatePotentialIncome` |
 | `src/data/worlds.ts`                   | World list, `findWorld`, `resolveWorldGroup`     |
 | `src/data/bossPresets.ts`              | CRA / LOMIEN / CTENE preset definitions          |

@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { render, renderApp, screen, fireEvent, waitFor, within, act } from '@/test/test-utils';
-import { Dashboard as AppContent } from '../components/Dashboard';
+import { Dashboard } from '../components/Dashboard';
 import type { Mule } from '../types';
 import { useWorld } from '../context/WorldProvider';
 import type { WorldId } from '../data/worlds';
@@ -318,7 +318,7 @@ describe('App', () => {
       const { container, rerender } = render(
         <>
           <TestLensDriver worldId="heroic-kronos" />
-          <AppContent />
+          <Dashboard />
         </>,
         { defaultWorld: 'heroic-kronos' },
       );
@@ -332,7 +332,7 @@ describe('App', () => {
       rerender(
         <>
           <TestLensDriver worldId="heroic-hyperion" />
-          <AppContent />
+          <Dashboard />
         </>,
       );
       fireEvent.click(screen.getByTestId('lens-set'));

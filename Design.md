@@ -62,7 +62,7 @@ Chart palette: `#d97757`, `#5b8ca8`, `#e2a84f`, `#7ea67a`, `#a97bb5`.
 
 ### Color space
 
-Hex for the handoff layer (concrete, human-readable). `color-mix(in hsl, …)` is used in a few places (App.tsx drag boundary). `hsl(from …)` relative syntax appears for the pie empty-state glow.
+Hex for the handoff layer (concrete, human-readable). `color-mix(in hsl, …)` is used in a few places (Dashboard.tsx drag boundary). `hsl(from …)` relative syntax appears for the pie empty-state glow.
 
 ---
 
@@ -293,7 +293,7 @@ Both states share a single slot; the swap is instant, no transition. Animates in
 
 **Touch-device variant** — `useMatchMedia('(pointer: coarse)')` flips two pieces of behaviour:
 
-- **Bulk Confirm** is removed from the bar and re-rendered as the **Bulk Delete Pill** — a floating, viewport-anchored pill `position: fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-10 px-6`, full-width (`w-full h-10 rounded-full shadow-lg`), opaque `background: var(--destructive)` with white text, label `Delete {N}`. It is **portaled to `document.body` via `createPortal`** because an ancestor `<section>` uses `animate-in slide-in-from-bottom-4` (App.tsx) whose residual `transform` creates a containing block that re-anchors `position: fixed` away from the viewport. Rendered only when `selectedCount > 0` (no disabled state — absence is the affordance). Identified by the `data-bulk-delete-pill` attribute (used by the toast `:has()` rule and the body padding rule).
+- **Bulk Confirm** is removed from the bar and re-rendered as the **Bulk Delete Pill** — a floating, viewport-anchored pill `position: fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-10 px-6`, full-width (`w-full h-10 rounded-full shadow-lg`), opaque `background: var(--destructive)` with white text, label `Delete {N}`. It is **portaled to `document.body` via `createPortal`** because an ancestor `<section>` uses `animate-in slide-in-from-bottom-4` (Dashboard.tsx) whose residual `transform` creates a containing block that re-anchors `position: fixed` away from the viewport. Rendered only when `selectedCount > 0` (no disabled state — absence is the affordance). Identified by the `data-bulk-delete-pill` attribute (used by the toast `:has()` rule and the body padding rule).
 - The narrow-width swap polarity flips: on non-touch the "Select or drag to delete" text hides via `max-[524.99px]:hidden` and the `N SELECTED` chip stays; on touch it's the inverse — the chip hides at narrow widths because the count is already shown on the floating pill, and the instructional text remains as the visual anchor of the bar.
 
 ### [MatrixToolbar](src/components/MatrixToolbar.tsx)
@@ -365,7 +365,7 @@ shadcn/ui over `@base-ui/react`. Notable: `Button` has `default / outline / seco
 
 ---
 
-## Layout shell — [App.tsx](src/App.tsx)
+## Layout shell — [Dashboard.tsx](src/components/Dashboard.tsx)
 
 `max-w-[88rem]` (1408px) container, 8-col × 12-col hero/split split, 6- or 8-col roster grid below. Roster drag boundary is a dashed `1.5px` inset that fades to a 45%-accent color while dragging (`color-mix(in hsl, var(--accent-primary) 45%, transparent)`). Each section fades + slides in from bottom on mount (`animate-in fade-in slide-in-from-bottom-4 duration-500`).
 
