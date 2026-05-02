@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { renderApp, screen, waitFor } from '@/test/test-utils';
+import { fireEvent, renderApp, screen, waitFor } from '@/test/test-utils';
 
 describe('Router smoke', () => {
   beforeEach(() => {
@@ -31,5 +31,54 @@ describe('Router smoke', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: /changelog/i })).toBeTruthy();
     });
+  });
+
+  it('navigates from "/" to "/changelog" when the Header Changelog link is clicked', async () => {
+    await renderApp({ initialPath: '/' });
+    const navLink = await waitFor(() => {
+      const link = screen
+        .getAllByRole('link', { name: /changelog/i })
+        .find((el) => el.getAttribute('href') === '/changelog');
+      expect(link).toBeTruthy();
+      return link!;
+    });
+    fireEvent.click(navLink);
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: /changelog/i })).toBeTruthy();
+    });
+  });
+
+  it('navigates from "/changelog" back to "/" when the logo is clicked', async () => {
+    await renderApp({ initialPath: '/changelog' });
+    const wordmark = await waitFor(() => screen.getByText('YABI'));
+    const logoLink = wordmark.closest('a')!;
+    fireEvent.click(logoLink);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add mule/i })).toBeTruthy();
+    });
+  });
+
+  it('marks the Header Changelog link as active when on "/changelog"', async () => {
+    await renderApp({ initialPath: '/changelog' });
+    const navLink = await waitFor(() => {
+      const link = screen
+        .getAllByRole('link', { name: /changelog/i })
+        .find((el) => el.getAttribute('href') === '/changelog');
+      expect(link).toBeTruthy();
+      return link!;
+    });
+    expect(navLink.getAttribute('data-active')).toBe('true');
+  });
+
+  it('does not mark the Header Changelog link as active when on "/"', async () => {
+    await renderApp({ initialPath: '/' });
+    const navLink = await waitFor(() => {
+      const link = screen
+        .getAllByRole('link', { name: /changelog/i })
+        .find((el) => el.getAttribute('href') === '/changelog');
+      expect(link).toBeTruthy();
+      return link!;
+    });
+    expect(navLink.getAttribute('data-active')).toBe('false');
   });
 });

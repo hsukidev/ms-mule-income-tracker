@@ -4,7 +4,8 @@ import { Header } from '../Header';
 
 // `<Header />` is mounted in isolation here, so the TanStack Router
 // `<Link>` it wraps the logo with has no router context. Stub `Link` to a
-// plain anchor — full routing is exercised in the app-level smoke tests.
+// plain anchor and `useMatchRoute` to a no-match function — full routing
+// is exercised in the app-level smoke tests.
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/react-router')>();
   return {
@@ -21,6 +22,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
         {children}
       </a>
     ),
+    useMatchRoute: () => () => false,
   };
 });
 

@@ -1,8 +1,9 @@
 import { Sun, Moon } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import { useTheme } from '../context/ThemeProvider';
 import { WorldSelect } from './WorldSelect';
 import { BuyMeCoffeeButton } from './BuyMeCoffeeButton';
+import { navItems, type NavItem } from '../constants/navItems';
 import logoUrl from '../assets/logo.svg';
 
 export function Header() {
@@ -18,28 +19,35 @@ export function Header() {
     >
       <div className="container mx-auto max-w-352 px-4 sm:px-6">
         <div className="flex h-14 items-center justify-between">
-          <Link
-            to="/"
-            style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
-          >
-            <img
-              src={logoUrl}
-              alt="YABI logo"
-              width={28}
-              height={28}
-              style={{ width: 28, height: 28 }}
-            />
-            <span
-              style={{
-                color: 'var(--text, var(--foreground))',
-                fontWeight: 600,
-                letterSpacing: '-0.01em',
-                fontSize: 15,
-              }}
+          <div className="flex items-center gap-6">
+            <Link
+              to="/"
+              style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
             >
-              YABI
-            </span>
-          </Link>
+              <img
+                src={logoUrl}
+                alt="YABI logo"
+                width={28}
+                height={28}
+                style={{ width: 28, height: 28 }}
+              />
+              <span
+                style={{
+                  color: 'var(--text, var(--foreground))',
+                  fontWeight: 600,
+                  letterSpacing: '-0.01em',
+                  fontSize: 15,
+                }}
+              >
+                YABI
+              </span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-5">
+              {navItems.map((item) => (
+                <HeaderNavLink key={item.to} item={item} />
+              ))}
+            </nav>
+          </div>
           <div className="flex items-center gap-5 max-[479.99px]:gap-2">
             <WorldSelect />
             <button
@@ -55,5 +63,27 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function HeaderNavLink({ item }: { item: NavItem }) {
+  const matchRoute = useMatchRoute();
+  const isActive = Boolean(matchRoute({ to: item.to }));
+  return (
+    <Link
+      to={item.to}
+      data-active={isActive}
+      style={{
+        color: isActive
+          ? 'var(--text, var(--foreground))'
+          : 'var(--muted-raw, var(--muted-foreground))',
+        fontSize: 14,
+        fontWeight: 500,
+        textDecoration: 'none',
+        transition: 'color 0.15s ease',
+      }}
+    >
+      {item.label}
+    </Link>
   );
 }
