@@ -211,26 +211,25 @@ describe('IncomePieChart', () => {
     // attributes are deterministic.
     function buildOverCapRoster(hillaSelected = [NORMAL_HILLA]): Mule[] {
       const top14 = topWeeklyKeys(14).map((k) => k.slateKey);
-      const out: Mule[] = [];
-      for (let i = 0; i < 13; i++) {
-        out.push({
-          id: `m${i}`,
-          name: `M${i}`,
-          level: 200,
-          muleClass: 'Hero',
-          selectedBosses: top14,
-          active: true,
-        });
-      }
-      out.push({
-        id: 'mhilla',
-        name: 'HillaMule',
+      const main: Mule[] = Array.from({ length: 13 }, (_, i) => ({
+        id: `m${i}`,
+        name: `M${i}`,
         level: 200,
         muleClass: 'Hero',
-        selectedBosses: hillaSelected,
+        selectedBosses: top14,
         active: true,
-      });
-      return out;
+      }));
+      return [
+        ...main,
+        {
+          id: 'mhilla',
+          name: 'HillaMule',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: hillaSelected,
+          active: true,
+        },
+      ];
     }
 
     it('filters out a fully-dropped mule (renders no slice for it)', () => {
@@ -250,33 +249,32 @@ describe('IncomePieChart', () => {
       // slots, plus 7 hilla daily 4M slots = 185 total. Top 180 keep all 178
       // weeklies + 2 of 7 hilla. Hilla mule: potential 28M, contributed 8M.
       const top14 = topWeeklyKeys(14).map((k) => k.slateKey);
-      const mules: Mule[] = [];
-      for (let i = 0; i < 12; i++) {
-        mules.push({
+      const mules: Mule[] = [
+        ...Array.from({ length: 12 }, (_, i) => ({
           id: `m${i}`,
           name: `M${i}`,
           level: 200,
           muleClass: 'Hero',
           selectedBosses: top14,
           active: true,
-        });
-      }
-      mules.push({
-        id: 'm12',
-        name: 'M12',
-        level: 200,
-        muleClass: 'Hero',
-        selectedBosses: top14.slice(0, 10),
-        active: true,
-      });
-      mules.push({
-        id: 'mhilla',
-        name: 'HillaMule',
-        level: 200,
-        muleClass: 'Hero',
-        selectedBosses: [NORMAL_HILLA],
-        active: true,
-      });
+        })),
+        {
+          id: 'm12',
+          name: 'M12',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: top14.slice(0, 10),
+          active: true,
+        },
+        {
+          id: 'mhilla',
+          name: 'HillaMule',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: [NORMAL_HILLA],
+          active: true,
+        },
+      ];
 
       const { container } = render(<IncomePieChart mules={mules} />, {
         defaultAbbreviated: false,

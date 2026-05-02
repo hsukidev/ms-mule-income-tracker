@@ -58,17 +58,19 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
   // A mule whose entire slate is dropped to the cap (`contributedMeso === 0`)
   // is filtered out and renders no slice — same behavior as `active === false`
   // and "no bosses selected".
-  const data: ChartDataItem[] = mules
-    .filter((m) => m.active !== false && m.selectedBosses.length > 0)
-    .map((m) => ({ mule: m, contributed: perMule.get(m.id)?.contributedMeso ?? 0 }))
-    .filter(({ contributed }) => contributed > 0)
-    .map(({ mule, contributed }, i) => ({
+  const data: ChartDataItem[] = [];
+  for (const mule of mules) {
+    if (mule.active === false || mule.selectedBosses.length === 0) continue;
+    const contributed = perMule.get(mule.id)?.contributedMeso ?? 0;
+    if (contributed === 0) continue;
+    data.push({
       name: mule.name || 'Unnamed Mule',
       value: contributed,
       formatted: formatMeso(contributed, abbreviated),
       muleId: mule.id,
-      fill: colorForMulePosition(i),
-    }));
+      fill: colorForMulePosition(data.length),
+    });
+  }
 
   if (data.length === 0) {
     return (
