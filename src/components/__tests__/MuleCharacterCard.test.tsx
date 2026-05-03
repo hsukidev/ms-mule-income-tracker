@@ -12,9 +12,12 @@ import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { MuleCharacterCard } from '../MuleCharacterCard';
 import type { Mule } from '../../types';
 import { bosses } from '../../data/bosses';
+import type { SlateKey } from '../../data/muleBossSlate';
 
 const LUCID = bosses.find((b) => b.family === 'lucid')!.id;
+const HILLA = bosses.find((b) => b.family === 'hilla')!.id;
 const HARD_LUCID = `${LUCID}:hard:weekly`;
+const NORMAL_HILLA = `${HILLA}:normal:daily`;
 
 const baseMule: Mule = {
   id: 'test-mule-1',
@@ -31,7 +34,7 @@ interface RenderCardOptions {
   bulkMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
-  droppedMeso?: number;
+  droppedKeys?: ReadonlyMap<SlateKey, number>;
 }
 
 function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) {
@@ -50,7 +53,7 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
             bulkMode={options?.bulkMode ?? false}
             selected={options?.selected ?? false}
             onToggleSelect={onToggleSelect}
-            droppedMeso={options?.droppedMeso}
+            droppedKeys={options?.droppedKeys}
           />
         </SortableContext>
       </DndContext>,
@@ -428,34 +431,75 @@ describe('MuleCharacterCard', () => {
     });
   });
 
-  describe('Cap Drop Badge', () => {
-    it('does not render when droppedMeso is undefined (under cap)', () => {
+  describe('Cap Drop Info Icon', () => {
+    const ICON_NAME = /show bosses dropped to cap/i;
+
+    it('does not render the icon when droppedKeys is undefined', () => {
       renderCard();
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('does not render the icon when droppedKeys is an empty map', () => {
+      renderCard({}, { droppedKeys: new Map() });
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('renders the icon with the expected aria-label when droppedKeys has entries', () => {
+      renderCard({}, { droppedKeys: new Map([[HARD_LUCID, 1]]) });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      expect(icon).toBeTruthy();
+      expect(icon.tagName).toBe('BUTTON');
+    });
+
+    it('the icon does not invoke the card onClick when clicked', () => {
+      const { onClick } = renderCard({}, { droppedKeys: new Map([[HARD_LUCID, 1]]) });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      fireEvent.click(icon);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('shows weekly-line content in the tooltip when the icon is focused', async () => {
+      renderCard({}, { droppedKeys: new Map([[HARD_LUCID, 1]]) });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      fireEvent.focus(icon);
+      expect(await screen.findByText('Hard Lucid dropped')).toBeTruthy();
+    });
+
+    it('shows daily-line content with count + "daily" suffix in the tooltip', async () => {
+      renderCard({}, { droppedKeys: new Map([[NORMAL_HILLA, 3]]) });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      fireEvent.focus(icon);
+      expect(await screen.findByText('3× Normal Hilla daily dropped')).toBeTruthy();
+    });
+
+    it('stacks tooltip lines vertically in Boss Matrix display order', async () => {
+      // Insert HILLA (display index 25) before LUCID (display index 12) — the
+      // helper must re-order so Lucid renders first.
+      const droppedKeys = new Map<SlateKey, number>([
+        [NORMAL_HILLA, 2],
+        [HARD_LUCID, 1],
+      ]);
+      renderCard({}, { droppedKeys });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      fireEvent.focus(icon);
+      const lucid = await screen.findByText('Hard Lucid dropped');
+      const hilla = await screen.findByText('2× Normal Hilla daily dropped');
+      // Both lines live in the same tooltip popup; their DOM order matches
+      // the rendered visual order.
+      const tooltipBody = lucid.parentElement!;
+      expect(tooltipBody).toBe(hilla.parentElement);
+      const order = Array.from(tooltipBody.children);
+      expect(order.indexOf(lucid)).toBeLessThan(order.indexOf(hilla));
+    });
+
+    it('does not render the icon in bulk mode regardless of droppedKeys', () => {
+      renderCard({}, { droppedKeys: new Map([[HARD_LUCID, 1]]), bulkMode: true });
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('does not render the legacy "−$X to cap" badge text', () => {
+      renderCard({}, { droppedKeys: new Map([[HARD_LUCID, 1]]) });
       expect(screen.queryByText(/to cap/i)).toBeNull();
-    });
-
-    it('does not render when droppedMeso is 0', () => {
-      renderCard({}, { droppedMeso: 0 });
-      expect(screen.queryByText(/to cap/i)).toBeNull();
-    });
-
-    it('renders the formatted dropped meso (abbreviated by default)', () => {
-      renderCard({}, { droppedMeso: 504_000_000 });
-      expect(screen.getByText('−$504M to cap')).toBeTruthy();
-    });
-
-    it('renders fully-formatted dropped meso when abbreviated is off', () => {
-      renderCard({}, { droppedMeso: 504_000_000, defaultAbbreviated: false });
-      expect(screen.getByText('−$504,000,000 to cap')).toBeTruthy();
-    });
-
-    it('uses the kpi-meta muted style', () => {
-      renderCard({}, { droppedMeso: 504_000_000 });
-      const badge = screen.getByText('−$504M to cap');
-      expect(badge.className).toContain('kpi-meta');
-      expect(badge.style.color).toContain('muted');
-      expect(badge.style.fontStyle).toBe('italic');
-      expect(badge.style.fontFamily).toContain('monospace');
     });
   });
 });

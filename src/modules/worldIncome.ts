@@ -1,8 +1,17 @@
 import { useMemo } from 'react';
-import { MuleBossSlate, type SlateSlot } from '../data/muleBossSlate';
+import { MuleBossSlate, type SlateKey, type SlateSlot } from '../data/muleBossSlate';
 import { resolveWorldGroup } from '../data/worlds';
 import type { Mule } from '../types';
 import { useIncome } from './income';
+
+/**
+ * Reference-stable empty `droppedKeys` map shared by every under-cap mule.
+ * `MuleCardInner` is `memo`'d on its props — handing each under-cap mule a
+ * fresh `new Map()` would defeat memoization for the whole healthy roster
+ * on every aggregator re-run. One frozen singleton keeps the prop identity
+ * steady for the under-cap fast path.
+ */
+const EMPTY_DROPPED_KEYS: ReadonlyMap<SlateKey, number> = new Map<SlateKey, number>();
 
 /**
  * `WorldIncome` — pure aggregator that turns a **World Lens**'d mule list
@@ -33,6 +42,15 @@ export interface MuleContribution {
   droppedMeso: number;
   /** Number of slots dropped to the cap. Zero when no drops. */
   droppedSlots: number;
+  /**
+   * Per-**Slate Key** count of slots that didn't survive the **World Cap
+   * Cut**, keyed on the originating slate key. Daily Cadence keys can carry
+   * any value in `[1, 7]` (one entry per partial drop); Weekly Cadence keys
+   * are always 1 since each weekly key contributes a single slot. Mules
+   * under the cap share a frozen empty-map reference so `MuleCardInner`'s
+   * memo identity stays stable.
+   */
+  droppedKeys: ReadonlyMap<SlateKey, number>;
 }
 
 interface PoolSlot {
@@ -52,6 +70,9 @@ interface MuleAccumulator {
   contributed: number;
   totalSlots: number;
   survivedSlots: number;
+  /** Lazily allocated; `null` until the mule's first drop is recorded so
+   *  under-cap mules can share `EMPTY_DROPPED_KEYS` without a per-mule alloc. */
+  droppedKeys: Map<SlateKey, number> | null;
 }
 
 interface WorldIncomeFields {
@@ -112,6 +133,7 @@ export class WorldIncome {
         contributed: 0,
         totalSlots: slots.length,
         survivedSlots: 0,
+        droppedKeys: null,
       });
     }
 
@@ -124,18 +146,23 @@ export class WorldIncome {
       return a.withinMuleIndex - b.withinMuleIndex;
     });
 
-    const survivors = pool.slice(0, WORLD_WEEKLY_CRYSTAL_CAP);
-
     let totalContributedMeso = 0;
     let weeklySlotsContributed = 0;
     let dailySlotsContributed = 0;
-    for (const s of survivors) {
-      totalContributedMeso += s.value;
-      if (s.cadence === 'weekly') weeklySlotsContributed++;
-      else dailySlotsContributed++;
+    for (let i = 0; i < pool.length; i++) {
+      const s = pool[i];
       const acc = accumulators.get(s.muleId)!;
-      acc.contributed += s.value;
-      acc.survivedSlots += 1;
+      if (i < WORLD_WEEKLY_CRYSTAL_CAP) {
+        totalContributedMeso += s.value;
+        if (s.cadence === 'weekly') weeklySlotsContributed++;
+        else dailySlotsContributed++;
+        acc.contributed += s.value;
+        acc.survivedSlots += 1;
+      } else {
+        const map = acc.droppedKeys ?? new Map<SlateKey, number>();
+        map.set(s.slateKey, (map.get(s.slateKey) ?? 0) + 1);
+        acc.droppedKeys = map;
+      }
     }
 
     const perMule = new Map<string, MuleContribution>();
@@ -145,6 +172,7 @@ export class WorldIncome {
         contributedMeso: acc.contributed,
         droppedMeso: acc.potential - acc.contributed,
         droppedSlots: acc.totalSlots - acc.survivedSlots,
+        droppedKeys: acc.droppedKeys ?? EMPTY_DROPPED_KEYS,
       });
     }
 

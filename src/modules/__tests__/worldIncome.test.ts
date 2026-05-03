@@ -394,3 +394,97 @@ describe('WorldIncome.of — per-mule contribution invariant', () => {
     expect(w.slotsTotalContributed).toBe(WORLD_WEEKLY_CRYSTAL_CAP);
   });
 });
+
+describe('WorldIncome.of — droppedKeys per-mule attribution', () => {
+  it('exposes an empty droppedKeys map for under-cap mules', () => {
+    const w = WorldIncome.of([
+      makeMule('a', [HARD_LUCID]),
+      makeMule('b', [HARD_WILL, NORMAL_HILLA]),
+    ]);
+    const a = w.perMule.get('a')!;
+    const b = w.perMule.get('b')!;
+    expect(a.droppedKeys.size).toBe(0);
+    expect(b.droppedKeys.size).toBe(0);
+  });
+
+  it('shares the same empty droppedKeys reference across under-cap mules (memo identity)', () => {
+    const w = WorldIncome.of([makeMule('a', [HARD_LUCID]), makeMule('b', [HARD_WILL])]);
+    const a = w.perMule.get('a')!;
+    const b = w.perMule.get('b')!;
+    // Reference equality keeps `MuleCardInner`'s memo from invalidating just
+    // because a sibling card forced a re-render of the aggregator.
+    expect(a.droppedKeys).toBe(b.droppedKeys);
+  });
+
+  it('records exactly one weekly key with count 1 when a single weekly slot drops', () => {
+    // 12 mules × top14 (168) + 1 mule with top13 only (13) = 181 slots, cap
+    // 180. The single dropped slot is rank-14 (lowest value), owned by every
+    // mule m0..m11 — Cap Tiebreak picks the highest roster index (m11), so
+    // m11.droppedKeys carries `{ rank14 → 1 }`.
+    const top14 = topWeeklyKeys(14).map((k) => k.slateKey);
+    const dropKey = top14[13];
+    const mules: Mule[] = [];
+    for (let i = 0; i < 12; i++) mules.push(makeMule(`m${i}`, top14)); // 168
+    mules.push(makeMule('m12', top14.slice(0, 13))); // +13 = 181, cap 180
+    const w = WorldIncome.of(mules);
+    let totalDroppedSlots = 0;
+    for (const c of w.perMule.values()) totalDroppedSlots += c.droppedSlots;
+    expect(totalDroppedSlots).toBe(1);
+    const m11 = w.perMule.get('m11')!;
+    expect(m11.droppedKeys.get(dropKey)).toBe(1);
+    expect(m11.droppedKeys.size).toBe(1);
+    // m12 has no rank-14 slot, so no drop attributed to it.
+    expect(w.perMule.get('m12')!.droppedKeys.size).toBe(0);
+  });
+
+  it('accumulates daily slots into a single map entry with the right count', () => {
+    // 5 of 7 daily-Hilla slots drop (mirrors the existing "daily partial drop"
+    // fixture). The map should record `{ NORMAL_HILLA: 5 }`.
+    const top14 = topWeeklyKeys(14).map((k) => k.slateKey);
+    const mules: Mule[] = [];
+    for (let i = 0; i < 12; i++) mules.push(makeMule(`m${i}`, top14)); // 168
+    mules.push(makeMule('m12', top14.slice(0, 10))); // +10 = 178 weekly
+    mules.push(makeMule('hilla', [NORMAL_HILLA])); // +7 daily Hilla = 185
+    const w = WorldIncome.of(mules);
+    const hilla = w.perMule.get('hilla')!;
+    expect(hilla.droppedKeys.get(NORMAL_HILLA)).toBe(5);
+    expect(hilla.droppedKeys.size).toBe(1);
+  });
+
+  it('attributes drops to each owning mule independently', () => {
+    // Two mules each fully dropped on different weekly keys.
+    const top13 = topWeeklyKeys(13).map((k) => k.slateKey);
+    const lowKey = topWeeklyKeys(14)[13].slateKey;
+    const mules: Mule[] = [];
+    for (let i = 0; i < 13; i++) mules.push(makeMule(`m${i}`, top13)); // 169
+    mules.push(makeMule('m13', top13.slice(0, 11))); // +11 = 180 at top
+    mules.push(makeMule('droppedA', [lowKey])); // +1 below cut
+    mules.push(makeMule('droppedB', [lowKey])); // +1 below cut
+    const w = WorldIncome.of(mules);
+    const a = w.perMule.get('droppedA')!;
+    const b = w.perMule.get('droppedB')!;
+    expect(a.droppedKeys.get(lowKey)).toBe(1);
+    expect(b.droppedKeys.get(lowKey)).toBe(1);
+    expect(a.droppedKeys.size).toBe(1);
+    expect(b.droppedKeys.size).toBe(1);
+    // Healthy mules carry no drops.
+    for (let i = 0; i < 13; i++) {
+      expect(w.perMule.get(`m${i}`)!.droppedKeys.size).toBe(0);
+    }
+  });
+
+  it('sum of counts in every droppedKeys equals the global droppedSlots invariant', () => {
+    const top14 = topWeeklyKeys(14).map((k) => k.slateKey);
+    const mules: Mule[] = [];
+    for (let i = 0; i < 13; i++) mules.push(makeMule(`m${i}`, top14)); // 182
+    mules.push(makeMule('hilla', [NORMAL_HILLA, NORMAL_VELLUM])); // +14 daily
+    const w = WorldIncome.of(mules);
+    let totalDroppedSlots = 0;
+    let summedKeyCounts = 0;
+    for (const c of w.perMule.values()) {
+      totalDroppedSlots += c.droppedSlots;
+      for (const count of c.droppedKeys.values()) summedKeyCounts += count;
+    }
+    expect(summedKeyCounts).toBe(totalDroppedSlots);
+  });
+});

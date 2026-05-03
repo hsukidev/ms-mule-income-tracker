@@ -67,7 +67,7 @@ export function Dashboard() {
   const muleIds = useMemo(() => mulesInWorld.map((m) => m.id), [mulesInWorld]);
 
   // World Cap Cut applied at the live (non-deferred) `mulesInWorld` so per-mule
-  // **Cap Drop Badges** track interaction in real time. KPI/Pie consume the
+  // **Cap Drop Info Icons** track interaction in real time. KPI/Pie consume the
   // deferred list separately to absorb boss-matrix burst updates.
   const { perMule: capPerMule } = useWorldIncome(mulesInWorld);
 
@@ -239,7 +239,7 @@ export function Dashboard() {
                       selected={toDelete.has(mule.id)}
                       onToggleSelect={toggleDelete}
                       isPaintEngaged={isPaintEngaged}
-                      droppedMeso={capPerMule.get(mule.id)?.droppedMeso}
+                      droppedKeys={capPerMule.get(mule.id)?.droppedKeys}
                     />
                   ))}
                   {!bulkMode && <AddCard onClick={handleAddMule} />}

@@ -1,13 +1,14 @@
 import { memo, useEffect, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
 import { useMatchMedia } from '../hooks/useMatchMedia';
-import { formatMeso } from '../utils/meso';
+import { formatDroppedSlots, type SlateKey } from '../data/muleBossSlate';
 import { CharacterAvatar } from './CharacterAvatar';
 import { ROSTER_CARD_ASPECT, ROSTER_CARD_MIN_HEIGHT } from './rosterCardContract';
 
@@ -21,10 +22,11 @@ interface MuleCharacterCardProps {
   // Clears press-scale on engagement — the finger doesn't lift during a
   // paint drag, so `onTouchEnd` can't release `isPressed` on its own.
   isPaintEngaged?: boolean;
-  // Per-mule meso lost to the World Cap Cut, surfaced as the "−$X to cap"
-  // Cap Drop Badge when > 0. Threaded from `useWorldIncome(...).perMule` at
-  // the Dashboard level so the aggregator runs once per render.
-  droppedMeso?: number;
+  // Per-mule slate keys whose slots didn't survive the World Cap Cut, keyed
+  // on slate key with the dropped slot count as value. Threaded from
+  // `useWorldIncome(...).perMule` at the Dashboard level. The Cap Drop Info
+  // Icon renders only when this map has at least one entry.
+  droppedKeys?: ReadonlyMap<SlateKey, number>;
 }
 
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
@@ -43,26 +45,31 @@ const destructiveAlpha = (pct: number) =>
 const MuleCardInner = memo(function MuleCardInner({
   mule,
   hideLevelBadge = false,
-  droppedMeso = 0,
+  droppedKeys,
 }: {
   mule: Mule;
   hideLevelBadge?: boolean;
-  droppedMeso?: number;
+  droppedKeys?: ReadonlyMap<SlateKey, number>;
 }) {
   // Omit `active` so the Active-Flag Filter doesn't zero the card when its
   // roster toggle is off — the card shows potential income regardless of
   // active state. `partySizes` is threaded so the Computed Value matches
   // the drawer and KPI total for party-adjusted weeklies.
-  const { formatted: potentialIncome, abbreviated } = useIncome({
+  const { formatted: potentialIncome } = useIncome({
     selectedBosses: mule.selectedBosses,
     partySizes: mule.partySizes,
     worldId: mule.worldId,
   });
+  const [tooltipOpen, setTooltipOpen] = useState(false);
   const hasBosses = mule.selectedBosses.length > 0;
   const incomeColor =
     mule.active && hasBosses
       ? 'var(--accent-raw, var(--accent))'
       : 'var(--dim, var(--surface-dim))';
+  const hasDrops = droppedKeys !== undefined && droppedKeys.size > 0;
+  const droppedLines = hasDrops ? formatDroppedSlots(droppedKeys) : [];
+
+  const stopBubble = (e: React.SyntheticEvent) => e.stopPropagation();
 
   return (
     <>
@@ -149,40 +156,55 @@ const MuleCardInner = memo(function MuleCardInner({
         >
           INCOME
         </span>
-        <span
-          style={{
-            color: incomeColor,
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 13,
-            fontWeight: 600,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {potentialIncome}
-        </span>
-      </div>
-
-      {droppedMeso > 0 && (
-        <div
-          data-cap-drop-badge
-          className="kpi-meta"
-          style={{
-            color: 'var(--muted-raw, var(--muted-foreground))',
-            fontStyle: 'italic',
-            fontFamily: 'monospace',
-            fontSize: 11,
-            marginTop: 4,
-            textAlign: 'right',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          −${formatMeso(droppedMeso, abbreviated)} to cap
+        <div className="flex flex-row items-center gap-1.5 min-w-0">
+          <span
+            style={{
+              color: incomeColor,
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 13,
+              fontWeight: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+            }}
+          >
+            {potentialIncome}
+          </span>
+          {hasDrops && !hideLevelBadge && (
+            <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+              <TooltipTrigger
+                aria-label="Show bosses dropped to cap"
+                closeOnClick={false}
+                delay={0}
+                onClick={(e) => {
+                  stopBubble(e);
+                  setTooltipOpen(true);
+                }}
+                onPointerDown={stopBubble}
+                onTouchStart={stopBubble}
+                className="inline-flex items-center justify-center cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                style={{
+                  flexShrink: 0,
+                  padding: 0,
+                  background: 'transparent',
+                  border: 'none',
+                }}
+              >
+                <Info className="size-3" aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="flex-col items-start gap-1 normal-case text-[11px] tracking-normal"
+              >
+                {droppedLines.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
-      )}
+      </div>
     </>
   );
 });
@@ -195,7 +217,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
   selected = false,
   onToggleSelect,
   isPaintEngaged = false,
-  droppedMeso,
+  droppedKeys,
 }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mule.id,
@@ -296,7 +318,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         aria-pressed={bulkMode ? selected : undefined}
         onKeyDown={handleKeyDown}
       >
-        <MuleCardInner mule={mule} hideLevelBadge={bulkMode} droppedMeso={droppedMeso} />
+        <MuleCardInner mule={mule} hideLevelBadge={bulkMode} droppedKeys={droppedKeys} />
 
         {bulkMode && (
           <div

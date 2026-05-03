@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { MuleBossSlate, type SlateKey, type SlateRow, type SlateFamily } from '../muleBossSlate';
+import {
+  MuleBossSlate,
+  formatDroppedSlot,
+  formatDroppedSlots,
+  type SlateKey,
+  type SlateRow,
+  type SlateFamily,
+} from '../muleBossSlate';
 import { bosses, getBossById } from '../bosses';
 import type { BossCadence, BossTier } from '../../types';
 
@@ -912,5 +919,69 @@ describe('MuleBossSlate.slots — Crystal Slot expansion', () => {
     const partySizes = { lucid: 2 };
     const slotSum = slate.slots(partySizes).reduce((s, slot) => s + slot.value, 0);
     expect(slotSum).toBe(slate.totalCrystalValue(partySizes));
+  });
+});
+
+describe('formatDroppedSlot — per-key cap-drop label', () => {
+  it('formats a weekly drop as "<Boss Name> dropped" with no count or cadence suffix', () => {
+    expect(formatDroppedSlot(key(LUCID, 'hard'), 1)).toBe('Hard Lucid dropped');
+  });
+
+  it('formats a daily drop as "<count>× <Boss Name> daily dropped"', () => {
+    const HILLA = idForFamily('hilla');
+    expect(formatDroppedSlot(key(HILLA, 'normal'), 3)).toBe('3× Normal Hilla daily dropped');
+  });
+
+  it('counts a single daily slot as "1× <Boss Name> daily dropped"', () => {
+    const HILLA = idForFamily('hilla');
+    expect(formatDroppedSlot(key(HILLA, 'normal'), 1)).toBe('1× Normal Hilla daily dropped');
+  });
+
+  it('uses the bare display name for tier-less families (no tier prefix)', () => {
+    // Akechi is a tier-less weekly family — just the bare name, no tier prefix.
+    expect(formatDroppedSlot(key(AKECHI, 'normal'), 1)).toBe('Akechi dropped');
+    // OMNI-CLN is a tier-less daily family — bare name + count + cadence suffix.
+    const OMNI_CLN = idForFamily('omni-cln');
+    expect(formatDroppedSlot(key(OMNI_CLN, 'normal'), 4)).toBe('4× OMNI-CLN daily dropped');
+  });
+
+  it('returns an empty string for an unresolvable slate key', () => {
+    expect(formatDroppedSlot('not-a-real-key', 1)).toBe('');
+  });
+});
+
+describe('formatDroppedSlots — full-tooltip render', () => {
+  it('returns an empty array for an empty map', () => {
+    expect(formatDroppedSlots(new Map())).toEqual([]);
+  });
+
+  it('returns a single line for a single drop', () => {
+    expect(formatDroppedSlots(new Map([[key(LUCID, 'hard'), 1]]))).toEqual(['Hard Lucid dropped']);
+  });
+
+  it('orders lines by Boss Matrix display order regardless of input map iteration order', () => {
+    // Lucid sits at display index 12; Hilla at 25 (DISPLAY_ORDER source of
+    // truth in muleBossSlate.ts). Insert Hilla first to confirm the helper
+    // re-orders them.
+    const HILLA = idForFamily('hilla');
+    const m = new Map<SlateKey, number>([
+      [key(HILLA, 'normal'), 2],
+      [key(LUCID, 'hard'), 1],
+    ]);
+    const lines = formatDroppedSlots(m);
+    expect(lines[0]).toBe('Hard Lucid dropped');
+    expect(lines[1]).toBe('2× Normal Hilla daily dropped');
+  });
+
+  it('keeps daily and weekly lines for the same family as separate entries', () => {
+    // Vellum has both Normal (daily) and Chaos (weekly) → expect two lines.
+    const m = new Map<SlateKey, number>([
+      [key(VELLUM, 'normal'), 4],
+      [key(VELLUM, 'chaos'), 1],
+    ]);
+    const lines = formatDroppedSlots(m);
+    expect(lines).toHaveLength(2);
+    expect(lines).toContain('Chaos Vellum dropped');
+    expect(lines).toContain('4× Normal Vellum daily dropped');
   });
 });

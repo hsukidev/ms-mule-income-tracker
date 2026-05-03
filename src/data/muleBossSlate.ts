@@ -375,6 +375,66 @@ export interface SlateSlot {
   slateKey: SlateKey;
 }
 
+/**
+ * Render a single dropped **Slate Key** into a human-readable line for the
+ * per-card cap-drop tooltip. Cadence-aware:
+ *
+ * - Weekly Cadence → `<Boss Name> dropped` (count omitted; weekly keys always
+ *   contribute exactly one slot, so a count would be redundant).
+ * - Daily Cadence → `<count>× <Boss Name> daily dropped` (count is always
+ *   shown, including `1×`, so partial-drop counts like `3×` aren't confusable
+ *   with the all-7 case).
+ * - Monthly Cadence / unresolvable keys → empty string. Monthly keys never
+ *   reach the cap pool, so this is unreachable in practice but kept defensive.
+ *
+ * The display name is the Boss Matrix row label: tiered families render as
+ * `<Tier> <Family Name>`; tier-less families render as the bare family name.
+ */
+export function formatDroppedSlot(slateKey: SlateKey, count: number): string {
+  const resolved = resolveKey(slateKey);
+  if (!resolved) return '';
+  const { boss, diff } = resolved;
+  const name = rowLabel(boss.family, diff.tier, boss.name);
+  if (diff.cadence === 'weekly') return `${name} dropped`;
+  if (diff.cadence === 'daily') return `${count}× ${name} daily dropped`;
+  return '';
+}
+
+/**
+ * Render every dropped key in the per-mule `droppedKeys` map into a
+ * tooltip-ready `string[]`, ordered by **Boss Matrix** display order. The
+ * input map's iteration order is not preserved; the helper resolves each
+ * key, sorts on `(family display index, crystalValue desc)`, and emits one
+ * line per surviving key. Unresolvable keys drop silently. Empty input
+ * returns `[]`.
+ */
+export function formatDroppedSlots(droppedKeys: ReadonlyMap<SlateKey, number>): string[] {
+  if (droppedKeys.size === 0) return [];
+  interface Entry {
+    line: string;
+    familyIndex: number;
+    crystalValue: number;
+  }
+  const entries: Entry[] = [];
+  for (const [key, count] of droppedKeys) {
+    const resolved = resolveKey(key);
+    if (!resolved) continue;
+    const line = formatDroppedSlot(key, count);
+    if (!line) continue;
+    const familyIndex = DISPLAY_ORDER.indexOf(resolved.boss.family);
+    entries.push({
+      line,
+      familyIndex: familyIndex < 0 ? Number.MAX_SAFE_INTEGER : familyIndex,
+      crystalValue: priceFor(resolved.diff, FALLBACK_WORLD_GROUP),
+    });
+  }
+  entries.sort((a, b) => {
+    if (a.familyIndex !== b.familyIndex) return a.familyIndex - b.familyIndex;
+    return b.crystalValue - a.crystalValue;
+  });
+  return entries.map((e) => e.line);
+}
+
 export class MuleBossSlate {
   /**
    * Reference-stable empty slate cache, keyed by **World Group**. At most
