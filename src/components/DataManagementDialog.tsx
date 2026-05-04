@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Textarea } from './ui/textarea';
+import { Button } from './ui/button';
+import {
+  decodeImport,
+  summarizeImport,
+  type ExportEnvelope,
+  type SummaryResult,
+} from '../lib/dataTransfer';
 
 type Screen = 'chooser' | 'export' | 'import' | 'confirm';
 
@@ -11,17 +19,38 @@ interface Props {
 
 export function DataManagementDialog({ open, onOpenChange }: Props) {
   const [screen, setScreen] = useState<Screen>('chooser');
+  const [importCode, setImportCode] = useState('');
+  const [importError, setImportError] = useState(false);
+  const [decoded, setDecoded] = useState<ExportEnvelope | null>(null);
 
   const handleOpenChange = (next: boolean) => {
-    if (!next) setScreen('chooser');
+    if (!next) {
+      setScreen('chooser');
+      setImportCode('');
+      setImportError(false);
+      setDecoded(null);
+    }
     onOpenChange(next);
+  };
+
+  const handleImportClick = () => {
+    const result = decodeImport(importCode);
+    if (!result.ok) {
+      setImportError(true);
+      return;
+    }
+    setImportError(false);
+    setDecoded(result.payload);
+    setScreen('confirm');
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Data Management</DialogTitle>
+          <DialogTitle>
+            {screen === 'confirm' ? 'Replace your data?' : 'Data Management'}
+          </DialogTitle>
         </DialogHeader>
         {screen === 'chooser' && (
           <div className="flex flex-col gap-2">
@@ -38,6 +67,25 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
               onClick={() => setScreen('import')}
             />
           </div>
+        )}
+        {screen === 'import' && (
+          <ImportPasteScreen
+            code={importCode}
+            error={importError}
+            onCodeChange={(next) => {
+              setImportCode(next);
+              if (importError) setImportError(false);
+            }}
+            onCancel={() => {
+              setScreen('chooser');
+              setImportCode('');
+              setImportError(false);
+            }}
+            onImport={handleImportClick}
+          />
+        )}
+        {screen === 'confirm' && decoded && (
+          <ConfirmScreen summary={summarizeImport(decoded)} onBack={() => setScreen('import')} />
         )}
       </DialogContent>
     </Dialog>
@@ -66,5 +114,89 @@ function ChooserRow({ icon, label, description, onClick }: ChooserRowProps) {
         <span className="text-sm text-muted-foreground">{description}</span>
       </span>
     </button>
+  );
+}
+
+interface ImportPasteScreenProps {
+  code: string;
+  error: boolean;
+  onCodeChange: (next: string) => void;
+  onCancel: () => void;
+  onImport: () => void;
+}
+
+function ImportPasteScreen({
+  code,
+  error,
+  onCodeChange,
+  onCancel,
+  onImport,
+}: ImportPasteScreenProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        value={code}
+        onChange={(e) => onCodeChange(e.target.value)}
+        rows={6}
+        className="font-mono text-xs"
+        placeholder="Paste your YABI transfer code here"
+        aria-invalid={error || undefined}
+      />
+      {error && <p className="text-sm text-destructive">Invalid YABI transfer code</p>}
+      <div className="mt-2 flex justify-end gap-2">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button onClick={onImport}>Import</Button>
+      </div>
+    </div>
+  );
+}
+
+interface ConfirmScreenProps {
+  summary: SummaryResult;
+  onBack: () => void;
+}
+
+function ConfirmScreen({ summary, onBack }: ConfirmScreenProps) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        Importing will replace all your current data. This cannot be undone.
+      </p>
+      <SummarySection label="Before" counts={summary.before} />
+      <SummarySection label="After" counts={summary.after} />
+      <div className="mt-2 flex justify-end gap-2">
+        <Button variant="outline" onClick={onBack}>
+          Back
+        </Button>
+        <Button>Replace and reload</Button>
+      </div>
+    </div>
+  );
+}
+
+interface SummarySectionProps {
+  label: string;
+  counts: SummaryResult['before'];
+}
+
+function SummarySection({ label, counts }: SummarySectionProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-center font-mono text-xs text-muted-foreground">─── {label} ───</p>
+      {counts.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">No mules</p>
+      ) : (
+        <ul className="flex flex-col gap-0.5">
+          {counts.map((c) => (
+            <li key={c.worldLabel} className="flex justify-between text-sm text-foreground">
+              <span>{c.worldLabel}</span>
+              <span className="text-muted-foreground">{c.count} mules</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
