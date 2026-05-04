@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import {
+  applyImport,
   decodeImport,
   summarizeImport,
   type ExportEnvelope,
   type SummaryResult,
 } from '../lib/dataTransfer';
+import { toast } from '../lib/toast';
 
 type Screen = 'chooser' | 'export' | 'import' | 'confirm';
 
@@ -42,6 +44,16 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
     setImportError(false);
     setDecoded(result.payload);
     setScreen('confirm');
+  };
+
+  const handleApplyImport = () => {
+    if (!decoded) return;
+    const result = applyImport(decoded);
+    if (result.ok) {
+      window.location.reload();
+    } else {
+      toast.error('Import failed — your data was not changed.');
+    }
   };
 
   return (
@@ -85,7 +97,11 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
           />
         )}
         {screen === 'confirm' && decoded && (
-          <ConfirmScreen summary={summarizeImport(decoded)} onBack={() => setScreen('import')} />
+          <ConfirmScreen
+            summary={summarizeImport(decoded)}
+            onBack={() => setScreen('import')}
+            onApply={handleApplyImport}
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -156,9 +172,10 @@ function ImportPasteScreen({
 interface ConfirmScreenProps {
   summary: SummaryResult;
   onBack: () => void;
+  onApply: () => void;
 }
 
-function ConfirmScreen({ summary, onBack }: ConfirmScreenProps) {
+function ConfirmScreen({ summary, onBack, onApply }: ConfirmScreenProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
@@ -170,7 +187,7 @@ function ConfirmScreen({ summary, onBack }: ConfirmScreenProps) {
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button>Replace and reload</Button>
+        <Button onClick={onApply}>Replace and reload</Button>
       </div>
     </div>
   );
