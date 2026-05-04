@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root {...props} />;
+  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -48,7 +48,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 flex w-full max-w-lg -translate-1/2  flex-col gap-4 rounded-lg bg-popover bg-clip-padding p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 transition duration-220 ease-out data-ending-style:translate-y-[calc(-50%+6px)] data-ending-style:opacity-0 data-ending-style:duration-0 data-starting-style:translate-y-[calc(-50%+6px)] data-starting-style:opacity-0',
+          'fixed top-1/2 left-1/2 z-50 flex w-full max-w-lg -translate-1/2 flex-col gap-4 rounded-lg bg-popover bg-clip-padding p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10 transition duration-220 ease-out data-ending-style:translate-y-[calc(-50%+6px)] data-ending-style:opacity-0 data-ending-style:duration-0 data-starting-style:translate-y-[calc(-50%+6px)] data-starting-style:opacity-0',
           className,
         )}
         {...props}
