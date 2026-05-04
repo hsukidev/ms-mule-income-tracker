@@ -263,12 +263,14 @@ html[data-theme-swap] *::after {
   --roster-cols: 2;
   --roster-gap: 16px;
   --mule-name-size: 14px;
+  --mule-level-size: 11px;
 }
 [data-density='compact'] {
   --card-pad: 12px;
   --roster-cols: 2;
   --roster-gap: 16px;
   --mule-name-size: 13px;
+  --mule-level-size: 10px;
 }
 
 /* Responsive roster column counts:
@@ -424,7 +426,7 @@ html[data-theme-swap] *::after {
   }
   .bignum {
     font-family: 'Geist Mono', monospace;
-    font-size: 59px;
+    font-size: 62px;
     font-weight: 500;
     color: var(--accent-raw, var(--accent));
     letter-spacing: -0.02em;

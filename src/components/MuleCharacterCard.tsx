@@ -83,7 +83,7 @@ const MuleCardInner = memo(function MuleCardInner({
             top: 12,
             left: 12,
             fontFamily: 'Geist Mono, monospace',
-            fontSize: 10,
+            fontSize: 'var(--mule-level-size, 11px)',
             letterSpacing: '0.1em',
             color: 'var(--muted-raw, var(--muted-foreground))',
             padding: '3px 8px',
