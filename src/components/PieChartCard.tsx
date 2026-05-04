@@ -21,7 +21,9 @@ export const PieChartCard = memo(function PieChartCard({ mules, onSliceClick }: 
         <span style={{ color: 'var(--text, var(--foreground))', fontWeight: 500, fontSize: 14 }}>
           Income Split
         </span>
-        <span className="eyebrow-plain">BY MULE</span>
+        <span className="eyebrow-plain" style={{ fontSize: 11 }}>
+          BY MULE
+        </span>
       </div>
       <IncomePieChart mules={mules} onSliceClick={onSliceClick} />
     </div>

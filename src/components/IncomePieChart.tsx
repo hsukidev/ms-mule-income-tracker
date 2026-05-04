@@ -137,11 +137,11 @@ export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
         <span className="font-display text-base font-semibold max-w-[140px] truncate mt-0.5">
           {hoveredName ?? 'Total'}
         </span>
-        <span className="font-mono-nums text-sm text-(--accent-numeric) mt-1">
+        <span className="font-mono-nums text-[15px] font-semibold text-(--accent-numeric) mt-1 leading-tight">
           {hoveredValue ??
             (abbreviated ? formatCompact(total) : Math.round(total).toLocaleString())}
         </span>
-        <span className="font-mono-nums text-xs text-muted-foreground mt-0.5">
+        <span className="font-mono-nums text-[13px] text-muted-foreground leading-tight">
           {centerPercentText}
         </span>
       </div>
