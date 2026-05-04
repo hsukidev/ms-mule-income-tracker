@@ -31,11 +31,13 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { findWorld } from '../data/worlds';
 
+const TRACKER_KEY = 'maplestory-mule-tracker';
+
 /**
  * Apply transaction key order is fixed and documented for debuggability.
  * The same order is used for snapshot, write, and rollback.
  */
-export const TRACKED_KEYS = ['maplestory-mule-tracker', 'world', 'lastSeenChangelog'] as const;
+export const TRACKED_KEYS = [TRACKER_KEY, 'world', 'lastSeenChangelog'] as const;
 
 export type TrackedKey = (typeof TRACKED_KEYS)[number];
 
@@ -106,16 +108,10 @@ export function buildExport(): string {
  * (which returns `null` or `''` on garbage input) and from `JSON.parse`.
  */
 export function decodeImport(code: string): DecodeResult {
-  let json: string | null;
-  try {
-    json = decompressFromEncodedURIComponent(code);
-  } catch {
-    return { ok: false };
-  }
-  if (!json) return { ok: false };
-
   let parsed: unknown;
   try {
+    const json = decompressFromEncodedURIComponent(code);
+    if (!json) return { ok: false };
     parsed = JSON.parse(json);
   } catch {
     return { ok: false };
@@ -188,8 +184,8 @@ export function applyImport(
  */
 export function summarizeImport(payload: ExportEnvelope): SummaryResult {
   return {
-    before: countByWorld(localStorage.getItem('maplestory-mule-tracker')),
-    after: countByWorld(payload.data['maplestory-mule-tracker']),
+    before: countByWorld(localStorage.getItem(TRACKER_KEY)),
+    after: countByWorld(payload.data[TRACKER_KEY]),
   };
 }
 
