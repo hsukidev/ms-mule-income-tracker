@@ -3,6 +3,7 @@ import { Link, useMatchRoute } from '@tanstack/react-router';
 import { useTheme } from '../context/ThemeProvider';
 import { BuyMeCoffeeButton } from './BuyMeCoffeeButton';
 import { MobileNavDrawer } from './MobileNavDrawer';
+import { SettingsMenu } from './SettingsMenu';
 import { navItems, type NavItem } from '../constants/navItems';
 import logoUrl from '../assets/logo.svg';
 
@@ -58,6 +59,7 @@ export function Header() {
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+            <SettingsMenu />
             <BuyMeCoffeeButton />
           </div>
         </div>
