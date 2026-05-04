@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -7,6 +7,7 @@ import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
 import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
+import type { PresetKey } from './MatrixToolbar';
 import { resolveWorldGroup } from '../data/worlds';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
@@ -20,6 +21,7 @@ import { usePresetPill } from './MuleDetailDrawer/hooks/usePresetPill';
 import { useSlateActions } from './MuleDetailDrawer/hooks/useSlateActions';
 import { CrystalTally } from './MuleDetailDrawer/CrystalTally';
 import { MuleIdentityFields } from './MuleDetailDrawer/MuleIdentityFields';
+import { MuleNotesField } from './MuleDetailDrawer/MuleNotesField';
 
 interface MuleDetailDrawerProps {
   mule: Mule | null;
@@ -88,6 +90,20 @@ export function MuleDetailDrawer({
   const identity = useMuleIdentityDraft(mule, onUpdate);
   const liveLevel = Number(identity.level.draft) || 0;
   const [activeInfoOpen, setActiveInfoOpen] = useState(false);
+
+  // Presets emit weekly Slate Keys; under Daily filter those would render as
+  // Filtered-out Cells. Flip to All so the click has a visible effect.
+  // Deps below are individual values — `matrixFilter` / `slateActions` are
+  // fresh objects every render. See CLAUDE.md (drawer keystroke perf).
+  const { filter: cadenceFilter, setFilter: setCadenceFilter } = matrixFilter;
+  const { applyPreset } = slateActions;
+  const handleApplyPreset = useCallback(
+    (preset: PresetKey) => {
+      if (cadenceFilter === 'Daily') setCadenceFilter('All');
+      applyPreset(preset);
+    },
+    [cadenceFilter, setCadenceFilter, applyPreset],
+  );
 
   return (
     <Sheet
@@ -241,14 +257,17 @@ export function MuleDetailDrawer({
             <div className="mx-6 border-t border-border/50" />
 
             <div className="p-6 flex flex-col gap-5 max-sm:pb-7">
-              <MuleIdentityFields mule={mule} identity={identity} onUpdate={onUpdate} />
+              <div className="flex flex-col gap-3">
+                <MuleIdentityFields mule={mule} identity={identity} onUpdate={onUpdate} />
+                <MuleNotesField mule={mule} onUpdate={onUpdate} />
+              </div>
 
               <div>
                 <MatrixToolbar
                   filter={matrixFilter.filter}
                   onFilterChange={matrixFilter.setFilter}
                   activePill={pill.activePill}
-                  onApplyPreset={slateActions.applyPreset}
+                  onApplyPreset={handleApplyPreset}
                   onReset={slateActions.resetBosses}
                 />
                 <div className="mt-2">
@@ -259,6 +278,7 @@ export function MuleDetailDrawer({
                     onToggleKey={slateActions.toggleKey}
                     partySizes={partySizes.stablePartySizes}
                     onChangePartySize={partySizes.setPartySize}
+                    activeCadence={matrixFilter.activeCadence}
                   />
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { DensityToggle } from './DensityToggle';
+import { WorldSelect } from './WorldSelect';
 
 export interface RosterHeaderProps {
   muleCount: number;
@@ -141,6 +142,7 @@ export function RosterHeader({
           }}
         />
         <h2 className="font-display text-2xl font-bold tracking-tight">Roster</h2>
+        <WorldSelect />
         <DensityToggle />
       </div>
       <div className="flex items-center gap-3">

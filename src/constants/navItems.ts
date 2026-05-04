@@ -6,3 +6,5 @@ export type NavItem = {
 };
 
 export const navItems: readonly NavItem[] = [{ label: 'Changelog', to: '/changelog' }];
+
+export const drawerNavItems: readonly NavItem[] = [{ label: 'Home', to: '/' }, ...navItems];

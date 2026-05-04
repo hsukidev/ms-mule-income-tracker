@@ -502,4 +502,41 @@ describe('MuleCharacterCard', () => {
       expect(screen.queryByText(/to cap/i)).toBeNull();
     });
   });
+
+  describe('Notes Indicator', () => {
+    const ICON_NAME = /show character notes/i;
+
+    it('does not render the indicator when mule.notes is undefined', () => {
+      renderCard({ notes: undefined });
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('does not render the indicator when mule.notes is whitespace-only', () => {
+      renderCard({ notes: '   \n\t ' });
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('renders the indicator when mule.notes is non-empty after trim', () => {
+      renderCard({ notes: 'main mule, owes legion levels' });
+      expect(screen.getByRole('button', { name: ICON_NAME })).toBeTruthy();
+    });
+
+    it('does not render the indicator in bulk mode regardless of notes', () => {
+      renderCard({ notes: 'main mule' }, { bulkMode: true });
+      expect(screen.queryByRole('button', { name: ICON_NAME })).toBeNull();
+    });
+
+    it('does not invoke the card onClick when the indicator is clicked', () => {
+      const { onClick } = renderCard({ notes: 'main mule' });
+      fireEvent.click(screen.getByRole('button', { name: ICON_NAME }));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('shows the notes content in the tooltip when the indicator is focused', async () => {
+      renderCard({ notes: 'owes 8 legion levels' });
+      const icon = screen.getByRole('button', { name: ICON_NAME });
+      fireEvent.focus(icon);
+      expect(await screen.findByText('owes 8 legion levels')).toBeTruthy();
+    });
+  });
 });

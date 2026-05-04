@@ -114,7 +114,7 @@ See [docs/RELEASING.md](./docs/RELEASING.md) for the full workflow and the `patc
 | `src/components/BossMatrix.tsx`        | Tier × family selection grid                     |
 | `src/components/KpiCard.tsx`           | Hero income card + cap rail + countdown          |
 | `src/components/IncomePieChart.tsx`    | Donut chart                                      |
-| `src/components/WorldSelect.tsx`       | Header world picker                              |
+| `src/components/WorldSelect.tsx`       | Roster world picker                              |
 | `worker/src/worker.ts`                 | Cloudflare Worker character-lookup endpoint      |
 
-See [Design.md](./Design.md) for the visual system and [UBIQUITOUS_LANGUAGE.md](./UBIQUITOUS_LANGUAGE.md) for canonical domain terms.
+See [Design.md](./docs/Design.md) for the visual system and [UBIQUITOUS_LANGUAGE.md](./docs/UBIQUITOUS_LANGUAGE.md) for canonical domain terms.

@@ -1,18 +1,22 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   render,
   screen,
   fireEvent,
+  waitFor,
   within,
   mockMatchMedia,
   restoreMatchMedia,
 } from '../../test/test-utils';
-import { DensityProvider } from '../../context/DensityProvider';
 import { RosterHeader } from '../RosterHeader';
+import type { WorldId } from '../../data/worlds';
 
 const mockCoarsePointer = () => mockMatchMedia((q) => q.includes('pointer: coarse'));
 
-function renderHeader(overrides: Partial<Parameters<typeof RosterHeader>[0]> = {}) {
+function renderHeader(
+  overrides: Partial<Parameters<typeof RosterHeader>[0]> = {},
+  { defaultWorld }: { defaultWorld?: WorldId | null } = {},
+) {
   const props = {
     muleCount: 3,
     bulkMode: false,
@@ -23,11 +27,7 @@ function renderHeader(overrides: Partial<Parameters<typeof RosterHeader>[0]> = {
     ...overrides,
   };
   return {
-    ...render(
-      <DensityProvider>
-        <RosterHeader {...props} />
-      </DensityProvider>,
-    ),
+    ...render(<RosterHeader {...props} />, { defaultWorld }),
     props,
   };
 }
@@ -65,6 +65,111 @@ describe('RosterHeader', () => {
       renderHeader();
       expect(screen.queryByText(/select or drag to delete/i)).toBeNull();
       expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
+    });
+  });
+
+  describe('WorldSelect integration', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('renders the WorldSelect placeholder (Select world) when no world is selected', () => {
+      renderHeader({}, { defaultWorld: null });
+      const triggers = screen.getAllByText(/select world/i);
+      expect(triggers.length).toBeGreaterThan(0);
+    });
+
+    it('renders the selected world label in the trigger when a world is pre-selected', () => {
+      renderHeader({}, { defaultWorld: 'heroic-kronos' });
+      expect(screen.getByText('Kronos')).toBeTruthy();
+    });
+
+    it('renders the WorldSelect trigger with aria-label="Select world"', () => {
+      renderHeader({}, { defaultWorld: null });
+      expect(screen.getByLabelText('Select world')).toBeTruthy();
+    });
+
+    it('places the WorldSelect between the Roster heading and the DensityToggle', () => {
+      renderHeader({}, { defaultWorld: null });
+      const heading = screen.getByRole('heading', { name: /roster/i });
+      const trigger = screen.getByLabelText('Select world');
+      const densityToggle = screen.getByTestId('density-toggle');
+      expect(heading.compareDocumentPosition(trigger) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(
+        trigger.compareDocumentPosition(densityToggle) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('opens the panel with two groups (HEROIC and INTERACTIVE) when the trigger is clicked', async () => {
+      renderHeader({}, { defaultWorld: null });
+      fireEvent.click(screen.getByLabelText('Select world'));
+
+      await waitFor(() => {
+        expect(screen.getByText('HEROIC')).toBeTruthy();
+        expect(screen.getByText('INTERACTIVE')).toBeTruthy();
+      });
+
+      const heroic = screen.getByText('HEROIC');
+      const interactive = screen.getByText('INTERACTIVE');
+      expect(heroic.compareDocumentPosition(interactive) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+
+    it('renders all six worlds grouped correctly when the panel is open', async () => {
+      renderHeader({}, { defaultWorld: null });
+      fireEvent.click(screen.getByLabelText('Select world'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Kronos' })).toBeTruthy();
+      });
+
+      expect(screen.getByRole('option', { name: 'Kronos' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'Hyperion' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'Solis' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'Scania' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'Bera' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'Luna' })).toBeTruthy();
+    });
+
+    it('selecting an option updates the trigger label', async () => {
+      renderHeader({}, { defaultWorld: null });
+      fireEvent.click(screen.getByLabelText('Select world'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Hyperion' })).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByRole('option', { name: 'Hyperion' }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Hyperion')).toBeTruthy();
+      });
+    });
+
+    it('persists the selection across renders when defaultWorld is supplied', () => {
+      renderHeader({}, { defaultWorld: 'interactive-bera' });
+      expect(screen.getByText('Bera')).toBeTruthy();
+    });
+
+    it('shows a check indicator next to the selected row when the panel reopens', async () => {
+      renderHeader({}, { defaultWorld: 'heroic-hyperion' });
+      fireEvent.click(screen.getByLabelText('Select world'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /Hyperion/ })).toBeTruthy();
+      });
+
+      const selectedOption = screen.getByRole('option', { name: /Hyperion/ });
+      expect(selectedOption.getAttribute('data-selected')).not.toBeNull();
+      expect(within(selectedOption).getByTestId('world-select-check')).toBeTruthy();
+    });
+
+    it('hides the WorldSelect chip in bulk mode', () => {
+      renderHeader({ bulkMode: true }, { defaultWorld: 'heroic-kronos' });
+      expect(screen.queryByLabelText('Select world')).toBeNull();
     });
   });
 

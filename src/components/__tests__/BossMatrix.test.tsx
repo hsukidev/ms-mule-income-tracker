@@ -52,11 +52,19 @@ const BOSSES_WITH_PARTYABLE_TIER_COUNT = bosses.filter((b) =>
   b.difficulty.some((d) => d.cadence === 'weekly' || d.cadence === 'monthly'),
 ).length;
 
+function getTierHeaderLabels(): (string | null)[] {
+  return screen
+    .getAllByRole('columnheader')
+    .filter((h) => h.getAttribute('aria-label'))
+    .map((h) => h.getAttribute('aria-label'));
+}
+
 function renderMatrix(
   slateKeys: string[] = [],
   onToggleKey = vi.fn(),
   partySizes: Record<string, number> = {},
   onChangePartySize = vi.fn(),
+  activeCadence?: 'daily' | 'weekly',
 ) {
   return {
     ...render(
@@ -65,6 +73,7 @@ function renderMatrix(
         onToggleKey={onToggleKey}
         partySizes={partySizes}
         onChangePartySize={onChangePartySize}
+        activeCadence={activeCadence}
       />,
     ),
     onToggleKey,
@@ -711,6 +720,92 @@ describe('BossMatrix', () => {
         />,
       );
       expect(screen.getByTestId(`matrix-cell-${LUCID}-hard`).getAttribute('data-state')).toBe('on');
+    });
+  });
+
+  describe('Filtered-out Cells (cadence ≠ activeCadence)', () => {
+    // Papulatus is the canonical mixed-cadence fixture (daily Easy/Normal +
+    // weekly Chaos). Chaos column survives because Horntail has chaos daily.
+    it('renders weekly Chaos Papulatus as `—` under activeCadence="daily"', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'daily');
+      const cell = screen.getByTestId(`matrix-cell-${PAPULATUS}-chaos`);
+      expect(cell.textContent).toBe('—');
+    });
+
+    it('Filtered-out Cell carries aria-disabled="true"', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'daily');
+      const cell = screen.getByTestId(`matrix-cell-${PAPULATUS}-chaos`);
+      expect(cell.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('clicking a Filtered-out Cell does not fire onToggleKey', () => {
+      const onToggleKey = vi.fn();
+      renderMatrix([], onToggleKey, {}, vi.fn(), 'daily');
+      const cell = screen.getByTestId(`matrix-cell-${PAPULATUS}-chaos`);
+      fireEvent.click(cell);
+      expect(onToggleKey).not.toHaveBeenCalled();
+    });
+
+    it('a selected weekly Slate Key on a mixed family still renders as `—` under activeCadence="daily"', () => {
+      renderMatrix([CHAOS_PAPULATUS_WEEKLY], vi.fn(), {}, vi.fn(), 'daily');
+      const cell = screen.getByTestId(`matrix-cell-${PAPULATUS}-chaos`);
+      expect(cell.textContent).toBe('—');
+      expect(cell.getAttribute('data-state')).not.toBe('on');
+    });
+  });
+
+  describe('PartyStepper visibility under activeCadence', () => {
+    it('hides the PartyStepper for a mixed family under activeCadence="daily" (Solo placeholder shown)', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'daily');
+      expect(screen.queryByTestId(`party-stepper-${PAPULATUS_BOSS.family}`)).toBeNull();
+      const rowHeader = screen
+        .getAllByRole('rowheader')
+        .find((r) => r.textContent?.includes(PAPULATUS_BOSS.name))!;
+      expect(rowHeader.textContent).toContain('Solo');
+    });
+
+    it('shows the PartyStepper for a mixed family under activeCadence="weekly"', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'weekly');
+      expect(screen.queryByTestId(`party-stepper-${PAPULATUS_BOSS.family}`)).not.toBeNull();
+    });
+
+    it('shows the PartyStepper for a mixed family under no filter (activeCadence undefined)', () => {
+      renderMatrix();
+      expect(screen.queryByTestId(`party-stepper-${PAPULATUS_BOSS.family}`)).not.toBeNull();
+    });
+  });
+
+  describe('Weekly filter symmetry', () => {
+    it('renders Vellum normal-daily as `—` under activeCadence="weekly"', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'weekly');
+      const cell = screen.getByTestId(`matrix-cell-${VELLUM}-normal`);
+      expect(cell.textContent).toBe('—');
+      expect(cell.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('clicking a weekly-filtered-out daily cell does not fire onToggleKey', () => {
+      const onToggleKey = vi.fn();
+      renderMatrix([], onToggleKey, {}, vi.fn(), 'weekly');
+      const cell = screen.getByTestId(`matrix-cell-${VELLUM}-normal`);
+      fireEvent.click(cell);
+      expect(onToggleKey).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Visible Tier collapse (activeCadence)', () => {
+    it('drops the Extreme column header when activeCadence is "daily" (no daily boss has extreme)', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'daily');
+      expect(getTierHeaderLabels()).not.toContain('Extreme');
+    });
+
+    it('keeps all 5 tier columns when activeCadence is "weekly" (every tier has a weekly boss)', () => {
+      renderMatrix([], vi.fn(), {}, vi.fn(), 'weekly');
+      expect(getTierHeaderLabels()).toEqual(['Extreme', 'Chaos', 'Hard', 'Normal', 'Easy']);
+    });
+
+    it('keeps all 5 tier columns when activeCadence is undefined (filter All)', () => {
+      renderMatrix();
+      expect(getTierHeaderLabels()).toEqual(['Extreme', 'Chaos', 'Hard', 'Normal', 'Easy']);
     });
   });
 });

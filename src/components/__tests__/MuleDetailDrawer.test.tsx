@@ -174,4 +174,83 @@ describe('MuleDetailDrawer (smoke)', () => {
     const img = screen.getByTestId('drawer-avatar') as HTMLImageElement;
     expect(img.src).toMatch(/blank-character/);
   });
+
+  describe('Preset click auto-switches Cadence Filter from Daily to All', () => {
+    function getToggleButton(groupName: RegExp, label: string): HTMLButtonElement {
+      const group = screen.getByRole('group', { name: groupName });
+      return within(group).getByRole('button', {
+        name: new RegExp(`^${label}$`, 'i'),
+      }) as HTMLButtonElement;
+    }
+    const cadence = (label: string) => getToggleButton(/cadence filter/i, label);
+    const preset = (label: string) => getToggleButton(/boss presets/i, label);
+
+    it('clicking CRA while filter is Daily flips filter to All', () => {
+      renderDrawer();
+      fireEvent.click(cadence('Daily'));
+      expect(cadence('Daily').className).toContain('on');
+      fireEvent.click(preset('CRA'));
+      expect(cadence('All').className).toContain('on');
+      expect(cadence('Daily').className).not.toContain('on');
+    });
+
+    it('clicking CUSTOM while filter is Daily flips filter to All', () => {
+      renderDrawer();
+      fireEvent.click(cadence('Daily'));
+      fireEvent.click(preset('CUSTOM'));
+      expect(cadence('All').className).toContain('on');
+    });
+
+    it('clicking CRA while filter is Weekly does not change the filter', () => {
+      renderDrawer();
+      fireEvent.click(cadence('Weekly'));
+      fireEvent.click(preset('CRA'));
+      expect(cadence('Weekly').className).toContain('on');
+    });
+
+    it('clicking CRA while filter is All leaves filter on All', () => {
+      renderDrawer();
+      fireEvent.click(preset('CRA'));
+      expect(cadence('All').className).toContain('on');
+    });
+  });
+
+  it('threads activeCadence to BossMatrix so switching to Daily collapses the Extreme column', () => {
+    renderDrawer();
+    expect(screen.getByRole('columnheader', { name: /extreme/i })).toBeTruthy();
+    const group = screen.getByRole('group', { name: /cadence filter/i });
+    fireEvent.click(within(group).getByRole('button', { name: /^daily$/i }));
+    expect(screen.queryByRole('columnheader', { name: /extreme/i })).toBeNull();
+  });
+
+  it('renders a Notes textarea seeded from mule.notes', () => {
+    renderDrawer({ mule: { ...baseMule, notes: 'main mule, owes legion levels' } });
+    const textarea = screen.getByLabelText('Notes') as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    expect(textarea.value).toBe('main mule, owes legion levels');
+  });
+
+  it('typing into Notes does NOT call onUpdate per-keystroke', () => {
+    const { props } = renderDrawer();
+    const textarea = screen.getByLabelText('Notes') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'draft typing' } });
+    expect(props.onUpdate).not.toHaveBeenCalled();
+  });
+
+  it('wires the Notes textarea to the notes draft hook (commit on blur)', () => {
+    const { props } = renderDrawer();
+    const textarea = screen.getByLabelText('Notes') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'committed note' } });
+    fireEvent.blur(textarea);
+    expect(props.onUpdate).toHaveBeenCalledWith(baseMule.id, { notes: 'committed note' });
+  });
+
+  it('character counter reflects current Notes draft length', () => {
+    renderDrawer({ mule: { ...baseMule, notes: 'hello' } });
+    const counter = screen.getByTestId('notes-character-counter');
+    expect(counter.textContent).toBe('5 / 500');
+    const textarea = screen.getByLabelText('Notes') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'hello world' } });
+    expect(counter.textContent).toBe('11 / 500');
+  });
 });

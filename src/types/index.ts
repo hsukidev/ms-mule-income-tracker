@@ -83,4 +83,12 @@ export interface Mule {
    * fallback.
    */
   avatarUrl?: string;
+  /**
+   * Freeform note attached by the user — surfaced in the Mule Detail
+   * Drawer's Notes Field and as the Notes Tooltip on the Roster Card.
+   * Lands in schemaVersion 6 as an additive optional field. Empty /
+   * whitespace-only commits are normalized to `undefined`; legacy v5
+   * payloads load with `notes` undefined.
+   */
+  notes?: string;
 }

@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, Info, Trash2 } from 'lucide-react';
+import { Check, FileText, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -61,6 +61,7 @@ const MuleCardInner = memo(function MuleCardInner({
     worldId: mule.worldId,
   });
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [notesTooltipOpen, setNotesTooltipOpen] = useState(false);
   const hasBosses = mule.selectedBosses.length > 0;
   const incomeColor =
     mule.active && hasBosses
@@ -68,6 +69,8 @@ const MuleCardInner = memo(function MuleCardInner({
       : 'var(--dim, var(--surface-dim))';
   const droppedLines =
     !hideLevelBadge && droppedKeys && droppedKeys.size > 0 ? formatDroppedSlots(droppedKeys) : [];
+  const trimmedNotes = mule.notes?.trim() ?? '';
+  const hasNotes = !hideLevelBadge && trimmedNotes.length > 0;
 
   const stopBubble = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -128,17 +131,46 @@ const MuleCardInner = memo(function MuleCardInner({
         >
           {mule.name || 'Unnamed'}
         </div>
-        <div
-          style={{
-            color: 'var(--muted-raw, var(--muted-foreground))',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 10,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            marginTop: 2,
-          }}
-        >
-          {mule.muleClass || 'No class'}
+        <div className="flex flex-row items-center justify-between gap-2" style={{ marginTop: 2 }}>
+          <span
+            style={{
+              color: 'var(--muted-raw, var(--muted-foreground))',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+            }}
+          >
+            {mule.muleClass || 'No class'}
+          </span>
+          {hasNotes && (
+            <Tooltip open={notesTooltipOpen} onOpenChange={setNotesTooltipOpen}>
+              <TooltipTrigger
+                aria-label="Show character notes"
+                closeOnClick={false}
+                delay={0}
+                onClick={(e) => {
+                  stopBubble(e);
+                  setNotesTooltipOpen(true);
+                }}
+                onPointerDown={stopBubble}
+                onTouchStart={stopBubble}
+                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <FileText className="size-3.5" aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="max-w-xs whitespace-pre-wrap wrap-anywhere normal-case tracking-normal text-[11px]"
+              >
+                {trimmedNotes}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
 

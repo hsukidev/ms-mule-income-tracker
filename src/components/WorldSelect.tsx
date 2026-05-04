@@ -9,10 +9,10 @@ const WORLDS_BY_GROUP: ReadonlyArray<{ group: WorldGroup; worlds: readonly World
 ];
 
 /**
- * Header World Select control. A single chip trigger (border + label +
- * chevron) rendered at every viewport width. The panel groups the six
- * canonical worlds by **World Group** with right-aligned check indicators on
- * the selected row.
+ * World Select control. A single chip trigger (border + label + chevron)
+ * rendered at every viewport width. The panel groups the six canonical
+ * worlds by **World Group** with right-aligned check indicators on the
+ * selected row.
  */
 export function WorldSelect() {
   const { world, setWorld } = useWorld();
@@ -27,7 +27,7 @@ export function WorldSelect() {
       <Select.Trigger
         aria-label="Select world"
         data-slot="world-select-trigger"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-(--surface-2) px-2.5 py-1 text-xs text-muted-foreground cursor-pointer transition-colors hover:border-(--panel-border-hover)"
+        className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-border bg-(--surface-2) px-3.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground cursor-pointer transition-colors hover:border-(--panel-border-hover)"
       >
         {world ? (
           <span>{world.label}</span>

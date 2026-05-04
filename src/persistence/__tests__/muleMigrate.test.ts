@@ -424,9 +424,9 @@ describe('muleMigrate', () => {
   });
 
   describe('schema lineage constant', () => {
-    it('exports CURRENT_SCHEMA_VERSION = 5', () => {
+    it('exports CURRENT_SCHEMA_VERSION = 6', () => {
       // Sanity: guards against an accidental bump without test updates.
-      expect(CURRENT_SCHEMA_VERSION).toBe(5);
+      expect(CURRENT_SCHEMA_VERSION).toBe(6);
     });
   });
 
@@ -503,6 +503,142 @@ describe('muleMigrate', () => {
         ],
       };
       expect(muleMigrate(JSON.stringify(v5))[0].avatarUrl).toBeUndefined();
+    });
+  });
+
+  describe('schemaVersion 6 → As-Is Load', () => {
+    it('loads a v5 payload (no notes key) with notes undefined', () => {
+      const v5 = {
+        schemaVersion: 5,
+        mules: [
+          {
+            id: 'a',
+            name: 'Legacy v5',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [],
+            partySizes: {},
+            active: true,
+          },
+        ],
+      };
+      expect(muleMigrate(JSON.stringify(v5))[0].notes).toBeUndefined();
+    });
+
+    it('omits a whitespace-only notes on a v6 payload', () => {
+      const v6 = {
+        schemaVersion: 6,
+        mules: [
+          {
+            id: 'a',
+            name: 'WhitespaceNotes',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [],
+            partySizes: {},
+            active: true,
+            notes: '   \n\t ',
+          },
+        ],
+      };
+      expect(muleMigrate(JSON.stringify(v6))[0].notes).toBeUndefined();
+    });
+
+    it('omits an empty-string notes on a v6 payload', () => {
+      const v6 = {
+        schemaVersion: 6,
+        mules: [
+          {
+            id: 'a',
+            name: 'EmptyNotes',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [],
+            partySizes: {},
+            active: true,
+            notes: '',
+          },
+        ],
+      };
+      expect(muleMigrate(JSON.stringify(v6))[0].notes).toBeUndefined();
+    });
+
+    it('omits a non-string notes on a v6 payload', () => {
+      const v6 = {
+        schemaVersion: 6,
+        mules: [
+          {
+            id: 'a',
+            name: 'BadNotes',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [],
+            partySizes: {},
+            active: true,
+            notes: 42,
+          },
+        ],
+      };
+      expect(muleMigrate(JSON.stringify(v6))[0].notes).toBeUndefined();
+    });
+
+    it('round-trips a canonical v6 payload (no notes)', () => {
+      const mules: Mule[] = [
+        {
+          id: 'a',
+          name: 'V6',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: [HARD_LUCID],
+          partySizes: {},
+          active: true,
+        },
+      ];
+      const raw = JSON.stringify({ schemaVersion: 6, mules });
+      expect(muleMigrate(raw)).toEqual(mules);
+    });
+
+    it('round-trips notes on a v6 payload', () => {
+      const mules: Mule[] = [
+        {
+          id: 'a',
+          name: 'V6',
+          level: 200,
+          muleClass: 'Hero',
+          selectedBosses: [HARD_LUCID],
+          partySizes: {},
+          active: true,
+          notes: 'main mule, owes legion levels',
+        },
+      ];
+      const raw = JSON.stringify({ schemaVersion: 6, mules });
+      const [mule] = muleMigrate(raw);
+      expect(mule.notes).toBe('main mule, owes legion levels');
+    });
+
+    it('treats v6 as asIs (mixed legacy + native keys → prune, not wipe)', () => {
+      // Distinguishes asIs from the wipe-mode fallback: under wipe, ANY
+      // legacy id triggers a full wipe of selectedBosses + partySizes.
+      // Under asIs, the legacy id drops silently and the native key
+      // survives (matches the v4 contract at line 299-315).
+      const v6 = {
+        schemaVersion: 6,
+        mules: [
+          {
+            id: 'a',
+            name: 'V6',
+            level: 200,
+            muleClass: 'Hero',
+            selectedBosses: [HARD_LUCID, 'hard-lucid'],
+            partySizes: { lucid: 3 },
+            active: true,
+          },
+        ],
+      };
+      const [mule] = muleMigrate(JSON.stringify(v6));
+      expect(mule.selectedBosses).toEqual([HARD_LUCID]);
+      // partySizes survive — they only get wiped under wipe mode.
+      expect(mule.partySizes).toEqual({ lucid: 3 });
     });
   });
 

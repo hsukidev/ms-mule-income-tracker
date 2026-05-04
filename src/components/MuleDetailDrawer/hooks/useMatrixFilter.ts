@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
+import type { BossCadence } from '../../../types';
 import type { MuleBossSlate, SlateFamily } from '../../../data/muleBossSlate';
 import type { CadenceFilter } from '../../MatrixToolbar';
+
+function activeCadenceOf(filter: CadenceFilter): BossCadence | undefined {
+  if (filter === 'Daily') return 'daily';
+  if (filter === 'Weekly') return 'weekly';
+  return undefined;
+}
 
 /**
  * Narrow `SlateFamily[]` to families whose rows include at least one row with
@@ -8,8 +15,8 @@ import type { CadenceFilter } from '../../MatrixToolbar';
  * filter composes with the search filter without reshaping slate internals.
  */
 function filterFamiliesByCadence(families: SlateFamily[], filter: CadenceFilter): SlateFamily[] {
-  if (filter === 'All') return families;
-  const cadence = filter === 'Weekly' ? 'weekly' : 'daily';
+  const cadence = activeCadenceOf(filter);
+  if (!cadence) return families;
   return families.filter((f) => f.rows.some((r) => r.cadence === cadence));
 }
 
@@ -36,6 +43,7 @@ export function useMatrixFilter({
   setSearch: (s: string) => void;
   filter: CadenceFilter;
   setFilter: (f: CadenceFilter) => void;
+  activeCadence: BossCadence | undefined;
   visibleBosses: SlateFamily[];
 } {
   const [search, setSearch] = useState('');
@@ -54,5 +62,12 @@ export function useMatrixFilter({
     [slate, search, filter],
   );
 
-  return { search, setSearch, filter, setFilter, visibleBosses };
+  return {
+    search,
+    setSearch,
+    filter,
+    setFilter,
+    activeCadence: activeCadenceOf(filter),
+    visibleBosses,
+  };
 }

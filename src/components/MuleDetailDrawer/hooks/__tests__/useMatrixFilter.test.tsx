@@ -116,6 +116,35 @@ describe('useMatrixFilter', () => {
     });
   });
 
+  describe('activeCadence (derived from filter)', () => {
+    it('is undefined when filter is All', () => {
+      const { result } = renderHook(() =>
+        useMatrixFilter({ muleId: 'mule-1', slate: makeSlate() }),
+      );
+      expect(result.current.activeCadence).toBeUndefined();
+    });
+
+    it('is "daily" when filter is Daily', () => {
+      const { result } = renderHook(() =>
+        useMatrixFilter({ muleId: 'mule-1', slate: makeSlate() }),
+      );
+      act(() => {
+        result.current.setFilter('Daily');
+      });
+      expect(result.current.activeCadence).toBe('daily');
+    });
+
+    it('is "weekly" when filter is Weekly', () => {
+      const { result } = renderHook(() =>
+        useMatrixFilter({ muleId: 'mule-1', slate: makeSlate() }),
+      );
+      act(() => {
+        result.current.setFilter('Weekly');
+      });
+      expect(result.current.activeCadence).toBe('weekly');
+    });
+  });
+
   describe('Mule Switch reset', () => {
     it('auto-resets search and filter on muleId change', () => {
       const { result, rerender } = renderHook(

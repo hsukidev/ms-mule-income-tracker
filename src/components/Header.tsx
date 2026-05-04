@@ -1,7 +1,6 @@
 import { Sun, Moon } from 'lucide-react';
 import { Link, useMatchRoute } from '@tanstack/react-router';
 import { useTheme } from '../context/ThemeProvider';
-import { WorldSelect } from './WorldSelect';
 import { BuyMeCoffeeButton } from './BuyMeCoffeeButton';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { navItems, type NavItem } from '../constants/navItems';
@@ -51,7 +50,6 @@ export function Header() {
             </nav>
           </div>
           <div className="flex items-center gap-5 max-[479.99px]:gap-2">
-            <WorldSelect />
             <button
               onClick={toggleTheme}
               className="flex size-8  items-center justify-center rounded-md transition-colors cursor-pointer"

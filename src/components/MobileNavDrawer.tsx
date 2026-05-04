@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { navItems, type NavItem } from '../constants/navItems';
+import { drawerNavItems, type NavItem } from '../constants/navItems';
 import logoUrl from '../assets/logo.svg';
 
 export function MobileNavDrawer() {
@@ -64,7 +64,7 @@ export function MobileNavDrawer() {
 
           <nav className="flex-1 overflow-y-auto px-2 py-2.5">
             <ul className="m-0 list-none p-0 flex flex-col gap-px">
-              {navItems.map((item) => (
+              {drawerNavItems.map((item) => (
                 <DrawerNavLink key={item.to} item={item} onNavigate={() => setOpen(false)} />
               ))}
             </ul>

@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import type { BossTier } from '../types';
+import { memo, useMemo } from 'react';
+import type { BossCadence, BossTier } from '../types';
 import type { SlateFamily, SlateKey, SlateRow } from '../data/muleBossSlate';
 import { formatMeso } from '../utils/meso';
 
@@ -22,8 +22,6 @@ const TIER_HEADER_LABEL: Record<BossTier, string> = {
   extreme: 'Extreme',
 };
 
-const GRID_TEMPLATE = 'max-content repeat(5, 1fr)';
-
 const STEPPER_BTN_CLASS =
   'grid place-items-center w-5 self-stretch text-sm leading-none text-[var(--muted-raw,var(--muted-foreground))] cursor-pointer hover:bg-[var(--surface-2)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -43,6 +41,8 @@ interface BossMatrixProps {
    * `false` (the existing `rounded-[10px]` treatment).
    */
   fusedTop?: boolean;
+  /** Drives Visible Tier collapse and Filtered-out Cell rendering; undefined = no filter. */
+  activeCadence?: BossCadence;
 }
 
 function TierHeader({ tier }: { tier: BossTier }) {
@@ -125,11 +125,15 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
   partySize,
   onToggleKey,
   onChangePartySize,
+  visibleTiers,
+  activeCadence,
 }: {
   family: SlateFamily;
   partySize: number;
   onToggleKey: (key: SlateKey) => void;
   onChangePartySize: (family: string, n: number) => void;
+  visibleTiers: BossTier[];
+  activeCadence?: BossCadence;
 }) {
   // Index rows by tier so we can render the 5-column grid even when the family
   // doesn't offer a tier (empty cell) or offers multiple cadences on one tier
@@ -140,7 +144,9 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
   // boss — opposite-cadence tiers stay fully clickable (slice 2).
   const selectedCadences = new Set(family.rows.filter((r) => r.selected).map((r) => r.cadence));
   const hasPartyableTier = family.rows.some(
-    (r) => r.cadence === 'weekly' || r.cadence === 'monthly',
+    (r) =>
+      (r.cadence === 'weekly' || r.cadence === 'monthly') &&
+      (!activeCadence || r.cadence === activeCadence),
   );
   const displayName = family.displayName;
   // Any row carries the bossId we need for stable test ids across cells.
@@ -173,9 +179,10 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
           </div>
         )}
       </div>
-      {MATRIX_TIER_COLUMNS.map((tier) => {
+      {visibleTiers.map((tier) => {
         const row = rowByTier.get(tier);
-        if (!row) {
+        const filteredOut = !!row && !!activeCadence && row.cadence !== activeCadence;
+        if (!row || filteredOut) {
           return (
             <div
               key={tier}
@@ -230,10 +237,26 @@ export const BossMatrix = memo(function BossMatrix({
   partySizes,
   onChangePartySize,
   fusedTop = false,
+  activeCadence,
 }: BossMatrixProps) {
   // When a search bar is fused above, the matrix drops its top border and
   // squares its top corners so the two elements visually share a border.
   const cornerClass = fusedTop ? 'rounded-t-none rounded-b-[10px] border-t-0' : 'rounded-[10px]';
+
+  // Memoized so the array identity is stable across renders that don't change
+  // `families` or `activeCadence` — preserves `FamilyMatrixRow`'s memo.
+  const visibleTiers = useMemo<BossTier[]>(
+    () =>
+      activeCadence
+        ? MATRIX_TIER_COLUMNS.filter((tier) =>
+            families.some((f) =>
+              f.rows.some((r) => r.tier === tier && r.cadence === activeCadence),
+            ),
+          )
+        : MATRIX_TIER_COLUMNS,
+    [families, activeCadence],
+  );
+  const gridTemplate = `max-content repeat(${visibleTiers.length}, 1fr)`;
 
   return (
     // overflow-clip (not hidden) — keeps sticky header attached to drawer scroll; narrow drawer trades sticky for horizontal scroll
@@ -243,7 +266,7 @@ export const BossMatrix = memo(function BossMatrix({
       <div
         role="table"
         className="grid @max-[500px]/drawer:min-w-[500px]"
-        style={{ gridTemplateColumns: GRID_TEMPLATE }}
+        style={{ gridTemplateColumns: gridTemplate }}
       >
         <div
           role="row"
@@ -255,7 +278,7 @@ export const BossMatrix = memo(function BossMatrix({
           >
             Bosses
           </div>
-          {MATRIX_TIER_COLUMNS.map((tier) => (
+          {visibleTiers.map((tier) => (
             <div
               key={tier}
               role="columnheader"
@@ -274,6 +297,8 @@ export const BossMatrix = memo(function BossMatrix({
             partySize={partySizes[family.family] ?? 1}
             onToggleKey={onToggleKey}
             onChangePartySize={onChangePartySize}
+            visibleTiers={visibleTiers}
+            activeCadence={activeCadence}
           />
         ))}
       </div>

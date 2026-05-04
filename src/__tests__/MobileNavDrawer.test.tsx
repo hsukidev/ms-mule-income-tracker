@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
 import { MobileNavDrawer } from '../components/MobileNavDrawer';
-import { navItems } from '../constants/navItems';
+import { drawerNavItems } from '../constants/navItems';
 
 // `<MobileNavDrawer />` is mounted in isolation, so the TanStack Router
 // `<Link>` it renders inside the drawer has no router context. Stub `Link`
@@ -62,16 +62,39 @@ describe('MobileNavDrawer', () => {
     await waitForOpenDrawer();
   });
 
-  it("drawer's nav items match the shared navItems constant", async () => {
+  it('renders a Home link pointing to "/"', async () => {
     render(<MobileNavDrawer />);
     openDrawer();
     const drawer = await waitForOpenDrawer();
 
-    expect(navItems.length).toBeGreaterThan(0);
-    const renderedLinks = Array.from(drawer.querySelectorAll('a'));
-    expect(renderedLinks).toHaveLength(navItems.length);
+    const homeLink = drawer.querySelector('a[href="/"]');
+    expect(homeLink).toBeTruthy();
+    expect(homeLink!.textContent).toContain('Home');
+  });
 
-    for (const item of navItems) {
+  it('closes when the Home link is clicked', async () => {
+    render(<MobileNavDrawer />);
+    openDrawer();
+    const drawer = await waitForOpenDrawer();
+
+    const homeLink = drawer.querySelector('a[href="/"]') as HTMLAnchorElement;
+    fireEvent.click(homeLink);
+
+    await waitFor(() => {
+      expect(queryDrawer()).toBeNull();
+    });
+  });
+
+  it("drawer's nav items match the drawerNavItems constant", async () => {
+    render(<MobileNavDrawer />);
+    openDrawer();
+    const drawer = await waitForOpenDrawer();
+
+    expect(drawerNavItems.length).toBeGreaterThan(0);
+    const renderedLinks = Array.from(drawer.querySelectorAll('a'));
+    expect(renderedLinks).toHaveLength(drawerNavItems.length);
+
+    for (const item of drawerNavItems) {
       const link = drawer.querySelector(`a[href="${item.to}"]`);
       expect(link).toBeTruthy();
       expect(link!.textContent).toContain(item.label);
@@ -83,7 +106,7 @@ describe('MobileNavDrawer', () => {
     openDrawer();
     const drawer = await waitForOpenDrawer();
 
-    const link = drawer.querySelector(`a[href="${navItems[0].to}"]`) as HTMLAnchorElement;
+    const link = drawer.querySelector(`a[href="${drawerNavItems[0].to}"]`) as HTMLAnchorElement;
     fireEvent.click(link);
 
     await waitFor(() => {

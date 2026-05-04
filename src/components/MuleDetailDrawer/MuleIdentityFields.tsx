@@ -6,16 +6,13 @@ import { GMS_CLASSES } from '../../constants/classes';
 import { MULE_NAME_MAX_LENGTH } from '../../utils/muleName';
 import type { useMuleIdentityDraft } from './hooks/useMuleIdentityDraft';
 import { CharacterLookupButton } from './CharacterLookupButton';
+import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from './fieldStyles';
 
 interface Props {
   mule: Mule;
   identity: ReturnType<typeof useMuleIdentityDraft>;
   onUpdate: (id: string, updates: Partial<Omit<Mule, 'id'>>) => void;
 }
-
-const FIELD_LABEL_CLASS = 'font-sans text-xs text-muted-foreground';
-const FIELD_INPUT_CLASS =
-  'bg-(--surface-2) border-border/60 focus-visible:border-(--accent-raw,var(--accent))/60 focus-visible:ring-1 focus-visible:ring-(--ring)/20 placeholder:opacity-60 placeholder:text-xs placeholder:italic';
 
 /**
  * Renders the identity Draft Field inputs. The drawer owns the

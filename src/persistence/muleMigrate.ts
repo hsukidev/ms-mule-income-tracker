@@ -12,7 +12,7 @@ import { isWorldId } from '../data/worlds';
  * returns `[]` (a **Wipe**).
  */
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 /**
  * Which migration path a given **Persisted Root** follows:
@@ -118,6 +118,13 @@ function validateMule(raw: unknown, mode: LoadMode): Mule | null {
     ...(typeof obj.avatarUrl === 'string' && obj.avatarUrl.length > 0
       ? { avatarUrl: obj.avatarUrl }
       : {}),
+    // `notes` lands in schemaVersion 6 as an additive optional field.
+    // Whitespace-only / non-string → omit so callers can rely on a single
+    // `mule.notes && mule.notes.length > 0` predicate (Has Notes) without
+    // a defensive trim. The hook already trim-commits, so well-formed
+    // payloads never carry leading/trailing whitespace; this guard
+    // protects against tampered storage.
+    ...(typeof obj.notes === 'string' && obj.notes.trim().length > 0 ? { notes: obj.notes } : {}),
   };
 }
 
@@ -150,7 +157,10 @@ function parsePayload(raw: string): { mules: unknown[]; mode: LoadMode } | null 
       const root = parsed as Partial<PersistedRoot>;
       if (Array.isArray(root.mules)) {
         const mode: LoadMode =
-          root.schemaVersion === 5 || root.schemaVersion === 4 || root.schemaVersion === 3
+          root.schemaVersion === 6 ||
+          root.schemaVersion === 5 ||
+          root.schemaVersion === 4 ||
+          root.schemaVersion === 3
             ? 'asIs'
             : root.schemaVersion === 2
               ? 'upgradeV2'
