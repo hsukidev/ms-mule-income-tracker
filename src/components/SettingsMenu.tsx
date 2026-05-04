@@ -11,12 +11,11 @@ import { DataManagementDialog } from './DataManagementDialog';
 type ActiveDialog = 'data-management' | null;
 
 export function SettingsMenu() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
 
   return (
     <>
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenu>
         <DropdownMenuTrigger
           className="flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer"
           style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
