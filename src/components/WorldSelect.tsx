@@ -27,12 +27,12 @@ export function WorldSelect() {
       <Select.Trigger
         aria-label="Select world"
         data-slot="world-select-trigger"
-        className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-border bg-(--surface-2) px-3.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground cursor-pointer transition-colors hover:border-(--panel-border-hover)"
+        className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] border border-border bg-(--surface) px-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground cursor-pointer transition-colors hover:border-(--panel-border-hover)"
       >
         {world ? (
-          <span>{world.label}</span>
+          <span className="relative top-px">{world.label}</span>
         ) : (
-          <span className="italic text-muted-foreground">Select world</span>
+          <span className="relative top-px italic text-muted-foreground">Select world</span>
         )}
         <ChevronDown size={14} aria-hidden="true" />
       </Select.Trigger>

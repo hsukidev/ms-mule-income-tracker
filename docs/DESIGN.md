@@ -69,20 +69,20 @@ Hex for the handoff layer (concrete, human-readable). `color-mix(in hsl, …)` i
 ## Typography
 
 - `--font-sans` / `--font-display`: **Geist Variable** with `ss01` and `cv11` OpenType features enabled on `<body>`, weight 500, letter-spacing `-0.005em`.
-- `--font-mono`: **JetBrains Mono Variable** — used for every number in the app (levels, meso values, party size).
+- `--font-mono`: **Geist Mono Variable** — used for every number in the app (levels, meso values, party size).
 - `.font-mono-nums` utility: monospace + `font-variant-numeric: tabular-nums` + `letter-spacing: -0.02em`. Apply to any stat that might change digit count.
 
 ### Type roles
 
-| Role                                 | Style                                                                                                             |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Hero number (`bignum`)               | JetBrains Mono, 58px / 500, `--accent-raw`, `text-shadow: 0 0 40px var(--accent-glow)`                            |
-| Section heading                      | Geist, 2xl bold, tracking-tight (`font-display`)                                                                  |
-| Body                                 | Geist 14–15px, 500                                                                                                |
-| Eyebrow (`eyebrow`, `eyebrow-plain`) | JetBrains Mono, 10px, uppercase, `letter-spacing: 0.14em`, muted — optionally prefixed with a 18×3px accent "dot" |
-| Drawer sub-label                     | Geist 10px, uppercase, `tracking-[0.26em]`, muted                                                                 |
-| Stat number (`KpiStat`)              | JetBrains Mono 22px                                                                                               |
-| Matrix cell value                    | JetBrains Mono 11px, tabular-nums                                                                                 |
+| Role                                 | Style                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Hero number (`bignum`)               | Geist Mono, 58px / 500, `--accent-raw`, `text-shadow: 0 0 40px var(--accent-glow)`                            |
+| Section heading                      | Geist, 2xl bold, tracking-tight (`font-display`)                                                              |
+| Body                                 | Geist 14–15px, 500                                                                                            |
+| Eyebrow (`eyebrow`, `eyebrow-plain`) | Geist Mono, 10px, uppercase, `letter-spacing: 0.14em`, muted — optionally prefixed with a 18×3px accent "dot" |
+| Drawer sub-label                     | Geist 10px, uppercase, `tracking-[0.26em]`, muted                                                             |
+| Stat number (`KpiStat`)              | Geist Mono 22px                                                                                               |
+| Matrix cell value                    | Geist Mono 11px, tabular-nums                                                                                 |
 
 ---
 
@@ -195,7 +195,7 @@ Sticky, translucent, blurred (`backdrop-blur 12px`, `sticky top-0 z-50`). 56px-t
 
 1. **Eyebrow row** — `EXPECTED WEEKLY INCOME` (with accent dot) on the left, **ResetCountdown** (`align="right"`) on the right.
 2. **Bignum row** — click-to-toggle `bignum` + italic "mesos" suffix. Below 375px the abbreviated value drops decimals (`504.32M` → `504M`) so "mesos" still fits. An off-screen probe at `width: max-content` measures whether the unabbreviated value would overflow; if it would, the local display falls back to abbreviated even when the user's **Format Preference** is full.
-3. **Stat row** — 4 cells side by side: `MULES` / `ACTIVE` (accent) / `WEEKLY` (purple crystal png) / `DAILY` (blue crystal png). Each uses `eyebrow-plain` label + JetBrains Mono 22px value.
+3. **Stat row** — 4 cells side by side: `MULES` / `ACTIVE` (accent) / `WEEKLY` (purple crystal png) / `DAILY` (blue crystal png). Each uses `eyebrow-plain` label + Geist Mono 22px value.
 4. **WeeklyCapRail** — bottom block, see below.
 
 Below 480px the eyebrow row stacks (countdown drops under the title) and the stat row reflows to a 2×2 grid. Both breakpoints driven by `useMatchMedia`.
@@ -349,7 +349,7 @@ Bottom-right notification stack using [sonner](https://sonner.emilkowal.ski/) `2
 - **Icon chip** — 26×26, `border-radius: 6px`, `--success-soft` background, `--success` foreground. Contains a **custom 14×14 check SVG** (`polyline 20 6 9 17 4 12`, stroke 2.5, rounded caps) — not the default Lucide icon sonner ships.
 - **Title** — 13px / weight 500, `tracking-tight`, leading 5.
 - **Description** — 12px, `text-muted-foreground`, leading 4. Single-delete: `"{Name} removed from roster"` (falls back to `"Mule removed from roster"` when the name is empty). Bulk: `"{N} mule(s) removed"` with correct pluralization.
-- **Action button (Undo)** — JetBrains Mono, 11px, weight 600, `letter-spacing: 0.12em`, uppercase, `color: var(--accent)`, transparent fill, `border-radius: 4px`, `padding: 4px 8px`. Hover: `background: var(--accent-soft)`. Mirrors the design's `.t-link`.
+- **Action button (Undo)** — Geist Mono, 11px, weight 600, `letter-spacing: 0.12em`, uppercase, `color: var(--accent)`, transparent fill, `border-radius: 4px`, `padding: 4px 8px`. Hover: `background: var(--accent-soft)`. Mirrors the design's `.t-link`.
 - **No close (X) button** — the 5-second auto-dismiss + Undo action is the entire UX.
 - **Dimensions & position** — Desktop (≥600px viewport): `--width: 380px` (set on `<Toaster>`, overrides sonner's 356px default). Below 600px: sonner's built-in responsive rule kicks in and sizes each toast to `calc(100% - mobile-offset * 2)` — we deliberately don't set a `min-width` on the shell so narrow phones don't force the toast past the right edge. Anchored `bottom-right`, `offset: 20`, `gap: 10` between stacked toasts. Auto-dismiss `duration: 5000ms` (long enough to reach for Undo).
 

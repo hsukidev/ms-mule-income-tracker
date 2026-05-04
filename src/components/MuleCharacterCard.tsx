@@ -80,13 +80,13 @@ const MuleCardInner = memo(function MuleCardInner({
         <div
           style={{
             position: 'absolute',
-            top: 8,
-            left: 8,
-            fontFamily: 'JetBrains Mono, monospace',
+            top: 12,
+            left: 12,
+            fontFamily: 'Geist Mono, monospace',
             fontSize: 10,
             letterSpacing: '0.1em',
             color: 'var(--muted-raw, var(--muted-foreground))',
-            padding: '2px 6px',
+            padding: '3px 8px',
             borderRadius: 4,
             border: '1px solid var(--border)',
             background: 'var(--surface-2, var(--surface-raised))',
@@ -135,8 +135,8 @@ const MuleCardInner = memo(function MuleCardInner({
           <span
             style={{
               color: 'var(--muted-raw, var(--muted-foreground))',
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 10,
+              fontFamily: 'Geist Mono, monospace',
+              fontSize: 11,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               overflow: 'hidden',
@@ -176,14 +176,15 @@ const MuleCardInner = memo(function MuleCardInner({
 
       <div
         className="flex flex-row items-center justify-between gap-2"
-        style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border)' }}
+        style={{ marginTop: 6, paddingTop: 8, borderTop: '1px solid var(--border)' }}
       >
         <span
           style={{
             color: 'var(--muted-raw, var(--muted-foreground))',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 10,
-            letterSpacing: '0.12em',
+            fontFamily: 'Geist Mono, monospace',
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
           }}
         >
           INCOME
@@ -192,7 +193,7 @@ const MuleCardInner = memo(function MuleCardInner({
           <span
             style={{
               color: incomeColor,
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: 'Geist Mono, monospace',
               fontSize: 13,
               fontWeight: 600,
               overflow: 'hidden',
@@ -327,6 +328,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         className="panel cursor-pointer"
         style={{
           padding: 'var(--card-pad, 16px)',
+          paddingBottom: 8,
           minHeight: ROSTER_CARD_MIN_HEIGHT,
           aspectRatio: ROSTER_CARD_ASPECT,
           display: 'flex',

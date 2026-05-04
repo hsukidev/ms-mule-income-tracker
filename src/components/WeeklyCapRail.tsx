@@ -25,10 +25,7 @@ export function WeeklyCapRail({ crystalTotal, cap }: WeeklyCapRailProps) {
         }}
       >
         <span className="eyebrow-plain">WEEKLY CAP</span>
-        <span
-          className="kpi-meta"
-          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}
-        >
+        <span className="kpi-meta" style={{ fontFamily: 'Geist Mono, monospace', fontSize: 13 }}>
           <span style={{ color: 'var(--accent-raw, var(--accent))', fontWeight: 600 }}>
             {clampedTotal}
           </span>

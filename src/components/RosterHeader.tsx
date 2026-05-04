@@ -79,7 +79,7 @@ export function RosterHeader({
                 background: destructiveAlpha(20),
                 border: `1px solid ${destructiveAlpha(40)}`,
                 color: destructive,
-                fontFamily: 'JetBrains Mono, monospace',
+                fontFamily: 'Geist Mono, monospace',
                 fontSize: 10,
                 letterSpacing: '0.12em',
                 fontWeight: 500,
@@ -147,7 +147,10 @@ export function RosterHeader({
       </div>
       <div className="flex items-center gap-3">
         {muleCount > 1 && (
-          <p className="eyebrow-plain hidden sm:block" style={{ opacity: 0.6 }}>
+          <p
+            className="eyebrow-plain hidden sm:block"
+            style={{ opacity: 0.6, fontSize: 12, lineHeight: 1 }}
+          >
             drag to reorder
           </p>
         )}

@@ -20,8 +20,12 @@ function formatReleaseDate(iso: string): string {
 function ChangelogPage() {
   const { markSeen } = useChangelogNotification();
   useEffect(() => {
+    const previousTitle = document.title;
     document.title = 'Changelog — YABI';
     markSeen();
+    return () => {
+      document.title = previousTitle;
+    };
   }, [markSeen]);
 
   return (

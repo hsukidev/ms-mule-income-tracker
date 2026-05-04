@@ -17,7 +17,7 @@ export function DensityToggle() {
         border: '1px solid var(--border)',
         borderRadius: 8,
         padding: 4,
-        background: 'var(--surface-2, var(--surface-raised))',
+        background: 'var(--surface)',
       }}
     >
       {OPTIONS.map((opt) => {
@@ -32,8 +32,8 @@ export function DensityToggle() {
             style={{
               padding: '4px 10px',
               borderRadius: 6,
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 10,
+              fontFamily: 'Geist Mono, monospace',
+              fontSize: 11,
               letterSpacing: '0.14em',
               fontWeight: 500,
               border: 'none',

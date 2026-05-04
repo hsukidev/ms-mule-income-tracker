@@ -48,6 +48,16 @@ describe('Changelog page', () => {
       expect(document.title).toBe('Changelog — YABI');
     });
   });
+
+  it('restores the previous document title when unmounted', async () => {
+    document.title = 'YABI — home';
+    const { unmount } = await renderApp({ initialPath: '/changelog' });
+    await waitFor(() => {
+      expect(document.title).toBe('Changelog — YABI');
+    });
+    unmount();
+    expect(document.title).toBe('YABI — home');
+  });
 });
 
 describe('section entrance animations', () => {

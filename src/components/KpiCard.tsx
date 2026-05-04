@@ -109,7 +109,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           style={{
             color: 'var(--muted-raw, var(--muted-foreground))',
             fontStyle: 'italic',
-            fontFamily: 'monospace',
+            fontFamily: 'Geist Mono, monospace',
           }}
         >
           mesos
@@ -130,7 +130,7 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
           }}
         >
           <span className="bignum">{fullFormatted}</span>
-          <span style={{ fontStyle: 'italic', fontFamily: 'monospace' }}>mesos</span>
+          <span style={{ fontStyle: 'italic', fontFamily: 'Geist Mono, monospace' }}>mesos</span>
         </div>
       </div>
       <div data-testid="kpi-stat-row" style={statRowStyle}>
@@ -161,8 +161,8 @@ function KpiStat({ label, value, accent }: { label: string; value: string; accen
       <div
         style={{
           color: accent ? 'var(--accent-raw, var(--accent))' : 'var(--text, var(--foreground))',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 30,
+          fontFamily: 'Geist Mono, monospace',
+          fontSize: 31,
           marginTop: 6,
         }}
       >
@@ -187,8 +187,8 @@ function CrystalKpiStat({ icon, label, value }: { icon: string; label: string; v
       <div
         style={{
           color: 'var(--text, var(--foreground))',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 30,
+          fontFamily: 'Geist Mono, monospace',
+          fontSize: 31,
           marginTop: 6,
         }}
       >

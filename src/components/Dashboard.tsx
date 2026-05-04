@@ -208,6 +208,8 @@ export function Dashboard() {
             onDelete={handleBulkDelete}
           />
 
+          <div className="mb-4 border-t border-border" aria-hidden />
+
           <DndContext
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}

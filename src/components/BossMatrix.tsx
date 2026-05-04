@@ -85,7 +85,7 @@ function PartyStepper({
 
   return (
     <div data-testid={`party-stepper-${family}`} className="inline-flex items-center gap-1.5">
-      <span className="font-mono-nums text-[9px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground)) @max-[599.99px]/drawer:hidden">
+      <span className="font-mono-nums text-[10px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground)) @max-[599.99px]/drawer:hidden">
         Party
       </span>
       <div
@@ -172,7 +172,7 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
           />
         ) : (
           <div
-            className="inline-flex items-center font-mono-nums text-[9px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground))"
+            className="inline-flex items-center font-mono-nums text-[10px] uppercase tracking-widest text-(--muted-raw,var(--muted-foreground))"
             style={{ height: 20 }}
           >
             Solo
@@ -189,7 +189,7 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
               role="cell"
               data-testid={`matrix-cell-${bossId}-${tier}`}
               aria-disabled="true"
-              className="grid place-items-center py-[10px] px-1 border-r border-(--border) last:border-r-0 font-mono-nums text-[11px] text-(--muted-raw,var(--muted-foreground))"
+              className="grid place-items-center py-[10px] px-1 border-r border-(--border) last:border-r-0 font-mono-nums text-[12px] text-(--muted-raw,var(--muted-foreground))"
               style={{ cursor: 'default' }}
             >
               <span style={{ opacity: 0.3 }}>—</span>
@@ -214,7 +214,7 @@ const FamilyMatrixRow = memo(function FamilyMatrixRow({
             data-dim={isDim ? 'true' : undefined}
             onClick={() => onToggleKey(row.key)}
             className={[
-              'grid place-items-center py-[10px] px-1 border-r border-[var(--border)] last:border-r-0 font-mono-nums text-[11px] tabular-nums cursor-pointer transition-colors',
+              'grid place-items-center py-[10px] px-1 border-r border-[var(--border)] last:border-r-0 font-mono-nums text-[12px] tabular-nums cursor-pointer transition-colors',
               isSelected
                 ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
                 : 'text-[var(--muted-raw,var(--muted-foreground))] hover:bg-[var(--surface-2)] hover:text-[var(--text,var(--foreground))]',

@@ -41,11 +41,11 @@ export const MuleNotesField = memo(function MuleNotesField({ mule, onUpdate }: P
           onBlur={notes.onBlur}
           maxLength={MULE_NOTES_MAX_LENGTH}
           rows={3}
-          className={`${FIELD_INPUT_CLASS} min-h-[88px] max-h-[220px] resize-y pointer-coarse:resize-none pb-6 font-mono text-[13px]`}
+          className={`${FIELD_INPUT_CLASS} min-h-[88px] max-h-[220px] resize-y pointer-coarse:resize-none pb-6 placeholder:text-[13px]`}
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute right-4 bottom-1.5 select-none font-mono-nums text-[10px] tracking-[0.06em] text-muted-foreground/70"
+          className="pointer-events-none absolute right-4 bottom-1.5 select-none font-mono-nums text-[12px] tracking-[0.06em] text-muted-foreground/70"
           data-testid="notes-character-counter"
         >
           {notes.draft.length} / {MULE_NOTES_MAX_LENGTH}
