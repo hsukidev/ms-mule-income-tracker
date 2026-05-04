@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import {
+  buildExport,
   decodeImport,
   summarizeImport,
   type ExportEnvelope,
@@ -68,6 +69,12 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
             />
           </div>
         )}
+        {screen === 'export' && (
+          <ExportScreen
+            onBack={() => setScreen('chooser')}
+            onDone={() => handleOpenChange(false)}
+          />
+        )}
         {screen === 'import' && (
           <ImportPasteScreen
             code={importCode}
@@ -114,6 +121,80 @@ function ChooserRow({ icon, label, description, onClick }: ChooserRowProps) {
         <span className="text-sm text-muted-foreground">{description}</span>
       </span>
     </button>
+  );
+}
+
+type CopyState = 'idle' | 'copied' | 'failed';
+
+const COPY_LABELS: Record<CopyState, string> = {
+  idle: 'Copy',
+  copied: 'Copied!',
+  failed: 'Copy failed',
+};
+
+interface ExportScreenProps {
+  onBack: () => void;
+  onDone: () => void;
+}
+
+function ExportScreen({ onBack, onDone }: ExportScreenProps) {
+  const [code] = useState(buildExport);
+  const [copyState, setCopyState] = useState<CopyState>('idle');
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Re-arm on every Copy click — clicking while in 'copied' (or 'failed')
+  // resets the 3000ms timer rather than disabling the button.
+  const armRevertTimer = () => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setCopyState('idle');
+      timerRef.current = null;
+    }, 3000);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopyState('copied');
+    } catch {
+      setCopyState('failed');
+      textareaRef.current?.select();
+    }
+    armRevertTimer();
+  };
+
+  const selectAll = () => textareaRef.current?.select();
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        ref={textareaRef}
+        value={code}
+        readOnly
+        rows={6}
+        className="font-mono text-xs"
+        onFocus={selectAll}
+        onClick={selectAll}
+      />
+      <div className="mt-2 flex justify-between gap-2">
+        <Button variant="ghost" onClick={onBack}>
+          Back
+        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleCopy}>
+            {COPY_LABELS[copyState]}
+          </Button>
+          <Button onClick={onDone}>Done</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
