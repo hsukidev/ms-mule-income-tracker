@@ -14,18 +14,6 @@ const sonnerMock = vi.hoisted(() => ({
 
 vi.mock('sonner', () => sonnerMock);
 
-const dataTransferMock = vi.hoisted(() => ({
-  applyImport: vi.fn(),
-}));
-
-vi.mock('../../lib/dataTransfer', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../lib/dataTransfer')>();
-  return {
-    ...actual,
-    applyImport: dataTransferMock.applyImport,
-  };
-});
-
 import { DataManagementDialog } from '../DataManagementDialog';
 
 const TRACKER_KEY = 'maplestory-mule-tracker';
@@ -256,10 +244,7 @@ describe('DataManagementDialog (Replace and reload)', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    dataTransferMock.applyImport.mockReset();
     sonnerMock.toast.error.mockClear();
-    sonnerMock.toast.success.mockClear();
-    sonnerMock.toast.getToasts.mockReset();
     sonnerMock.toast.getToasts.mockReturnValue([]);
     reloadSpy = vi.fn();
     Object.defineProperty(window, 'location', {
@@ -293,28 +278,28 @@ describe('DataManagementDialog (Replace and reload)', () => {
     });
   }
 
-  it('calls applyImport with the decoded payload and reloads on success', async () => {
-    dataTransferMock.applyImport.mockReturnValue({ ok: true });
+  it('writes imported data to localStorage and reloads on success', async () => {
     await openConfirmWith(makeValidCode({ [WORLD_KEY]: 'heroic-kronos' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Replace and reload' }));
 
-    expect(dataTransferMock.applyImport).toHaveBeenCalledTimes(1);
-    const passedPayload = dataTransferMock.applyImport.mock.calls[0]![0] as {
-      app: string;
-      data: Record<string, string>;
-    };
-    expect(passedPayload.app).toBe('yabi');
-    expect(passedPayload.data[WORLD_KEY]).toBe('heroic-kronos');
+    expect(localStorage.getItem(WORLD_KEY)).toBe('heroic-kronos');
     expect(reloadSpy).toHaveBeenCalledTimes(1);
     expect(sonnerMock.toast.error).not.toHaveBeenCalled();
   });
 
   it('on apply failure: shows the error toast, does not reload, and stays on confirm screen', async () => {
-    dataTransferMock.applyImport.mockReturnValue({ ok: false });
     await openConfirmWith(makeValidCode());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Replace and reload' }));
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError');
+    });
+
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Replace and reload' }));
+    } finally {
+      setItemSpy.mockRestore();
+    }
 
     expect(reloadSpy).not.toHaveBeenCalled();
     expect(sonnerMock.toast.error).toHaveBeenCalledTimes(1);
