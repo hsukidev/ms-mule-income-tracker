@@ -117,4 +117,4 @@ See [docs/RELEASING.md](./docs/RELEASING.md) for the full workflow and the `patc
 | `src/components/WorldSelect.tsx`       | Roster world picker                              |
 | `worker/src/worker.ts`                 | Cloudflare Worker character-lookup endpoint      |
 
-See [Design.md](./docs/Design.md) for the visual system and [UBIQUITOUS_LANGUAGE.md](./docs/UBIQUITOUS_LANGUAGE.md) for canonical domain terms.
+See [Design.md](./docs/Design.md) for the visual system, [CONTEXT.md](./docs/CONTEXT.md) for canonical domain language, and [GLOSSARY.md](./docs/GLOSSARY.md) for the full engineering reference.

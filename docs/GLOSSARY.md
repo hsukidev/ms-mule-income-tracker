@@ -1,4 +1,6 @@
-# Ubiquitous Language
+# Engineering Glossary
+
+> The player-facing domain language lives in [CONTEXT.md](./CONTEXT.md). This file is the full engineering reference — every term in the codebase, including hooks, persistence, UI mechanics, and gesture internals. Reach for **CONTEXT.md** when reasoning about the domain; reach for this file when navigating the implementation.
 
 ## Boss Content
 
