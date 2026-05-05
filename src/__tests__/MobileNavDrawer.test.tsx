@@ -15,18 +15,23 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
       to,
       children,
       onClick,
-      ...rest
+      className,
+      style,
     }: {
       to: string;
       children: React.ReactNode;
-    } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+      className?: string;
+      style?: React.CSSProperties;
+    }) => (
       <a
         href={to}
         onClick={(e) => {
           e.preventDefault();
           onClick?.(e);
         }}
-        {...rest}
+        className={className}
+        style={style}
       >
         {children}
       </a>

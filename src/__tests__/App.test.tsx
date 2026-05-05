@@ -387,7 +387,10 @@ describe('App', () => {
       });
     });
 
-    it('keeps selectedMuleId when a different mule is deleted', async () => {
+    // Three drawer open/close cycles, each rendering MuleDetailDrawer + the
+    // boss matrix. ~1.5s in isolation, but the default 5s budget is tight
+    // under parallel load. Bump it rather than thinning the test.
+    it('keeps selectedMuleId when a different mule is deleted', { timeout: 15000 }, async () => {
       const mules: Mule[] = [
         {
           id: 'mule-a',
@@ -412,7 +415,9 @@ describe('App', () => {
       await renderApp();
 
       fireEvent.click(screen.getByText('KeepMe'));
-      expect(screen.getByRole('heading', { name: 'KeepMe' })).toBeTruthy();
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'KeepMe' })).toBeTruthy();
+      });
 
       const overlay = document.querySelector('[data-slot="sheet-overlay"]')!;
       fireEvent.click(overlay);
@@ -421,7 +426,9 @@ describe('App', () => {
       });
 
       fireEvent.click(screen.getByText('DeleteMe'));
-      expect(screen.getByRole('heading', { name: 'DeleteMe' })).toBeTruthy();
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'DeleteMe' })).toBeTruthy();
+      });
 
       fireEvent.click(screen.getByRole('button', { name: /delete/i }));
       fireEvent.click(screen.getByRole('button', { name: /yes/i }));
