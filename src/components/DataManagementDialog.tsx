@@ -70,13 +70,13 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
             <ChooserRow
               icon={<Download size={20} />}
               label="Export Data"
-              description="Generate user data transfer code"
+              description="Generate transfer code"
               onClick={() => setScreen('export')}
             />
             <ChooserRow
               icon={<Upload size={20} />}
               label="Import Data"
-              description="Paste user data transfer code"
+              description="Paste transfer code"
               onClick={() => setScreen('import')}
             />
           </div>

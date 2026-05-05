@@ -65,9 +65,9 @@ describe('DataManagementDialog (chooser screen)', () => {
       expect(screen.getByText('Data Management')).toBeTruthy();
     });
     expect(screen.getByText('Export Data')).toBeTruthy();
-    expect(screen.getByText('Generate user data transfer code')).toBeTruthy();
+    expect(screen.getByText('Generate transfer code')).toBeTruthy();
     expect(screen.getByText('Import Data')).toBeTruthy();
-    expect(screen.getByText('Paste user data transfer code')).toBeTruthy();
+    expect(screen.getByText('Paste transfer code')).toBeTruthy();
   });
 
   it('clicking Export advances internal state (chooser content goes away)', async () => {
@@ -77,7 +77,7 @@ describe('DataManagementDialog (chooser screen)', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Export Data/ }));
     await waitFor(() => {
-      expect(screen.queryByText('Generate user data transfer code')).toBeNull();
+      expect(screen.queryByText('Generate transfer code')).toBeNull();
     });
   });
 
@@ -88,7 +88,7 @@ describe('DataManagementDialog (chooser screen)', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Import Data/ }));
     await waitFor(() => {
-      expect(screen.queryByText('Paste user data transfer code')).toBeNull();
+      expect(screen.queryByText('Paste transfer code')).toBeNull();
     });
   });
 
@@ -135,7 +135,7 @@ describe('DataManagementDialog (import paste screen)', () => {
     await openImport();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     await waitFor(() => {
-      expect(screen.getByText('Generate user data transfer code')).toBeTruthy();
+      expect(screen.getByText('Generate transfer code')).toBeTruthy();
     });
   });
 
@@ -504,7 +504,7 @@ describe('DataManagementDialog (export screen)', () => {
     await openExport();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() => {
-      expect(screen.getByText('Generate user data transfer code')).toBeTruthy();
+      expect(screen.getByText('Generate transfer code')).toBeTruthy();
     });
   });
 });
