@@ -9,6 +9,7 @@ YABI uses a lightweight per-PR changeset workflow that rolls up into a new entry
    ```markdown
    ---
    bump: minor
+   category: feature
    ---
 
    Add dark mode toggle to the settings page.
@@ -35,6 +36,16 @@ Versions here are **communicative** — they tell users how big a release is. Th
 - **`patch`** — Things that worked yesterday work better today. Bug fixes, copy tweaks, small visual polish, performance, accessibility fixes.
 - **No changeset** — Internal-only changes (refactors, dependency bumps, build tooling, test improvements). They don't appear on the user-facing changelog.
 
+## When to use `feature`, `ui`, `fix`
+
+`category` controls which section the bullet renders under on `/changelog` (Features → UI Enhancements → Bug Fixes). It's **independent** of `bump` — a small UI tweak is `bump: patch, category: ui`; a bug fix that's also a behavior change might be `bump: minor, category: fix`.
+
+- **`feature`** — A new capability the user didn't have before. New page, new toggle, new data model field, new export.
+- **`ui`** — Existing functionality, but the UI is now better/clearer/more polished. Re-positioning, visual tweaks, additive nav affordances, improved layouts.
+- **`fix`** — Something was broken or behaving wrong; this corrects it. Includes restoring a regression.
+
+Rule of thumb: if the user could already do this thing, but it now looks/feels better → `ui`. If the user couldn't do it before → `feature`. If the user _thought_ they could do it but it didn't actually work → `fix`.
+
 The release version is the **max** of all pending bumps:
 
 | Pending changesets         | Result            |
@@ -52,13 +63,14 @@ The release version is the **max** of all pending bumps:
 ```markdown
 ---
 bump: patch
+category: fix
 ---
 
 One-line summary of the change. Becomes a bullet on the changelog page.
 ```
 
-- **Filename** is just for human readability. Has no semantic meaning, but bullets in the rendered release are sorted by filename — prefix with `01-`, `02-`, etc. if you want a specific order.
-- **Frontmatter** has exactly one field, `bump`.
+- **Filename** is just for human readability. Has no semantic meaning, but bullets within a category section are ordered by filename — prefix with `01-`, `02-`, etc. if you care about ordering.
+- **Frontmatter** has two fields, both required: `bump` and `category`.
 - **Body** is one line. Multiple lines in the body get joined with spaces.
 
 ## What `pnpm release` does

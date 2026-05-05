@@ -1,38 +1,73 @@
+export type ChangeCategory = 'feature' | 'ui' | 'fix';
+
+export type Change = {
+  category: ChangeCategory;
+  text: string;
+};
+
 export type Release = {
   date: string;
   version: string;
   headline?: string;
-  changes: string[];
+  changes: Change[];
 };
+
+export const CATEGORY_META: Record<ChangeCategory, { label: string; order: number }> = {
+  feature: { label: 'Features', order: 0 },
+  ui: { label: 'UI Enhancements', order: 1 },
+  fix: { label: 'Bug Fixes', order: 2 },
+};
+
+export const ORDERED_CATEGORIES: ChangeCategory[] = (
+  Object.keys(CATEGORY_META) as ChangeCategory[]
+).sort((a, b) => CATEGORY_META[a].order - CATEGORY_META[b].order);
 
 export const releases: Release[] = [
   {
     date: '2026-05-05',
     version: '1.2.0',
     changes: [
-      'Hide opposite cadence cells when a filter is selected (e.g. hide weekly cells when daily filter selected)',
-      'Hide Extreme difficulty when daily filter is selected',
-      'Restore the browser tab title when navigating away from the changelog page',
-      'Re-position density toggle',
-      'Add "Home" navitem for narrow screen nav drawer',
-      'Users can now import/export their data via Settings > Data Management',
-      'Users can now add notes for each mule in the details drawer',
-      'Re-position world select dropdown',
+      {
+        category: 'ui',
+        text: 'Hide opposite cadence cells when a filter is selected (e.g. hide weekly cells when daily filter selected)',
+      },
+      { category: 'ui', text: 'Hide Extreme difficulty when daily filter is selected' },
+      {
+        category: 'fix',
+        text: 'Restore the browser tab title when navigating away from the changelog page',
+      },
+      { category: 'ui', text: 'Add "Home" navitem for narrow screen nav drawer' },
+      {
+        category: 'feature',
+        text: 'Users can now import/export their data via Settings > Data Management',
+      },
+      { category: 'feature', text: 'Users can now add notes for each mule in the details drawer' },
+      { category: 'ui', text: 'Re-position density toggle' },
+      { category: 'ui', text: 'Re-position world select dropdown' },
     ],
   },
   {
     date: '2026-05-03',
     version: '1.1.0',
     changes: [
-      'Enforce weekly crystal cap to calculate top 180 crystal prices only',
-      'Drop lowest value bosses to retain 180 cap. Shown in info icon tooltip next to mule income',
-      'Restore sticky boss-difficulty header on the matrix at normal drawer widths',
+      {
+        category: 'feature',
+        text: 'Enforce weekly crystal cap to calculate top 180 crystal prices only',
+      },
+      {
+        category: 'feature',
+        text: 'Drop lowest value bosses to retain 180 cap. Shown in info icon tooltip next to mule income',
+      },
+      {
+        category: 'fix',
+        text: 'Restore sticky boss-difficulty header on the matrix at normal drawer widths',
+      },
     ],
   },
   {
     date: '2026-04-29',
     version: '1.0.0',
     headline: 'Client-side routing arrives, plus a dedicated changelog page',
-    changes: ['Initial release'],
+    changes: [{ category: 'feature', text: 'Initial release' }],
   },
 ];

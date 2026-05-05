@@ -1,7 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Calendar } from 'lucide-react';
 import { useEffect } from 'react';
-import { releases, type Release } from '../data/changelog';
+import {
+  CATEGORY_META,
+  ORDERED_CATEGORIES,
+  releases,
+  type Change,
+  type ChangeCategory,
+  type Release,
+} from '../data/changelog';
 import { useChangelogNotification } from '../hooks/useChangelogNotification';
 
 export const Route = createFileRoute('/changelog')({
@@ -15,6 +22,12 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 function formatReleaseDate(iso: string): string {
   return dateFormatter.format(new Date(`${iso}T00:00:00Z`));
+}
+
+function groupChanges(changes: Change[]): Record<ChangeCategory, Change[]> {
+  const grouped: Record<ChangeCategory, Change[]> = { feature: [], ui: [], fix: [] };
+  for (const change of changes) grouped[change.category].push(change);
+  return grouped;
 }
 
 function ChangelogPage() {
@@ -54,6 +67,8 @@ function ChangelogPage() {
 }
 
 function ReleaseCard({ release }: { release: Release }) {
+  const grouped = groupChanges(release.changes);
+
   return (
     <article
       className="rounded-2xl p-6"
@@ -72,13 +87,29 @@ function ReleaseCard({ release }: { release: Release }) {
         </div>
         <code className="rounded-full px-2 py-0.5 text-xs font-mono">v{release.version}</code>
       </div>
-      <ul className="mt-4 list-disc pl-5 flex flex-col gap-2">
-        {release.changes.map((change, idx) => (
-          <li key={idx} style={{ color: 'var(--text, var(--foreground))' }}>
-            {change}
-          </li>
-        ))}
-      </ul>
+
+      {ORDERED_CATEGORIES.map((category) => {
+        const items = grouped[category];
+        if (items.length === 0) return null;
+        const meta = CATEGORY_META[category];
+        return (
+          <section key={category} className="mt-4">
+            <h3
+              className="text-lg uppercase tracking-wide font-medium"
+              style={{ color: 'var(--accent-primary)' }}
+            >
+              {meta.label}
+            </h3>
+            <ul className="mt-2 list-disc pl-5 flex flex-col gap-2">
+              {items.map((item, idx) => (
+                <li key={idx} style={{ color: 'var(--text, var(--foreground))' }}>
+                  {item.text}
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </article>
   );
 }

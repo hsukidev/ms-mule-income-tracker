@@ -18,7 +18,10 @@ const packageJsonPath = join(repoRoot, 'package.json');
 type Bump = 'patch' | 'minor' | 'major';
 const BUMP_RANK: Record<Bump, number> = { patch: 0, minor: 1, major: 2 };
 
-type Changeset = { file: string; bump: Bump; summary: string };
+type Category = 'feature' | 'ui' | 'fix';
+const CATEGORIES: readonly Category[] = ['feature', 'ui', 'fix'];
+
+type Changeset = { file: string; bump: Bump; category: Category; summary: string };
 
 async function main(): Promise<void> {
   assertWorkingTreeClean();
@@ -38,7 +41,7 @@ async function main(): Promise<void> {
 
   console.log(`\nFound ${changesets.length} pending changeset${plural(changesets.length)}:`);
   for (const cs of changesets) {
-    console.log(`  [${cs.bump}] ${cs.summary}`);
+    console.log(`  [${cs.bump}/${cs.category}] ${cs.summary}`);
   }
   console.log();
   console.log(`Current version:   ${currentVersion}`);
@@ -145,15 +148,26 @@ async function loadChangesets(): Promise<Changeset[]> {
   return results;
 }
 
-function parseChangeset(raw: string, filename: string): { bump: Bump; summary: string } {
+function parseChangeset(
+  raw: string,
+  filename: string,
+): { bump: Bump; category: Category; summary: string } {
   const match = raw.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n([\s\S]*)$/);
   if (!match) {
-    throw new Error(`${filename}: missing frontmatter (--- bump: x ---)`);
+    throw new Error(`${filename}: missing frontmatter (--- bump: x category: y ---)`);
   }
   const [, frontmatter, body] = match;
   const bumpMatch = frontmatter.match(/^bump:\s*(patch|minor|major)\s*$/m);
   if (!bumpMatch) {
     throw new Error(`${filename}: frontmatter must have "bump: patch|minor|major"`);
+  }
+  const categoryMatch = frontmatter.match(/^category:\s*(\S+)\s*$/m);
+  if (!categoryMatch) {
+    throw new Error(`${filename}: frontmatter must have "category: feature|ui|fix"`);
+  }
+  const category = categoryMatch[1] as Category;
+  if (!CATEGORIES.includes(category)) {
+    throw new Error(`${filename}: invalid category "${category}" (expected feature|ui|fix)`);
   }
   const summary = body
     .trim()
@@ -164,7 +178,7 @@ function parseChangeset(raw: string, filename: string): { bump: Bump; summary: s
   if (!summary) {
     throw new Error(`${filename}: body is empty (must have a one-line summary)`);
   }
-  return { bump: bumpMatch[1] as Bump, summary };
+  return { bump: bumpMatch[1] as Bump, category, summary };
 }
 
 async function readCurrentVersion(): Promise<string> {
@@ -211,11 +225,14 @@ async function writeChangelog(
     lines.push(`    headline: '${escapeSingle(headline)}',`);
   }
   if (changesets.length === 1) {
-    lines.push(`    changes: ['${escapeSingle(changesets[0].summary)}'],`);
+    const cs = changesets[0];
+    lines.push(
+      `    changes: [{ category: '${cs.category}', text: '${escapeSingle(cs.summary)}' }],`,
+    );
   } else {
     lines.push('    changes: [');
     for (const cs of changesets) {
-      lines.push(`      '${escapeSingle(cs.summary)}',`);
+      lines.push(`      { category: '${cs.category}', text: '${escapeSingle(cs.summary)}' },`);
     }
     lines.push('    ],');
   }
