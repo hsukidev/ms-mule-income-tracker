@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { compressToEncodedURIComponent } from 'lz-string';
-import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
+import { render, screen, fireEvent, waitFor, act } from '@/test/test-utils';
 
 const sonnerMock = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), {
@@ -310,5 +310,201 @@ describe('DataManagementDialog (Replace and reload)', () => {
     // Still on the confirm screen.
     expect(screen.getByText('Replace your data?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Replace and reload' })).toBeTruthy();
+  });
+});
+
+describe('DataManagementDialog (export screen)', () => {
+  let writeText: ReturnType<typeof vi.fn>;
+  let originalClipboard: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    localStorage.clear();
+    writeText = vi.fn(() => Promise.resolve());
+    originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+  });
+
+  afterEach(() => {
+    if (originalClipboard) {
+      Object.defineProperty(navigator, 'clipboard', originalClipboard);
+    } else {
+      // @ts-expect-error - jsdom does not ship with a clipboard
+      delete (navigator as Navigator).clipboard;
+    }
+    vi.useRealTimers();
+  });
+
+  async function openExport() {
+    render(<DataManagementDialog open={true} onOpenChange={() => {}} />);
+    await waitFor(() => {
+      expect(screen.getByText('Export Data')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Export Data/ }));
+    await waitFor(() => {
+      expect(screen.getByRole('textbox')).toBeTruthy();
+    });
+  }
+
+  it('renders a read-only textarea pre-filled with a buildExport() code', async () => {
+    localStorage.setItem(TRACKER_KEY, trackerBlob([{ id: 'a', worldId: 'heroic-kronos' }]));
+    localStorage.setItem(WORLD_KEY, 'heroic-kronos');
+    localStorage.setItem(CHANGELOG_KEY, 'v1.0.0');
+    await openExport();
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.readOnly).toBe(true);
+    expect(textarea.value.length).toBeGreaterThan(0);
+    const decompressed = decompressFromEncodedURIComponent(textarea.value);
+    expect(decompressed).toBeTruthy();
+    const parsed = JSON.parse(decompressed!) as { app: string; data: Record<string, string> };
+    expect(parsed.app).toBe('yabi');
+    expect(parsed.data[TRACKER_KEY]).toContain('heroic-kronos');
+    expect(parsed.data[WORLD_KEY]).toBe('heroic-kronos');
+  });
+
+  it('does not regenerate the code on re-render', async () => {
+    await openExport();
+    const first = (screen.getByRole('textbox') as HTMLTextAreaElement).value;
+    // Force a re-render path: click the textarea — should not change the value.
+    fireEvent.click(screen.getByRole('textbox'));
+    fireEvent.focus(screen.getByRole('textbox'));
+    const second = (screen.getByRole('textbox') as HTMLTextAreaElement).value;
+    expect(second).toBe(first);
+  });
+
+  it('selects all on focus', async () => {
+    await openExport();
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const selectSpy = vi.spyOn(textarea, 'select');
+    fireEvent.focus(textarea);
+    expect(selectSpy).toHaveBeenCalled();
+  });
+
+  it('selects all on click', async () => {
+    await openExport();
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const selectSpy = vi.spyOn(textarea, 'select');
+    fireEvent.click(textarea);
+    expect(selectSpy).toHaveBeenCalled();
+  });
+
+  it('shows a Copy button initially labelled "Copy"', async () => {
+    await openExport();
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+  });
+
+  it('clicking Copy writes the code to the clipboard and toggles label to "Copied!"', async () => {
+    await openExport();
+    const code = (screen.getByRole('textbox') as HTMLTextAreaElement).value;
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(code);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    });
+  });
+
+  it('reverts label back to "Copy" 3000ms after a successful copy', async () => {
+    await openExport();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    // Flush the writeText microtask without using waitFor (which doesn't
+    // play well with non-auto-advancing fake timers in this setup).
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+  });
+
+  it('re-clicking while showing "Copied!" stays on "Copied!" and resets the 3000ms timer', async () => {
+    await openExport();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    // Re-click while still in Copied! state — button must NOT be disabled.
+    const copiedBtn = screen.getByRole('button', { name: 'Copied!' });
+    expect((copiedBtn as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(copiedBtn);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    // 2000ms more puts us at the *original* 4000ms — but the timer was reset
+    // by the second click, so the label must still read "Copied!".
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    // Now advance another 1000ms (3000ms after the second click) — label reverts.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+  });
+
+  it('shows "Copy failed" and selects the textarea when writeText rejects', async () => {
+    writeText.mockImplementationOnce(() => Promise.reject(new Error('insecure context')));
+    await openExport();
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const selectSpy = vi.spyOn(textarea, 'select');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Copy failed' })).toBeTruthy();
+    });
+    expect(selectSpy).toHaveBeenCalled();
+  });
+
+  it('"Copy failed" reverts to "Copy" after 3000ms', async () => {
+    writeText.mockImplementationOnce(() => Promise.reject(new Error('insecure context')));
+    await openExport();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('button', { name: 'Copy failed' })).toBeTruthy();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
+  });
+
+  it('Done closes the dialog (calls onOpenChange(false))', async () => {
+    const onOpenChange = vi.fn();
+    render(<DataManagementDialog open={true} onOpenChange={onOpenChange} />);
+    await waitFor(() => {
+      expect(screen.getByText('Export Data')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Export Data/ }));
+    await waitFor(() => {
+      expect(screen.getByRole('textbox')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await waitFor(() => {
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('Back returns to the chooser screen', async () => {
+    await openExport();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await waitFor(() => {
+      expect(screen.getByText('Generate user data transfer code')).toBeTruthy();
+    });
   });
 });
