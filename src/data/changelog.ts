@@ -7,6 +7,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    date: '2026-05-05',
+    version: '1.2.0',
+    changes: [
+      'Hide opposite cadence cells when a filter is selected (e.g. hide weekly cells when daily filter selected)',
+      'Hide Extreme difficulty when daily filter is selected',
+      'Restore the browser tab title when navigating away from the changelog page',
+      'Re-position density toggle',
+      'Add "Home" navitem for narrow screen nav drawer',
+      'Users can now import/export their data via Settings > Data Management',
+      'Users can now add notes for each mule in the details drawer',
+      'Re-position world select dropdown',
+    ],
+  },
+  {
     date: '2026-05-03',
     version: '1.1.0',
     changes: [
