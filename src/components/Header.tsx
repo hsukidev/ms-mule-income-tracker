@@ -51,15 +51,17 @@ export function Header() {
             </nav>
           </div>
           <div className="flex items-center gap-5 max-[479.99px]:gap-2">
-            <button
-              onClick={toggleTheme}
-              className="flex size-8  items-center justify-center rounded-md transition-colors cursor-pointer"
-              style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <SettingsMenu />
+            <div className="flex items-center gap-3 max-[479.99px]:gap-0">
+              <button
+                onClick={toggleTheme}
+                className="flex size-8 items-center justify-center rounded-md transition-colors cursor-pointer"
+                style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <SettingsMenu />
+            </div>
             <BuyMeCoffeeButton />
           </div>
         </div>

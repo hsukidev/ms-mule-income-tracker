@@ -145,8 +145,8 @@ export function ClassAutocomplete({ id, value, options, onSelect, placeholder, c
               aria-selected={idx === highlightedIndex}
               onClick={() => handleSelect(o)}
               onMouseEnter={() => setHighlightedIndex(idx)}
-              className={`cursor-pointer px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground ${
-                idx === highlightedIndex ? 'bg-accent text-accent-foreground' : ''
+              className={`cursor-pointer px-3 py-1.5 text-sm hover:bg-(--accent-soft) hover:text-(--accent-raw) ${
+                idx === highlightedIndex ? 'bg-(--accent-soft) text-(--accent-raw)' : ''
               }`}
             >
               {o}

@@ -40,7 +40,7 @@ export function WorldSelect() {
       <Select.Portal>
         <Select.Positioner
           sideOffset={6}
-          align="end"
+          align="start"
           alignItemWithTrigger={false}
           className="isolate z-50 outline-hidden"
         >
@@ -69,7 +69,7 @@ function WorldSelectItem({ id, label }: { id: WorldId; label: string }) {
   return (
     <Select.Item
       value={id}
-      className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm outline-hidden data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+      className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm outline-hidden data-highlighted:bg-(--accent-soft) data-highlighted:text-(--accent-raw)"
     >
       <Select.ItemText>{label}</Select.ItemText>
       <Select.ItemIndicator className="ml-auto flex items-center">

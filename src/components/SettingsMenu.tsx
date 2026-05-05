@@ -23,8 +23,11 @@ export function SettingsMenu() {
         >
           <Settings size={16} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => setActiveDialog('data-management')}>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            onClick={() => setActiveDialog('data-management')}
+            className="data-highlighted:bg-(--accent-soft) data-highlighted:text-(--accent-raw)"
+          >
             <Database />
             Data Management
           </DropdownMenuItem>
