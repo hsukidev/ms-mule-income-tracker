@@ -1,5 +1,5 @@
 import { type ReactElement } from 'react';
-import { render as rtlRender, type RenderOptions } from '@testing-library/react';
+import { act, render as rtlRender, type RenderOptions } from '@testing-library/react';
 import { vi } from 'vitest';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { ThemeProvider } from '@/context/ThemeProvider';
@@ -44,16 +44,25 @@ export function render(
 // (`router.load()`) before mount so the matched route renders synchronously
 // — without that, `<RouterProvider>` paints an empty pending state and tests
 // that query the DOM right after render see nothing.
+//
+// Both load + mount run inside `act(async)` so the router's post-mount state
+// machine (Transitioner, MatchImpl, etc.) flushes its scheduled updates
+// before we return — otherwise those updates land outside any act() scope
+// and produce noisy warnings, and (on flaky timing) a hung first test.
 export async function renderApp({ initialPath = '/' }: { initialPath?: string } = {}) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   });
-  await router.load();
-  return rtlRender(<RouterProvider router={router} />);
+  let result!: ReturnType<typeof rtlRender>;
+  await act(async () => {
+    await router.load();
+    result = rtlRender(<RouterProvider router={router} />);
+  });
+  return result;
 }
 
-export { screen, fireEvent, waitFor, within, act } from '@testing-library/react';
+export { act, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 // Test helper: install a window.matchMedia mock whose `matches` is decided by
 // `predicate`. Pair with `restoreMatchMedia()` in afterEach to drop back to

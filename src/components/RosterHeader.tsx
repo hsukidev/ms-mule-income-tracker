@@ -143,7 +143,6 @@ export function RosterHeader({
         />
         <h2 className="font-display text-2xl font-bold tracking-tight">Roster</h2>
         <WorldSelect />
-        <DensityToggle />
       </div>
       <div className="flex items-center gap-3">
         {muleCount > 1 && (
@@ -154,6 +153,7 @@ export function RosterHeader({
             drag to reorder
           </p>
         )}
+        <DensityToggle />
         {muleCount > 0 && (
           <button
             type="button"
@@ -166,7 +166,7 @@ export function RosterHeader({
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: 'transparent',
+              background: 'var(--surface)',
               border: '1px solid var(--border)',
               color: 'var(--muted-raw, var(--muted-foreground))',
               cursor: 'pointer',
@@ -180,7 +180,7 @@ export function RosterHeader({
             onMouseLeave={(e) => {
               e.currentTarget.style.color = 'var(--muted-raw, var(--muted-foreground))';
               e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.background = 'var(--surface)';
             }}
           >
             <Trash2 style={{ width: 16, height: 16 }} />
