@@ -1,8 +1,16 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { renderApp, screen, fireEvent, act } from '@/test/test-utils';
 import type { Mule } from '../types';
-
-const STORAGE_KEY = 'maplestory-mule-tracker';
+import {
+  enterBulk,
+  mockElementFromPointSlots,
+  pointerCancel,
+  pointerDown,
+  pointerMove,
+  pointerUp,
+  resetBulkPaintEnvironment,
+  seedMules,
+} from './helpers/bulkDragPaintHarness';
 
 // Seven mules give us enough runway for revert-on-backtrack and cross-start tests.
 // PRD walkthrough uses A,B,C,D,E,F,G with S=start in the middle (index 3 = D).
@@ -72,132 +80,35 @@ const testMules: Mule[] = [
   },
 ];
 
-function persistedRoot(mules: Mule[]) {
-  return { schemaVersion: 2, mules };
-}
+const CARD_STRIDE = 220;
+const CARD_SPAN = 200;
 
-function seedMules(mules: Mule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedRoot(mules)));
-}
-
-function resetTestEnvironment() {
-  localStorage.clear();
-  document.documentElement.classList.remove('dark');
-  // Seed a Kronos lens so every `testMules` fixture (all stamped
-  // `worldId='heroic-kronos'`) is visible under the World Lens filter.
-  localStorage.setItem('world', 'heroic-kronos');
-}
-
-/**
- * Hit-test mock: each card owns a 200px-wide slot at `i*220`. Any x inside
- * a slot returns the corresponding `[data-mule-card]` element. Outside all
- * slots returns the document body. This drives `document.elementFromPoint`
- * during pointermove.
- */
 function mockElementFromPoint(container: HTMLElement, mules: Mule[]) {
-  const orig = document.elementFromPoint;
-  document.elementFromPoint = ((x: number) => {
-    for (let i = 0; i < mules.length; i += 1) {
-      const lo = i * 220;
-      const hi = lo + 200;
-      if (x >= lo && x < hi) {
-        const card = container.querySelector(
-          `[data-mule-card="${mules[i].id}"]`,
-        ) as HTMLElement | null;
-        return card ?? null;
-      }
-    }
-    return document.body;
-  }) as typeof document.elementFromPoint;
-  return () => {
-    document.elementFromPoint = orig;
-  };
-}
-
-function enterBulk() {
-  fireEvent.click(screen.getByRole('button', { name: /bulk.*delete|bulk.*trash/i }));
+  return mockElementFromPointSlots(container, mules, {
+    axis: 'x',
+    stride: CARD_STRIDE,
+    span: CARD_SPAN,
+  });
 }
 
 function getCardWrapper(container: HTMLElement, id: string): HTMLElement {
-  return container.querySelector(`[data-mule-card="${id}"]`) as HTMLElement;
+  return container.querySelector(`[data-paint-target="${id}"]`) as HTMLElement;
 }
 
 function isCardSelected(container: HTMLElement, id: string): boolean {
-  const panel = container.querySelector(`[data-mule-card="${id}"] .panel`) as HTMLElement;
+  const panel = container.querySelector(`[data-paint-target="${id}"] .panel`) as HTMLElement;
   return panel.getAttribute('aria-pressed') === 'true';
 }
 
 function centerXFor(idx: number): number {
-  return idx * 220 + 100;
-}
-
-type PointerKind = 'mouse' | 'touch' | 'pen';
-
-function pointerDown(el: Element, x: number, y: number, pointerType: PointerKind = 'mouse') {
-  fireEvent.pointerDown(el, {
-    pointerId: 1,
-    clientX: x,
-    clientY: y,
-    button: 0,
-    isPrimary: true,
-    bubbles: true,
-    pointerType,
-  });
-}
-
-function pointerMove(
-  el: Element | Document,
-  x: number,
-  y: number,
-  pointerType: PointerKind = 'mouse',
-) {
-  fireEvent.pointerMove(el, {
-    pointerId: 1,
-    clientX: x,
-    clientY: y,
-    isPrimary: true,
-    bubbles: true,
-    pointerType,
-  });
-}
-
-function pointerUp(
-  el: Element | Document,
-  x: number,
-  y: number,
-  pointerType: PointerKind = 'mouse',
-) {
-  fireEvent.pointerUp(el, {
-    pointerId: 1,
-    clientX: x,
-    clientY: y,
-    isPrimary: true,
-    bubbles: true,
-    pointerType,
-  });
-}
-
-function pointerCancel(
-  el: Element | Document,
-  x: number,
-  y: number,
-  pointerType: PointerKind = 'mouse',
-) {
-  fireEvent.pointerCancel(el, {
-    pointerId: 1,
-    clientX: x,
-    clientY: y,
-    isPrimary: true,
-    bubbles: true,
-    pointerType,
-  });
+  return idx * CARD_STRIDE + CARD_SPAN / 2;
 }
 
 describe('useBulkDragPaint (drag-to-select gesture)', () => {
   let restoreHitTest: (() => void) | null = null;
 
   beforeEach(() => {
-    resetTestEnvironment();
+    resetBulkPaintEnvironment();
   });
 
   afterEach(() => {
@@ -253,9 +164,9 @@ describe('useBulkDragPaint (drag-to-select gesture)', () => {
     restoreHitTest = mockElementFromPoint(container, testMules);
 
     // Pre-mark three cards via clicks (zero-move path).
-    fireEvent.click(container.querySelector('[data-mule-card="mule-a"] .panel') as HTMLElement);
-    fireEvent.click(container.querySelector('[data-mule-card="mule-b"] .panel') as HTMLElement);
-    fireEvent.click(container.querySelector('[data-mule-card="mule-c"] .panel') as HTMLElement);
+    fireEvent.click(container.querySelector('[data-paint-target="mule-a"] .panel') as HTMLElement);
+    fireEvent.click(container.querySelector('[data-paint-target="mule-b"] .panel') as HTMLElement);
+    fireEvent.click(container.querySelector('[data-paint-target="mule-c"] .panel') as HTMLElement);
     expect(isCardSelected(container, 'mule-a')).toBe(true);
     expect(isCardSelected(container, 'mule-b')).toBe(true);
     expect(isCardSelected(container, 'mule-c')).toBe(true);
@@ -331,7 +242,7 @@ describe('useBulkDragPaint (drag-to-select gesture)', () => {
     restoreHitTest = mockElementFromPoint(container, testMules);
 
     // Pre-mark mule-c via single click.
-    fireEvent.click(container.querySelector('[data-mule-card="mule-c"] .panel') as HTMLElement);
+    fireEvent.click(container.querySelector('[data-paint-target="mule-c"] .panel') as HTMLElement);
     expect(isCardSelected(container, 'mule-c')).toBe(true);
 
     const cardA = getCardWrapper(container, 'mule-a');
@@ -397,7 +308,7 @@ describe('useBulkDragPaint (drag-to-select gesture)', () => {
     restoreHitTest = mockElementFromPoint(container, testMules);
 
     // Pre-mark mule-d so we can verify it's restored (not just reset to unmarked).
-    fireEvent.click(container.querySelector('[data-mule-card="mule-d"] .panel') as HTMLElement);
+    fireEvent.click(container.querySelector('[data-paint-target="mule-d"] .panel') as HTMLElement);
     expect(isCardSelected(container, 'mule-d')).toBe(true);
 
     const cardA = getCardWrapper(container, 'mule-a');
@@ -420,7 +331,7 @@ describe('useBulkDragPaint (touch long-press gate)', () => {
   let restoreHitTest: (() => void) | null = null;
 
   beforeEach(() => {
-    resetTestEnvironment();
+    resetBulkPaintEnvironment();
     vi.useFakeTimers();
   });
 
@@ -602,7 +513,7 @@ describe('useBulkDragPaint (scroll preventer)', () => {
   let restoreHitTest: (() => void) | null = null;
 
   beforeEach(() => {
-    resetTestEnvironment();
+    resetBulkPaintEnvironment();
     vi.useFakeTimers();
   });
 

@@ -3,19 +3,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /**
  * iPhone Photos-style drag-to-select gesture for Bulk Delete Mode.
  *
- * Owns all pointer state as refs so the drag produces zero re-renders from
- * the hook itself. Mouse/pen engage immediately on the first `pointermove`;
- * touch gates behind a 250ms long-press so that short taps open the drawer
- * and vertical swipes scroll the page. On engagement the hook snapshots
- * every Mule's current selection (the Original Snapshot) and fixes the
- * Brush polarity from the inverse of the Start Card's snapshot value. The
- * Paint Range is recomputed on every move as
- * `[min(startIdx, curIdx), max(startIdx, curIdx)]` in Roster order; Mules
- * that leave the range revert to their Original Snapshot, Mules that enter
- * adopt the Brush. Zero-move pointerup falls through to the single-click
- * `toggle` path. `pointercancel` reverts everything. `onClickCapture`
- * swallows the browser's trailing synthetic click after an engaged gesture
- * so the Start Card isn't double-toggled.
+ * Surface-agnostic: every paintable element (card or list row) exposes
+ * `data-paint-target="<mule-id>"`, and the hook resolves the start anchor
+ * and per-move hover via that single attribute. Owns all pointer state as
+ * refs so the drag produces zero re-renders from the hook itself. Mouse/pen
+ * engage immediately on the first `pointermove`; touch gates behind a 250ms
+ * long-press so that short taps open the drawer and vertical swipes scroll
+ * the page. On engagement the hook snapshots every Mule's current selection
+ * (the Original Snapshot) and fixes the Brush polarity from the inverse of
+ * the Start Item's snapshot value. The Paint Range is recomputed on every
+ * move as `[min(startIdx, curIdx), max(startIdx, curIdx)]` in Roster order;
+ * Mules that leave the range revert to their Original Snapshot, Mules that
+ * enter adopt the Brush. Zero-move pointerup falls through to the
+ * single-click `toggle` path. `pointercancel` reverts everything.
+ * `onClickCapture` swallows the browser's trailing synthetic click after an
+ * engaged gesture so the Start Item isn't double-toggled.
  *
  * `pointermove` / `pointerup` / `pointercancel` are attached to `document`
  * while a gesture is active. This mirrors pointer-capture semantics
@@ -54,23 +56,23 @@ interface BulkDragPaint {
   isPaintEngaged: boolean;
 }
 
-function cardIdFromTarget(target: EventTarget | null): string | null {
+function paintTargetIdFromTarget(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) return null;
-  const card = target.closest('[data-mule-card]');
-  if (!card) return null;
-  return card.getAttribute('data-mule-card');
+  const node = target.closest('[data-paint-target]');
+  if (!node) return null;
+  return node.getAttribute('data-paint-target');
 }
 
-function cardIdFromPoint(x: number, y: number): string | null {
+function paintTargetIdFromPoint(x: number, y: number): string | null {
   // JSDOM doesn't implement `elementFromPoint` by default — guard so an
   // unrelated bulk-mode test that fires pointer events without mocking it
   // doesn't throw. Real browsers always provide this API.
   if (typeof document.elementFromPoint !== 'function') return null;
   const el = document.elementFromPoint(x, y);
   if (!el) return null;
-  const card = el.closest('[data-mule-card]');
-  if (!card) return null;
-  return card.getAttribute('data-mule-card');
+  const node = el.closest('[data-paint-target]');
+  if (!node) return null;
+  return node.getAttribute('data-paint-target');
 }
 
 export function useBulkDragPaint({
@@ -183,7 +185,7 @@ export function useBulkDragPaint({
     (x: number, y: number) => {
       const startIdx = startIdxRef.current;
       if (startIdx === null) return;
-      const curId = cardIdFromPoint(x, y);
+      const curId = paintTargetIdFromPoint(x, y);
       if (curId === null) return;
       const curIdx = orderRef.current.indexOf(curId);
       if (curIdx < 0) return;
@@ -300,7 +302,7 @@ export function useBulkDragPaint({
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
       if (!enabled) return;
-      const id = cardIdFromTarget(e.target);
+      const id = paintTargetIdFromTarget(e.target);
       if (!id) return;
       const idx = orderRef.current.indexOf(id);
       if (idx < 0) return;

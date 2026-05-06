@@ -244,6 +244,7 @@ export function Dashboard() {
                     toDelete={toDelete}
                     onToggleSelect={toggleDelete}
                     onAddMule={handleAddMule}
+                    isPaintEngaged={isPaintEngaged}
                   />
                 ) : (
                   <div

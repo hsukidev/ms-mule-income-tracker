@@ -316,6 +316,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
       ref={setNodeRef}
       style={style}
       data-mule-card={mule.id}
+      data-paint-target={mule.id}
       className="group relative"
       {...attributes}
       {...listeners}

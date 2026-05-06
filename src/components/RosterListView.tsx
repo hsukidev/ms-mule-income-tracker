@@ -12,6 +12,7 @@ interface RosterListViewProps {
   toDelete: ReadonlySet<string>;
   onToggleSelect: (id: string) => void;
   onAddMule?: () => void;
+  isPaintEngaged?: boolean;
 }
 
 export function RosterListView({
@@ -22,6 +23,7 @@ export function RosterListView({
   toDelete,
   onToggleSelect,
   onAddMule,
+  isPaintEngaged = false,
 }: RosterListViewProps) {
   return (
     <div data-testid="roster-list" style={{ display: 'grid', gap: 'var(--row-vgap, 8px)' }}>
@@ -38,6 +40,7 @@ export function RosterListView({
             bulkMode={bulkMode}
             selected={toDelete.has(mule.id)}
             onToggleSelect={onToggleSelect}
+            isPaintEngaged={isPaintEngaged}
           />
         );
       })}

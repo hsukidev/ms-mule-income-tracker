@@ -18,6 +18,7 @@ interface MuleListRowProps {
   bulkMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  isPaintEngaged?: boolean;
 }
 
 const MONO = 'Geist Mono, monospace';
@@ -33,7 +34,12 @@ export const MuleListRow = memo(function MuleListRow({
   bulkMode = false,
   selected = false,
   onToggleSelect,
+  isPaintEngaged = false,
 }: MuleListRowProps) {
+  const [isPressed, setIsPressed] = useState(false);
+  const handlePressStart = () => setIsPressed(true);
+  const handlePressEnd = () => setIsPressed(false);
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mule.id,
     disabled: bulkMode,
@@ -64,9 +70,14 @@ export const MuleListRow = memo(function MuleListRow({
   const droppedLines =
     !bulkMode && metrics.droppedKeys.size > 0 ? formatDroppedSlots(metrics.droppedKeys) : [];
   const isBulkSelected = bulkMode && selected;
+  // Tint instead of MuleCharacterCard's 4% scale because a row is wide and
+  // short — scaling warps the cell layout.
+  const showPressTint = bulkMode && isPressed && !isPaintEngaged && !isBulkSelected;
   const rowStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition
+      ? `${transition}, background 200ms ease-out, border-color 200ms ease-out`
+      : 'background 200ms ease-out, border-color 200ms ease-out',
     opacity: mule.active ? 1 : 0.55,
     zIndex: isDragging ? 1 : undefined,
     display: 'grid',
@@ -75,8 +86,16 @@ export const MuleListRow = memo(function MuleListRow({
     gap: 'var(--row-gap, 10px)',
     padding: 'var(--row-pad, 14px 18px)',
     border: '1px solid',
-    borderColor: isBulkSelected ? DESTRUCTIVE : 'var(--border)',
-    background: isBulkSelected ? destructiveAlpha(10) : 'var(--surface)',
+    borderColor: isBulkSelected
+      ? DESTRUCTIVE
+      : showPressTint
+        ? destructiveAlpha(40)
+        : 'var(--border)',
+    background: isBulkSelected
+      ? destructiveAlpha(10)
+      : showPressTint
+        ? destructiveAlpha(6)
+        : 'var(--surface)',
     borderRadius: 10,
     cursor: 'pointer',
     WebkitTouchCallout: 'none',
@@ -93,9 +112,13 @@ export const MuleListRow = memo(function MuleListRow({
       ref={setNodeRef}
       style={rowStyle}
       data-mule-row={mule.id}
+      data-paint-target={mule.id}
       data-testid={`mule-row-${mule.id}`}
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
+      onTouchCancel={handlePressEnd}
       {...attributes}
       {...listeners}
     >
