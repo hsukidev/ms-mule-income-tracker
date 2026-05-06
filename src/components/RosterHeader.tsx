@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { DensityToggle } from './DensityToggle';
+import { DisplayToggle } from './DisplayToggle';
 import { WorldSelect } from './WorldSelect';
 
 export interface RosterHeaderProps {
@@ -153,6 +154,7 @@ export function RosterHeader({
             drag to reorder
           </p>
         )}
+        <DisplayToggle />
         <DensityToggle />
         {muleCount > 0 && (
           <button

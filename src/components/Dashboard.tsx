@@ -12,10 +12,12 @@ import {
   SortableContext,
   rectSortingStrategy,
   sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import { useState, useCallback, useDeferredValue, useEffect, useMemo, useRef } from 'react';
 
+import { useDisplay } from '../context/DisplayProvider';
 import { useWorld } from '../context/WorldProvider';
 import { lensMules } from '../data/worlds';
 import { useMuleActions } from '../hooks/useMuleActions';
@@ -23,6 +25,7 @@ import { useBulkDragPaint } from '../hooks/useBulkDragPaint';
 import { useWorldIncome } from '../modules/worldIncome';
 import { MuleCharacterCard } from './MuleCharacterCard';
 import { MuleDetailDrawer } from './MuleDetailDrawer';
+import { RosterListView } from './RosterListView';
 import { AddCard } from './AddCard';
 import { KpiCard } from './KpiCard';
 import { PieChartCard } from './PieChartCard';
@@ -47,6 +50,7 @@ const dragBoundaryActiveStyle: React.CSSProperties = {
 export function Dashboard() {
   const { mules, addMule, updateMule, deleteMule, deleteMules, reorderMules } = useMuleActions();
   const { world } = useWorld();
+  const { display } = useDisplay();
   // Unfiltered `mules` is intentionally kept for drag-reorder index math and
   // the selected/active lookups, which must address the full array.
   const mulesInWorld = useMemo(() => lensMules(mules, world), [mules, world]);
@@ -70,7 +74,8 @@ export function Dashboard() {
   // World Cap Cut applied at the live (non-deferred) `mulesInWorld` so per-mule
   // **Cap Drop Info Icons** track interaction in real time. KPI/Pie consume the
   // deferred list separately to absorb boss-matrix burst updates.
-  const { perMule: capPerMule } = useWorldIncome(mulesInWorld);
+  const worldIncome = useWorldIncome(mulesInWorld);
+  const capPerMule = worldIncome.perMule;
 
   // Split sensors so mouse stays instant (distance: 0) while touch gates
   // behind a 250ms long-press — a unified PointerSensor would delay desktop
@@ -218,7 +223,11 @@ export function Dashboard() {
             sensors={sensors}
             modifiers={[restrictToParentElement]}
           >
-            <SortableContext items={muleIds} strategy={rectSortingStrategy} disabled={bulkMode}>
+            <SortableContext
+              items={muleIds}
+              strategy={display === 'list' ? verticalListSortingStrategy : rectSortingStrategy}
+              disabled={bulkMode}
+            >
               <div
                 style={isDragging ? dragBoundaryActiveStyle : dragBoundaryBaseStyle}
                 className="transition-[border-color] duration-200"
@@ -226,28 +235,44 @@ export function Dashboard() {
                 data-bulk-mode={bulkMode ? 'true' : 'false'}
                 {...dragPaintHandlers}
               >
-                <div
-                  className="grid"
-                  style={{
-                    gridTemplateColumns: 'repeat(var(--roster-cols, 6), minmax(0, 1fr))',
-                    gap: 'var(--roster-gap, 16px)',
-                  }}
-                >
-                  {mulesInWorld.map((mule) => (
-                    <MuleCharacterCard
-                      key={mule.id}
-                      mule={mule}
-                      onClick={handleCardClick}
-                      onDelete={deleteMule}
-                      bulkMode={bulkMode}
-                      selected={toDelete.has(mule.id)}
-                      onToggleSelect={toggleDelete}
-                      isPaintEngaged={isPaintEngaged}
-                      droppedKeys={capPerMule.get(mule.id)?.droppedKeys}
-                    />
-                  ))}
-                  {!bulkMode && <AddCard onClick={handleAddMule} />}
-                </div>
+                {display === 'list' ? (
+                  <RosterListView
+                    mules={mulesInWorld}
+                    worldIncome={worldIncome}
+                    onCardClick={handleCardClick}
+                    bulkMode={bulkMode}
+                    toDelete={toDelete}
+                    onToggleSelect={toggleDelete}
+                    onAddMule={handleAddMule}
+                  />
+                ) : (
+                  <div
+                    className="grid"
+                    style={{
+                      gridTemplateColumns: 'repeat(var(--roster-cols, 6), minmax(0, 1fr))',
+                      gap: 'var(--roster-gap, 16px)',
+                    }}
+                  >
+                    {mulesInWorld.map((mule) => {
+                      const contribution = capPerMule.get(mule.id);
+                      return (
+                        <MuleCharacterCard
+                          key={mule.id}
+                          mule={mule}
+                          onClick={handleCardClick}
+                          onDelete={deleteMule}
+                          bulkMode={bulkMode}
+                          selected={toDelete.has(mule.id)}
+                          onToggleSelect={toggleDelete}
+                          isPaintEngaged={isPaintEngaged}
+                          droppedKeys={contribution?.droppedKeys}
+                          postCapIncomeMeso={contribution?.contributedMeso ?? 0}
+                        />
+                      );
+                    })}
+                    {!bulkMode && <AddCard onClick={handleAddMule} />}
+                  </div>
+                )}
               </div>
             </SortableContext>
           </DndContext>

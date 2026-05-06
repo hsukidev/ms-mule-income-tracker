@@ -13,6 +13,7 @@ import { MuleCharacterCard } from '../MuleCharacterCard';
 import type { Mule } from '../../types';
 import { bosses } from '../../data/bosses';
 import type { SlateKey } from '../../data/muleBossSlate';
+import { Income } from '../../modules/income';
 
 const LUCID = bosses.find((b) => b.family === 'lucid')!.id;
 const HILLA = bosses.find((b) => b.family === 'hilla')!.id;
@@ -35,6 +36,13 @@ interface RenderCardOptions {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   droppedKeys?: ReadonlyMap<SlateKey, number>;
+  /**
+   * Post-cap meso for the card. Defaults to the **Potential Income** of the
+   * mule's selectedBosses (computed via Income.of) so existing tests that
+   * assert "504M" for a single HARD_LUCID weekly continue to pass unchanged
+   * — under-cap mules have post-cap === potential.
+   */
+  postCapIncomeMeso?: number;
 }
 
 function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) {
@@ -42,6 +50,14 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
   const onDelete = options?.onDelete ?? vi.fn();
   const onToggleSelect = options?.onToggleSelect ?? vi.fn();
   const mule = { ...baseMule, ...overrides };
+  // Default post-cap to the mule's potential income (under-cap parity) so
+  // existing assertions that pre-date the post-cap migration still hold.
+  const postCapIncomeMeso =
+    options?.postCapIncomeMeso ??
+    Income.of(
+      { selectedBosses: mule.selectedBosses, partySizes: mule.partySizes, worldId: mule.worldId },
+      true,
+    ).raw;
   return {
     ...render(
       <DndContext>
@@ -54,6 +70,7 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
             selected={options?.selected ?? false}
             onToggleSelect={onToggleSelect}
             droppedKeys={options?.droppedKeys}
+            postCapIncomeMeso={postCapIncomeMeso}
           />
         </SortableContext>
       </DndContext>,
@@ -151,6 +168,14 @@ describe('MuleCharacterCard', () => {
     renderCard({ selectedBosses: [HARD_LUCID], worldId: 'heroic-kronos' });
     expect(screen.getByText('504M')).toBeTruthy();
     expect(screen.queryByText('100.8M')).toBeNull();
+  });
+
+  it('renders the post-cap meso value (not raw potential) when supplied', () => {
+    // Mule has 504M potential, but cap dropped half of it.
+    renderCard({ selectedBosses: [HARD_LUCID] }, { postCapIncomeMeso: 252_000_000 });
+    expect(screen.getByText('252M')).toBeTruthy();
+    // Raw potential should NOT appear.
+    expect(screen.queryByText('504M')).toBeNull();
   });
 
   it('keeps an active mule card at opacity 1 when not dragging', () => {

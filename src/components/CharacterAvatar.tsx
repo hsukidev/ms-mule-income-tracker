@@ -40,10 +40,18 @@ export const CharacterAvatar = memo(function CharacterAvatar({
   // keep the previously-loaded bitmap on screen during a src change, so
   // switching scales on src alone visibly rescales the old bitmap before
   // the new one arrives. Track the kind of the most-recent completed load.
-  const [lastLoadedKind, setLastLoadedKind] = useState<'placeholder' | 'real'>('placeholder');
+  // Initialised from the prop so a card that mounts with a real URL paints
+  // at the real-avatar scale on the very first frame instead of starting
+  // at PLACEHOLDER_SCALE and visibly growing on `onLoad`.
+  const [lastLoadedKind, setLastLoadedKind] = useState<'placeholder' | 'real'>(() =>
+    avatarUrl ? 'real' : 'placeholder',
+  );
   const useFallback = !avatarUrl || erroredSrc === avatarUrl;
   const displayedSrc = useFallback ? blankCharacterPng : avatarUrl;
-  const showingPlaceholder = lastLoadedKind === 'placeholder';
+  // When `useFallback` flips true mid-life (the real URL 404'd), the displayed
+  // src swaps to the placeholder PNG — drop scale in the same commit so we
+  // never paint the placeholder bitmap at REAL_AVATAR_SCALE for a frame.
+  const showingPlaceholder = useFallback || lastLoadedKind === 'placeholder';
 
   const isFluid = typeof size === 'string';
   // When the figure is scaled past 1× the wrapper, the inner img grows beyond

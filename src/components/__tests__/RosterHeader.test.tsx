@@ -66,6 +66,19 @@ describe('RosterHeader', () => {
       expect(screen.queryByText(/select or drag to delete/i)).toBeNull();
       expect(screen.queryByRole('button', { name: /^cancel$/i })).toBeNull();
     });
+
+    it('renders the DisplayToggle immediately to the left of the DensityToggle', () => {
+      renderHeader();
+      const displayToggle = screen.getByTestId('display-toggle');
+      const densityToggle = screen.getByTestId('density-toggle');
+      expect(
+        displayToggle.compareDocumentPosition(densityToggle) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      // Adjacent: same parent + display sits one slot before density
+      expect(displayToggle.parentElement).toBe(densityToggle.parentElement);
+      const siblings = Array.from(displayToggle.parentElement!.children);
+      expect(siblings.indexOf(densityToggle) - siblings.indexOf(displayToggle)).toBe(1);
+    });
   });
 
   describe('WorldSelect integration', () => {

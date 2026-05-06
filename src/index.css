@@ -264,6 +264,9 @@ html[data-theme-swap] *::after {
   --roster-gap: 16px;
   --mule-name-size: 14px;
   --mule-level-size: 11px;
+  --row-pad: 14px 18px;
+  --row-avatar: 44px;
+  --row-gap: 10px;
 }
 [data-density='compact'] {
   --card-pad: 12px;
@@ -271,6 +274,9 @@ html[data-theme-swap] *::after {
   --roster-gap: 16px;
   --mule-name-size: 13px;
   --mule-level-size: 10px;
+  --row-pad: 8px 14px;
+  --row-avatar: 36px;
+  --row-gap: 6px;
 }
 
 /* Responsive roster column counts:
@@ -316,6 +322,12 @@ html[data-theme-swap] *::after {
   [data-density='compact'] {
     --card-pad: 8px;
     --roster-gap: 8px;
+  }
+  /* Roster List view: WEEKLY / DAILY / SHARE eyebrow labels collapse on the
+   * narrowest viewports — bare values remain, and tapping a value opens a
+   * tooltip naming the metric (wired in MuleListRow's MetricTooltip). */
+  [data-row-eyebrow] {
+    display: none;
   }
 }
 @media (min-width: 1024px) {

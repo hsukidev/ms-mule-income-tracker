@@ -99,4 +99,42 @@ describe('CharacterAvatar', () => {
     rerender(<CharacterAvatar avatarUrl={REAL_URL} size={112} data-testid="avatar" />);
     expect(img.src).toMatch(/blank-character/);
   });
+
+  it('paints at the real-avatar scale on the very first commit when avatarUrl is provided', () => {
+    // Regression: cards used to paint every avatar at PLACEHOLDER_SCALE on
+    // first mount and only grow to REAL_AVATAR_SCALE after `onLoad` fired —
+    // visible as a "flash to default size" when a roster of mules first
+    // mounts (e.g. switching from an empty world to one with mules).
+    render(<CharacterAvatar avatarUrl={REAL_URL} size={112} data-testid="avatar" />);
+    const img = screen.getByTestId('avatar') as HTMLImageElement;
+    expect(img.style.transform).not.toMatch(/translateY/);
+  });
+
+  it('drops to the placeholder scale in the same commit as an onError fallback', () => {
+    // Once `useFallback` flips true (avatarUrl 404'd), the displayed src
+    // swaps to the placeholder PNG — the scale must drop to placeholder in
+    // the same render, not wait for the placeholder bitmap's onLoad. Tying
+    // those together prevents a one-frame "real-scale placeholder" blip.
+    render(<CharacterAvatar avatarUrl={REAL_URL} size={112} data-testid="avatar" />);
+    const img = screen.getByTestId('avatar') as HTMLImageElement;
+    fireEvent.error(img);
+    expect(img.style.transform).toMatch(/translateY/);
+  });
+
+  it('keeps placeholder scale across a placeholder→real swap until the new bitmap loads', () => {
+    // Character Lookup invariant: scale follows the bitmap currently
+    // *painted*, not the src that was just assigned. Browsers keep the
+    // placeholder visible while the real URL loads — rescaling the
+    // placeholder to real-scale before the real bitmap arrives would
+    // visibly stretch it. Only `onLoad` may flip the scale.
+    const { rerender } = render(
+      <CharacterAvatar avatarUrl={null} size={112} data-testid="avatar" />,
+    );
+    const img = screen.getByTestId('avatar') as HTMLImageElement;
+    expect(img.style.transform).toMatch(/translateY/);
+    rerender(<CharacterAvatar avatarUrl={REAL_URL} size={112} data-testid="avatar" />);
+    expect(img.style.transform).toMatch(/translateY/);
+    fireEvent.load(img);
+    expect(img.style.transform).not.toMatch(/translateY/);
+  });
 });

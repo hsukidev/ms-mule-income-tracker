@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { DensityProvider } from '@/context/DensityProvider';
+import { DisplayProvider } from '@/context/DisplayProvider';
 import { WorldProvider } from '@/context/WorldProvider';
 import { IncomeProvider } from '@/modules/income';
 import { routeTree } from '@/routeTree.gen';
@@ -13,6 +14,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   defaultTheme?: 'dark' | 'light';
   defaultAbbreviated?: boolean;
   defaultWorld?: WorldId | null;
+  defaultDisplay?: 'cards' | 'list';
 }
 
 export function render(
@@ -21,16 +23,30 @@ export function render(
     defaultTheme = 'dark',
     defaultAbbreviated = true,
     defaultWorld,
+    defaultDisplay,
     ...options
   }: CustomRenderOptions = {},
 ) {
+  // The DisplayProvider reads `localStorage['display']` at mount time, so the
+  // simplest way to honor `defaultDisplay` from a test is to seed the storage
+  // before the provider mounts. Tests that care about display state already
+  // clear localStorage in beforeEach, so this won't leak across cases.
+  if (defaultDisplay) {
+    try {
+      localStorage.setItem('display', defaultDisplay);
+    } catch {
+      // ignore; matches the provider's defensive try/catch around storage
+    }
+  }
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <ThemeProvider defaultTheme={defaultTheme}>
         <DensityProvider>
-          <WorldProvider defaultWorld={defaultWorld}>
-            <IncomeProvider defaultAbbreviated={defaultAbbreviated}>{children}</IncomeProvider>
-          </WorldProvider>
+          <DisplayProvider>
+            <WorldProvider defaultWorld={defaultWorld}>
+              <IncomeProvider defaultAbbreviated={defaultAbbreviated}>{children}</IncomeProvider>
+            </WorldProvider>
+          </DisplayProvider>
         </DensityProvider>
       </ThemeProvider>
     );

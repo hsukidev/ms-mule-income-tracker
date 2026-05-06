@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
 import { useIncome } from '../modules/income';
+import { formatMeso } from '../utils/meso';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { formatDroppedSlots, type SlateKey } from '../data/muleBossSlate';
 import { CharacterAvatar } from './CharacterAvatar';
@@ -27,6 +28,11 @@ interface MuleCharacterCardProps {
   // `useWorldIncome(...).perMule` at the Dashboard level. The Cap Drop Info
   // Icon renders only when this map has at least one entry.
   droppedKeys?: ReadonlyMap<SlateKey, number>;
+  // Post-cap meso for this mule, sourced from
+  // `useWorldIncome(...).perMule.get(id)?.contributedMeso ?? 0` at the
+  // Dashboard level so the card, the row, the pie chart, and the KPI all
+  // read the same number. Defaults to 0 (no income) when omitted.
+  postCapIncomeMeso?: number;
 }
 
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
@@ -46,20 +52,15 @@ const MuleCardInner = memo(function MuleCardInner({
   mule,
   hideLevelBadge = false,
   droppedKeys,
+  postCapIncomeMeso,
 }: {
   mule: Mule;
   hideLevelBadge?: boolean;
   droppedKeys?: ReadonlyMap<SlateKey, number>;
+  postCapIncomeMeso: number;
 }) {
-  // Omit `active` so the Active-Flag Filter doesn't zero the card when its
-  // roster toggle is off — the card shows potential income regardless of
-  // active state. `partySizes` is threaded so the Computed Value matches
-  // the drawer and KPI total for party-adjusted weeklies.
-  const { formatted: potentialIncome } = useIncome({
-    selectedBosses: mule.selectedBosses,
-    partySizes: mule.partySizes,
-    worldId: mule.worldId,
-  });
+  const { abbreviated } = useIncome();
+  const potentialIncome = formatMeso(postCapIncomeMeso, abbreviated);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [notesTooltipOpen, setNotesTooltipOpen] = useState(false);
   const hasBosses = mule.selectedBosses.length > 0;
@@ -245,6 +246,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
   onToggleSelect,
   isPaintEngaged = false,
   droppedKeys,
+  postCapIncomeMeso = 0,
 }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mule.id,
@@ -346,7 +348,12 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         aria-pressed={bulkMode ? selected : undefined}
         onKeyDown={handleKeyDown}
       >
-        <MuleCardInner mule={mule} hideLevelBadge={bulkMode} droppedKeys={droppedKeys} />
+        <MuleCardInner
+          mule={mule}
+          hideLevelBadge={bulkMode}
+          droppedKeys={droppedKeys}
+          postCapIncomeMeso={postCapIncomeMeso}
+        />
 
         {bulkMode && (
           <div

@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { ThemeProvider } from '../context/ThemeProvider';
 import { DensityProvider } from '../context/DensityProvider';
+import { DisplayProvider } from '../context/DisplayProvider';
 import { WorldProvider } from '../context/WorldProvider';
 import { IncomeProvider } from '../modules/income';
 import { Header } from '../components/Header';
@@ -14,14 +15,16 @@ function RootLayout() {
   return (
     <ThemeProvider defaultTheme="dark">
       <DensityProvider>
-        <WorldProvider>
-          <IncomeProvider>
-            <div className="min-h-screen bg-background text-foreground">
-              <Header />
-              <Outlet />
-            </div>
-          </IncomeProvider>
-        </WorldProvider>
+        <DisplayProvider>
+          <WorldProvider>
+            <IncomeProvider>
+              <div className="min-h-screen bg-background text-foreground">
+                <Header />
+                <Outlet />
+              </div>
+            </IncomeProvider>
+          </WorldProvider>
+        </DisplayProvider>
       </DensityProvider>
       <Toaster />
     </ThemeProvider>
