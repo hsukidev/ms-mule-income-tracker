@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useDisplay } from '../context/DisplayProvider';
 import { ROSTER_CARD_ASPECT, ROSTER_CARD_MIN_HEIGHT } from './rosterCardContract';
 
@@ -50,13 +51,17 @@ export function AddCard({ onClick }: AddCardProps) {
           transition: 'border-color 150ms, background 150ms, color 150ms',
         }}
       >
-        <span
+        <Plus
           aria-hidden
-          style={{ fontSize: 'calc(var(--row-name-size, 16px) * 1.25)', lineHeight: 1 }}
-        >
-          +
-        </span>
-        <span>Add Mule</span>
+          style={{
+            width: '1.1em',
+            height: '1.1em',
+            display: 'block',
+            transform: 'translateY(-0.06em)',
+          }}
+          strokeWidth={2.25}
+        />
+        <span style={{ lineHeight: 1, display: 'block' }}>Add Mule</span>
       </div>
     );
   }
@@ -77,40 +82,23 @@ export function AddCard({ onClick }: AddCardProps) {
         cursor: 'pointer',
         display: 'grid',
         placeItems: 'center',
-        transition: 'border-color 150ms, background 150ms',
+        transition: 'border-color 150ms, background 150ms, color 150ms',
         minHeight: ROSTER_CARD_MIN_HEIGHT,
         aspectRatio: ROSTER_CARD_ASPECT,
+        color: isHovered
+          ? 'var(--accent-raw, var(--accent))'
+          : 'var(--muted-raw, var(--muted-foreground))',
+        fontSize: 'var(--row-name-size, 16px)',
+        fontWeight: 600,
       }}
     >
       <div style={{ display: 'grid', placeItems: 'center', gap: 10 }}>
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: isHovered ? 'var(--accent-soft)' : 'var(--surface)',
-            border: '1px solid var(--border)',
-            display: 'grid',
-            placeItems: 'center',
-            color: isHovered
-              ? 'var(--accent-raw, var(--accent))'
-              : 'var(--muted-raw, var(--muted-foreground))',
-            fontSize: 24,
-            lineHeight: 1,
-            transition: 'background 150ms, color 150ms',
-          }}
-        >
-          +
-        </div>
-        <span
-          style={{
-            color: 'var(--muted-raw, var(--muted-foreground))',
-            fontSize: 13,
-            fontWeight: 500,
-          }}
-        >
-          Add Mule
-        </span>
+        <Plus
+          aria-hidden
+          style={{ width: '1.6em', height: '1.6em', display: 'block' }}
+          strokeWidth={2.25}
+        />
+        <span style={{ lineHeight: 1, display: 'block' }}>Add Mule</span>
       </div>
     </div>
   );
