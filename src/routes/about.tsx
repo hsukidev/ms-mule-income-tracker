@@ -34,7 +34,7 @@ function AboutPage() {
             What is YABI?
           </h2>
           <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
-            YABI is a weekly boss income tracking tool for MapleStory. With a simplified user
+            YABI is Yet Another Boss Income tracking tool for MapleStory. With a simplified user
             experience for both desktop and mobile, users can build a roster, select bosses, and
             YABI will display the per-world weekly meso total under MapleStory's actual caps.
           </p>
