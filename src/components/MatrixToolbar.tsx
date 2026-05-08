@@ -94,7 +94,8 @@ export const MatrixToolbar = memo(function MatrixToolbar({
   const [infoOpen, setInfoOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  // Wrap apply/save/delete to dismiss the popover on success.
+  // Wrap apply/save to dismiss the popover after the action runs;
+  // delete leaves the popover open so the user can keep tidying.
   const handleApplyUserPreset = (presetId: string) => {
     onApplyUserPreset(presetId);
     setPopoverOpen(false);

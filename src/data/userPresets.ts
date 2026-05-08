@@ -39,14 +39,7 @@ export function userPresetMatch(
   const target = new Set(slateKeys);
   for (const preset of userPresets) {
     if (preset.slateKeys.length !== target.size) continue;
-    let allFound = true;
-    for (const key of preset.slateKeys) {
-      if (!target.has(key)) {
-        allFound = false;
-        break;
-      }
-    }
-    if (allFound) return preset;
+    if (preset.slateKeys.every((key) => target.has(key))) return preset;
   }
   return null;
 }
