@@ -153,7 +153,7 @@ describe('LOMIEN multi-tier entries', () => {
   });
 });
 
-describe('isPresetActive — Same-Cadence Equality', () => {
+describe('isPresetActive — Full-Slate Equality', () => {
   it('returns false for an empty selection', () => {
     expect(isPresetActive('CRA', [])).toBe(false);
     expect(isPresetActive('LOMIEN', [])).toBe(false);
@@ -188,11 +188,32 @@ describe('isPresetActive — Same-Cadence Equality', () => {
     expect(isPresetActive('CRA', [vellumDaily])).toBe(false);
   });
 
-  it('daily keys do not affect the match for an otherwise exact weekly selection', () => {
+  it('Full-Slate Equality: any daily key disqualifies an otherwise exact weekly match', () => {
     const horntail = getBossByFamily('horntail')!;
     const horntailDaily = buildKey(horntail.id, 'chaos', 'daily');
     const keys = [...PRESET_FAMILIES.CRA.map(hardestKey), horntailDaily];
-    expect(isPresetActive('CRA', keys)).toBe(true);
+    expect(isPresetActive('CRA', keys)).toBe(false);
+  });
+
+  it('Full-Slate Equality: any monthly key disqualifies an otherwise exact weekly match', () => {
+    const blackMage = getBossByFamily('black-mage')!;
+    const bmExtreme = buildKey(blackMage.id, 'extreme', 'monthly');
+    const keys = [...PRESET_FAMILIES.CRA.map(hardestKey), bmExtreme];
+    expect(isPresetActive('CRA', keys)).toBe(false);
+  });
+
+  it('Full-Slate Equality: monthly key disqualifies LOMIEN match', () => {
+    const blackMage = getBossByFamily('black-mage')!;
+    const bmHard = buildKey(blackMage.id, 'hard', 'monthly');
+    const keys = [...PRESET_FAMILIES.LOMIEN.map(entryKey), bmHard];
+    expect(isPresetActive('LOMIEN', keys)).toBe(false);
+  });
+
+  it('Full-Slate Equality: daily key disqualifies CTENE match', () => {
+    const horntail = getBossByFamily('horntail')!;
+    const horntailDaily = buildKey(horntail.id, 'chaos', 'daily');
+    const keys = [...PRESET_FAMILIES.CTENE.map(entryKey), horntailDaily];
+    expect(isPresetActive('CTENE', keys)).toBe(false);
   });
 
   it('LOMIEN accepts Normal Damien (Default Tier)', () => {
@@ -280,14 +301,42 @@ describe('conform', () => {
     expect(result).toContain(buildKey(damien.id, 'normal', 'weekly'));
   });
 
-  it('preserves daily keys (different cadence is orthogonal to preset)', () => {
+  it('Conform wipes daily keys (Full-Slate Equality requires zero non-weeklies)', () => {
     const horntail = getBossByFamily('horntail')!;
     const horntailDaily = buildKey(horntail.id, 'chaos', 'daily');
     const vellum = getBossByFamily('vellum')!;
     const vellumDaily = buildKey(vellum.id, 'normal', 'daily');
     const result = conform([horntailDaily, vellumDaily], 'CRA');
-    expect(result).toContain(horntailDaily);
-    expect(result).toContain(vellumDaily);
+    expect(result).not.toContain(horntailDaily);
+    expect(result).not.toContain(vellumDaily);
+  });
+
+  it('Conform wipes monthly keys', () => {
+    const blackMage = getBossByFamily('black-mage')!;
+    const bmExtreme = buildKey(blackMage.id, 'extreme', 'monthly');
+    const result = conform([bmExtreme], 'CRA');
+    expect(result).not.toContain(bmExtreme);
+  });
+
+  it('Conform output contains only weekly keys (no daily, no monthly)', () => {
+    const horntail = getBossByFamily('horntail')!;
+    const blackMage = getBossByFamily('black-mage')!;
+    const horntailDaily = buildKey(horntail.id, 'chaos', 'daily');
+    const bmExtreme = buildKey(blackMage.id, 'extreme', 'monthly');
+    const initial = [...PRESET_FAMILIES.CRA.map(hardestKey), horntailDaily, bmExtreme];
+    const result = conform(initial, 'CRA');
+    for (const k of result) {
+      expect(k.endsWith(':weekly')).toBe(true);
+    }
+  });
+
+  it('Conform leaves the slate Active under Full-Slate Equality (post-Conform pill lights)', () => {
+    const horntail = getBossByFamily('horntail')!;
+    const blackMage = getBossByFamily('black-mage')!;
+    const horntailDaily = buildKey(horntail.id, 'chaos', 'daily');
+    const bmExtreme = buildKey(blackMage.id, 'extreme', 'monthly');
+    const result = conform([horntailDaily, bmExtreme], 'CRA');
+    expect(isPresetActive('CRA', result)).toBe(true);
   });
 
   it('CRA → LOMIEN swap: preserves CRA-∩-LOMIEN overlap + adds LOMIEN-unique families', () => {

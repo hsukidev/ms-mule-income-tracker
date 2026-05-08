@@ -4,9 +4,9 @@ import { getBossByFamily } from './bosses';
 /**
  * **Boss Preset** shortcuts for the **Matrix Toolbar**. Each preset is an
  * ordered list of **Preset Entries**; clicking a **Preset Pill** runs
- * **Conform**, which wipes weekly **Slate Keys** whose family is outside the
- * preset and replaces non-**Accepted Tier** keys with the **Default Tier**.
- * Dailies are always preserved.
+ * **Conform**, which wipes every non-weekly **Slate Key** plus weekly keys
+ * outside the preset, and replaces non-**Accepted Tier** keys with the
+ * **Default Tier**. The post-Conform slate is always pure-Canonical.
  *
  * Entry authoring forms:
  * - Bare string — family slug; **Accepted Tiers** = `[hardest]`.
@@ -14,10 +14,12 @@ import { getBossByFamily } from './bosses';
  * - `{ family, tiers }` — **Multi-Tier Entry** (e.g. LOMIEN's Damien and
  *   Lotus `['normal', 'hard']`); `tiers[0]` is the **Default Tier**.
  *
- * **Same-Cadence Equality**: a **Canonical Preset** is **Active Preset** iff
+ * **Full-Slate Equality**: a **Canonical Preset** is **Active Preset** iff
  * every **Preset Entry** is satisfied by exactly one weekly key on that
- * family whose tier is in **Accepted Tiers**, and no weekly keys exist on
- * families outside the preset's entries. Daily keys never affect the result.
+ * family whose tier is in **Accepted Tiers**, no weekly keys exist on
+ * families outside the preset's entries, AND the slate carries zero daily
+ * and zero monthly keys. Toggling a single non-weekly cell on a CRA-active
+ * mule demotes the match to **Custom Preset**.
  *
  * The selection-key grammar itself lives module-private inside
  * `muleBossSlate.ts`; the helpers here duplicate only the string shape,
@@ -28,7 +30,7 @@ import { getBossByFamily } from './bosses';
 
 /**
  * **Canonical Preset Keys** — the three curated presets that have an entries
- * list, a **Conform** behaviour, and a **Same-Cadence Equality** match rule.
+ * list, a **Conform** behaviour, and a **Full-Slate Equality** match rule.
  */
 export type CanonicalPresetKey = 'CRA' | 'LOMIEN' | 'CTENE';
 
@@ -190,10 +192,10 @@ function entryByBossId(preset: CanonicalPresetKey): Map<string, PresetEntry> {
 }
 
 /**
- * **Same-Cadence Equality**: `true` iff every **Preset Entry** is satisfied
- * by exactly one weekly key whose tier is in **Accepted Tiers**, AND no
- * weekly keys exist on families outside the preset's entries. Daily keys
- * are ignored entirely.
+ * **Full-Slate Equality**: `true` iff every **Preset Entry** is satisfied by
+ * exactly one weekly key whose tier is in **Accepted Tiers**, no weekly keys
+ * exist on families outside the preset's entries, AND the slate carries zero
+ * daily and zero monthly keys. A single non-weekly key demotes the match.
  */
 export function isPresetActive(preset: CanonicalPresetKey, keys: readonly string[]): boolean {
   const entries = entryByBossId(preset);
@@ -201,7 +203,9 @@ export function isPresetActive(preset: CanonicalPresetKey, keys: readonly string
 
   for (const key of keys) {
     const parsed = parseKey(key);
-    if (!parsed || parsed.cadence !== 'weekly') continue;
+    if (!parsed) continue;
+    // Any non-weekly key (daily or monthly) breaks Full-Slate Equality.
+    if (parsed.cadence !== 'weekly') return false;
     // Any weekly key on a non-preset family breaks the match.
     if (!entries.has(parsed.bossId)) return false;
     weeklyTierByBossId.set(parsed.bossId, parsed.tier);
@@ -221,8 +225,9 @@ export function isPresetActive(preset: CanonicalPresetKey, keys: readonly string
  * - Preserve weekly keys whose family is in the preset's entries AND whose
  *   tier is in **Accepted Tiers**.
  * - Wipe every other weekly key (non-preset families + non-accepted tiers).
+ * - Wipe every daily and monthly key — the post-Conform slate is always
+ *   pure-Canonical so the clicked pill lights under **Full-Slate Equality**.
  * - For every entry not already satisfied, add the **Default Tier** key.
- * - All daily keys pass through untouched.
  *
  * Idempotent on an already-**Active Preset** selection.
  */
@@ -233,11 +238,13 @@ export function conform(keys: readonly string[], preset: CanonicalPresetKey): st
 
   for (const key of keys) {
     const parsed = parseKey(key);
-    // Malformed keys (un-parseable) pass through. Dailies pass through too.
-    if (!parsed || parsed.cadence !== 'weekly') {
+    // Malformed keys pass through. Daily and monthly keys are wiped — the
+    // post-Conform slate must be pure-Canonical under Full-Slate Equality.
+    if (!parsed) {
       next.push(key);
       continue;
     }
+    if (parsed.cadence !== 'weekly') continue;
     const entry = entries.get(parsed.bossId);
     if (!entry) continue; // weekly on non-preset family → wipe
     if (!entry.tiers.includes(parsed.tier as BossTier)) continue; // non-accepted tier → wipe

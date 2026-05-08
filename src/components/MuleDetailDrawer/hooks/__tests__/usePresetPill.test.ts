@@ -147,6 +147,34 @@ describe('usePresetPill', () => {
     expect(result.current.activePill).toBeNull();
   });
 
+  it('activePill demotes to "CUSTOM" when CRA weeklies are joined by a daily key (Full-Slate Equality)', () => {
+    const horntail = bosses.find((b) => b.family === 'horntail')!;
+    const horntailDaily = `${horntail.id}:chaos:daily`;
+    const keys = [...CRA_KEYS, horntailDaily];
+    const { result } = renderHook(() =>
+      usePresetPill({
+        muleId: 'mule-1',
+        selectedBosses: keys,
+        weeklyCount: weeklyCountOf(keys),
+      }),
+    );
+    expect(result.current.activePill).toBe('CUSTOM');
+  });
+
+  it('activePill demotes to "CUSTOM" when CRA weeklies are joined by a monthly key', () => {
+    const blackMage = bosses.find((b) => b.family === 'black-mage')!;
+    const bmExtreme = `${blackMage.id}:extreme:monthly`;
+    const keys = [...CRA_KEYS, bmExtreme];
+    const { result } = renderHook(() =>
+      usePresetPill({
+        muleId: 'mule-1',
+        selectedBosses: keys,
+        weeklyCount: weeklyCountOf(keys),
+      }),
+    );
+    expect(result.current.activePill).toBe('CUSTOM');
+  });
+
   it('activePill returns "CUSTOM" when weekly ≥ 1 but no canonical preset matches', () => {
     // Baldrix is weekly-cadence and outside every canonical preset.
     const { result } = renderHook(() =>

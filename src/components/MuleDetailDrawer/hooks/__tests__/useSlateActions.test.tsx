@@ -462,7 +462,7 @@ describe('useSlateActions', () => {
       for (const k of CTENE_KEYS) expect(update.selectedBosses).toContain(k);
     });
 
-    it('preserves daily keys on conform', () => {
+    it('wipes daily keys on conform (Full-Slate Equality: post-Conform is pure-Canonical)', () => {
       const onUpdate = vi.fn();
       const pill = makePill();
       const { result } = renderHook(() =>
@@ -479,7 +479,30 @@ describe('useSlateActions', () => {
         result.current.applyPreset('CRA');
       });
       const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
-      expect(update.selectedBosses).toContain(HORNTAIL_DAILY);
+      expect(update.selectedBosses).not.toContain(HORNTAIL_DAILY);
+      for (const k of CRA_KEYS) expect(update.selectedBosses).toContain(k);
+    });
+
+    it('wipes monthly keys on conform', () => {
+      const blackMageBoss = bosses.find((b) => b.family === 'black-mage')!;
+      const bmExtreme = `${blackMageBoss.id}:extreme:monthly`;
+      const onUpdate = vi.fn();
+      const pill = makePill();
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: [bmExtreme],
+          slate: makeSlate([bmExtreme]),
+          pill,
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyPreset('CRA');
+      });
+      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
+      expect(update.selectedBosses).not.toContain(bmExtreme);
     });
 
     it('normalizes resulting keys through MuleBossSlate.from (Selection Invariant)', () => {
