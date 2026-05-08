@@ -260,7 +260,7 @@ function ConfirmScreen({ summary, onBack, onApply }: ConfirmScreenProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        Importing will replace all your current data.{' '}
+        Importing will replace all of your current data.{' '}
         <span className="text-destructive">This cannot be undone.</span>
       </p>
       <SummarySection label="Before" counts={summary.before} />
@@ -291,7 +291,9 @@ function SummarySection({ label, counts }: SummarySectionProps) {
           {counts.map((c) => (
             <li key={c.worldLabel} className="flex justify-between text-sm text-foreground">
               <span>{c.worldLabel}</span>
-              <span className="text-muted-foreground">{c.count} mules</span>
+              <span className="text-muted-foreground">
+                {c.count} {c.count === 1 ? 'mule' : 'mules'}
+              </span>
             </li>
           ))}
         </ul>

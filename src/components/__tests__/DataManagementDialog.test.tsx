@@ -197,7 +197,7 @@ describe('DataManagementDialog (confirm screen)', () => {
         (_, element) =>
           element?.tagName === 'P' &&
           element?.textContent ===
-            'Importing will replace all your current data. This cannot be undone.',
+            'Importing will replace all of your current data. This cannot be undone.',
       ),
     ).toBeTruthy();
   });
