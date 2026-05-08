@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@/test/test-utils';
+import { render, screen, fireEvent, waitFor } from '@/test/test-utils';
 
-import { Popover } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { UserPresetPopover } from '../UserPresetPopover';
 import type { UserPreset } from '../../data/userPresets';
 
@@ -35,6 +36,24 @@ function renderOpenPopover(opts: RenderOpts = {}) {
     </Popover>,
   );
   return { onApply, onSave, onDelete };
+}
+
+// Controlled-Popover host so Escape-to-close can be observed.
+function ControlledHost(opts: RenderOpts = {}) {
+  const [open, setOpen] = useState(true);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={<button type="button">Trigger</button>} />
+      <UserPresetPopover
+        userPresets={opts.userPresets ?? []}
+        slateKeys={opts.slateKeys ?? []}
+        matchedUserPreset={opts.matchedUserPreset ?? null}
+        onApply={opts.onApply ?? vi.fn()}
+        onSave={opts.onSave ?? vi.fn()}
+        onDelete={opts.onDelete ?? vi.fn()}
+      />
+    </Popover>
+  );
 }
 
 describe('UserPresetPopover', () => {
@@ -116,12 +135,12 @@ describe('UserPresetPopover', () => {
       expect(screen.queryByRole('button', { name: /save current as preset/i })).toBeNull();
     });
 
-    it('the footer button is rendered (disabled) when slate non-empty but name is empty', () => {
+    it('the footer button is rendered enabled when slate non-empty but name is empty (Slice 3 — click triggers empty-name flow, not a no-op disable)', () => {
       renderOpenPopover({ userPresets: [], slateKeys: ['k1'] });
       const btn = screen.getByRole('button', {
         name: /save current as preset/i,
       }) as HTMLButtonElement;
-      expect(btn.disabled).toBe(true);
+      expect(btn.disabled).toBe(false);
     });
 
     it('the footer button enables when slate non-empty and name typed', () => {
@@ -176,6 +195,155 @@ describe('UserPresetPopover', () => {
       });
       fireEvent.click(screen.getByRole('button', { name: /delete mine/i }));
       expect(onDelete).toHaveBeenCalledWith('p1');
+    });
+  });
+
+  describe('empty-name save flow (Slice 3)', () => {
+    it('clicking save with the input empty focuses the input', () => {
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'] });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      const btn = screen.getByRole('button', { name: /save current as preset/i });
+      fireEvent.click(btn);
+      expect(document.activeElement).toBe(search);
+    });
+
+    it('clicking save with the input empty marks the input aria-invalid (red border)', () => {
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'] });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      const btn = screen.getByRole('button', { name: /save current as preset/i });
+      fireEvent.click(btn);
+      expect(search.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('clicking save with the input empty surfaces the "Enter a name for this preset" tooltip', async () => {
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'] });
+      const btn = screen.getByRole('button', { name: /save current as preset/i });
+      fireEvent.click(btn);
+      await waitFor(() => {
+        expect(screen.getByText(/enter a name for this preset/i)).toBeTruthy();
+      });
+    });
+
+    it('clicking save with the input empty does NOT call onSave', () => {
+      const onSave = vi.fn();
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'], onSave });
+      const btn = screen.getByRole('button', { name: /save current as preset/i });
+      fireEvent.click(btn);
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it('first keystroke after empty-submit clears aria-invalid and the tooltip', async () => {
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'] });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      const btn = screen.getByRole('button', { name: /save current as preset/i });
+      fireEvent.click(btn);
+      expect(search.getAttribute('aria-invalid')).toBe('true');
+      fireEvent.change(search, { target: { value: 'a' } });
+      expect(search.getAttribute('aria-invalid')).not.toBe('true');
+      await waitFor(() => {
+        expect(screen.queryByText(/enter a name for this preset/i)).toBeNull();
+      });
+    });
+  });
+
+  describe('collision flow (Slice 3)', () => {
+    it('typing a name that case-insensitive-equals an existing preset disables the save button', () => {
+      renderOpenPopover({
+        userPresets: [preset('p1', 'CRA Mule')],
+        slateKeys: ['k2'],
+      });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.change(search, { target: { value: 'cra mule' } });
+      const btn = screen.getByRole('button', {
+        name: /save current as preset/i,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
+
+    it('typing a colliding name surfaces the "Name already in use" tooltip', async () => {
+      renderOpenPopover({
+        userPresets: [preset('p1', 'CRA Mule')],
+        slateKeys: ['k2'],
+      });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.change(search, { target: { value: 'CRA MULE' } });
+      await waitFor(() => {
+        expect(screen.getByText(/name already in use/i)).toBeTruthy();
+      });
+    });
+
+    it('typing a colliding name highlights the colliding row (aria-current="true")', () => {
+      renderOpenPopover({
+        userPresets: [preset('p1', 'CRA Mule'), preset('p2', 'Other CRA Mule')],
+        slateKeys: ['k2'],
+      });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      // The substring filter still includes "Other CRA Mule" so we can
+      // assert the non-collider stays unhighlighted in the same render.
+      fireEvent.change(search, { target: { value: 'cra mule' } });
+      const colliding = screen.getByRole('button', { name: 'CRA Mule' });
+      expect(colliding.getAttribute('aria-current')).toBe('true');
+      const other = screen.getByRole('button', { name: 'Other CRA Mule' });
+      expect(other.getAttribute('aria-current')).toBeNull();
+    });
+
+    it('clicking the colliding row applies that preset (escape hatch)', () => {
+      const onApply = vi.fn();
+      renderOpenPopover({
+        userPresets: [preset('p1', 'CRA Mule')],
+        slateKeys: ['k2'],
+        onApply,
+      });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.change(search, { target: { value: 'cra mule' } });
+      fireEvent.click(screen.getByRole('button', { name: 'CRA Mule' }));
+      expect(onApply).toHaveBeenCalledWith('p1');
+    });
+  });
+
+  describe('keyboard (Slice 3)', () => {
+    it('pressing Enter in the input saves when the name is valid', () => {
+      const onSave = vi.fn();
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1', 'k2'], onSave });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.change(search, { target: { value: '  My Preset  ' } });
+      fireEvent.keyDown(search, { key: 'Enter', code: 'Enter' });
+      expect(onSave).toHaveBeenCalledWith('My Preset', ['k1', 'k2']);
+    });
+
+    it('pressing Enter with the input empty triggers the empty-name flow (no save)', async () => {
+      const onSave = vi.fn();
+      renderOpenPopover({ userPresets: [], slateKeys: ['k1'], onSave });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.keyDown(search, { key: 'Enter', code: 'Enter' });
+      expect(onSave).not.toHaveBeenCalled();
+      expect(search.getAttribute('aria-invalid')).toBe('true');
+      await waitFor(() => {
+        expect(screen.getByText(/enter a name for this preset/i)).toBeTruthy();
+      });
+    });
+
+    it('pressing Enter with a colliding name does nothing', () => {
+      const onSave = vi.fn();
+      renderOpenPopover({
+        userPresets: [preset('p1', 'CRA Mule')],
+        slateKeys: ['k2'],
+        onSave,
+      });
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      fireEvent.change(search, { target: { value: 'CRA Mule' } });
+      fireEvent.keyDown(search, { key: 'Enter', code: 'Enter' });
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
+    it('pressing Escape inside the popover closes it', async () => {
+      render(<ControlledHost userPresets={[preset('p1', 'Mine')]} slateKeys={['k1']} />);
+      const search = screen.getByLabelText(/search or name/i) as HTMLInputElement;
+      expect(search).toBeTruthy();
+      fireEvent.keyDown(search, { key: 'Escape', code: 'Escape' });
+      await waitFor(() => {
+        expect(screen.queryByLabelText(/search or name/i)).toBeNull();
+      });
     });
   });
 });
