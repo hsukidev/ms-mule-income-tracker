@@ -304,8 +304,36 @@ The accepted-by-design behaviour where selecting a **Monthly Cadence** **Slate K
 ### UI surfaces
 
 **Roster**:
-The grid of **Character Cards** plus a trailing **Add Card**.
+The **Mule** collection surface, rendered in exactly one **Roster Display Mode** — either **Card View** or **List View** — with a trailing **Add Card** in both.
 _Avoid_: Card grid, mule list
+
+**Roster Display Mode**:
+How the **Roster** is laid out — exactly one of **Card View** or **List View**. Persisted per user.
+_Avoid_: View mode, layout mode
+
+**Card View**:
+The **Roster Display Mode** that renders each **Mule** as a **Character Card** in a responsive grid. Default mode.
+_Avoid_: Grid view, card grid
+
+**List View**:
+The **Roster Display Mode** that renders each **Mule** as one horizontal row (avatar, identity, **Weekly Count**, **Daily Count**, **Potential Meso**, share). Subject to **Density**.
+_Avoid_: List, table view, row view
+
+**Density**:
+The **List View** size mode — exactly one of **Comfy** or **Compact** — driving row padding, avatar size, in-row gap, and inter-row gap. Persisted per user. The **Density Toggle** is hidden below 768px; in that range **Comfy**'s row dimensions tighten via override so the user isn't stranded with a chunkier-than-fits layout.
+_Avoid_: Row size, list size
+
+**Comfy**:
+The looser **Density** — taller rows, larger avatar, more inter-row gap; the default for new users. Below 768px, **Comfy**'s row dimensions are tightened via override (the **Density Toggle** is hidden in that range).
+_Avoid_: Comfortable, spacious, large
+
+**Compact**:
+The tighter **Density** — shorter rows, smaller avatar, less inter-row gap; favored when scanning many **Mules** at once.
+_Avoid_: Dense, small, tight
+
+**Density Toggle**:
+The header control that flips **Density** between **Comfy** and **Compact**. Hidden below 768px because the toggle's value is too small to matter at that scale.
+_Avoid_: Density picker, density switcher
 
 **Character Card**:
 The tile in the **Roster** for one **Mule** — avatar, name, class, level, and **Potential Meso**.
