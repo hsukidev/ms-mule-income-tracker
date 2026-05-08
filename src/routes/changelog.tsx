@@ -30,6 +30,21 @@ function groupChanges(changes: Change[]): Record<ChangeCategory, Change[]> {
   return grouped;
 }
 
+function renderChangeText(change: Change) {
+  if (!change.boldText) return change.text;
+  const idx = change.text.indexOf(change.boldText);
+  if (idx === -1) return change.text;
+  const before = change.text.slice(0, idx);
+  const after = change.text.slice(idx + change.boldText.length);
+  return (
+    <>
+      {before}
+      <strong>{change.boldText}</strong>
+      {after}
+    </>
+  );
+}
+
 function ChangelogPage() {
   const { markSeen } = useChangelogNotification();
   useEffect(() => {
@@ -97,7 +112,7 @@ function ReleaseCard({ release }: { release: Release }) {
             <ul className="mt-2 list-disc pl-5 flex flex-col gap-2">
               {items.map((item, idx) => (
                 <li key={idx} style={{ color: 'var(--text, var(--foreground))' }}>
-                  {item.text}
+                  {renderChangeText(item)}
                 </li>
               ))}
             </ul>

@@ -3,6 +3,7 @@ export type ChangeCategory = 'feature' | 'ui' | 'fix';
 export type Change = {
   category: ChangeCategory;
   text: string;
+  boldText?: string;
 };
 
 export type Release = {
@@ -38,6 +39,8 @@ export const releases: Release[] = [
       {
         category: 'feature',
         text: 'Users can now save and load custom boss presets. Transfer codes prior to this update will no longer work. Please generate a new transfer code',
+        boldText:
+          'Transfer codes prior to this update will no longer work. Please generate a new transfer code',
       },
     ],
   },

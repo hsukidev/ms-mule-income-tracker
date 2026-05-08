@@ -37,7 +37,11 @@ describe('Changelog page', () => {
       expect(screen.getByText(longDate(release.date))).toBeTruthy();
       expect(screen.getByText(`v${release.version}`)).toBeTruthy();
       for (const change of release.changes) {
-        expect(screen.getByText(change.text)).toBeTruthy();
+        expect(
+          screen.getByText(
+            (_, element) => element?.tagName === 'LI' && element?.textContent === change.text,
+          ),
+        ).toBeTruthy();
       }
     }
   });
