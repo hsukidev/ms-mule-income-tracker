@@ -7,7 +7,7 @@ import { UserPresetPopover } from '../UserPresetPopover';
 import type { UserPreset } from '../../data/userPresets';
 
 function preset(id: string, name: string, slateKeys: readonly string[] = ['k1']): UserPreset {
-  return { id, name, slateKeys };
+  return { id, name, slateKeys, partySizes: {} };
 }
 
 interface RenderOpts {

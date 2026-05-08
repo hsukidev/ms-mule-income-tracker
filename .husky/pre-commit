@@ -1,5 +1,13 @@
 pnpm exec lint-staged
 
+if git diff --cached --name-only | grep -qE '\.(ts|tsx)$'; then
+  if ! pnpm typecheck; then
+    echo
+    echo "ERROR: typecheck failed. Fix TS errors before committing."
+    exit 1
+  fi
+fi
+
 # Fail fast if a package.json change isn't accompanied by a matching
 # pnpm-lock.yaml update. Sandcastle sandboxes set CI=true and so use
 # --frozen-lockfile by default — drift here aborts every subsequent

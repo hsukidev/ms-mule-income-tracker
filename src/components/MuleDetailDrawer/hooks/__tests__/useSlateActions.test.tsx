@@ -73,6 +73,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -91,6 +92,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [NORMAL_LUCID],
+          partySizes: {},
           slate: makeSlate([NORMAL_LUCID]),
           userPresets: [],
           onUpdate,
@@ -109,6 +111,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: null,
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -131,6 +134,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
+          partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
           onUpdate,
@@ -157,6 +161,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
+          partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
           onUpdate,
@@ -177,6 +182,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
+          partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
           onUpdate,
@@ -197,6 +203,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
+          partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
           onUpdate,
@@ -218,6 +225,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -236,6 +244,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
+          partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
           onUpdate,
@@ -254,6 +263,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
+          partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
           onUpdate,
@@ -272,6 +282,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -294,6 +305,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: initial,
+          partySizes: {},
           slate: makeSlate(initial),
           userPresets: [],
           onUpdate,
@@ -314,6 +326,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
+          partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
           onUpdate,
@@ -333,6 +346,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [HORNTAIL_DAILY],
+          partySizes: {},
           slate: makeSlate([HORNTAIL_DAILY]),
           userPresets: [],
           onUpdate,
@@ -353,6 +367,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -374,6 +389,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: null,
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,
@@ -396,6 +412,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
+          partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets,
           onUpdate,
@@ -423,6 +440,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets,
           onUpdate,
@@ -442,6 +460,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [preset('p1', 'A', [HARD_LUCID])],
           onUpdate,
@@ -460,6 +479,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: null,
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [preset('p1', 'A', [HARD_LUCID])],
           onUpdate,
@@ -524,6 +544,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [HARD_LUCID],
+          partySizes: {},
           slate: makeSlate([HARD_LUCID]),
           userPresets: [],
           onUpdate,
@@ -545,6 +566,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [HARD_LUCID],
+          partySizes: {},
           slate: makeSlate([HARD_LUCID]),
           userPresets: [],
           onUpdate,
@@ -564,6 +586,7 @@ describe('useSlateActions', () => {
         useSlateActions({
           muleId: null,
           selectedBosses: [],
+          partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
           onUpdate,

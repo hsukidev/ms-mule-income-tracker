@@ -34,13 +34,9 @@ function AboutPage() {
             What is YABI?
           </h2>
           <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
-            YABI is a weekly boss income tracker for MapleStory inspired by{' '}
-            <a href="https://maplehub.app" style={{ color: 'var(--accent-primary)' }}>
-              Maplehub
-            </a>
-            . With a simplified user experience for both desktop and mobile, users can build a
-            roster, select bosses, and YABI will display the per-world weekly meso total under
-            MapleStory's actual caps.
+            YABI is a weekly boss income tracking tool for MapleStory. With a simplified user
+            experience for both desktop and mobile, users can build a roster, select bosses, and
+            YABI will display the per-world weekly meso total under MapleStory's actual caps.
           </p>
           <p className="mt-3" style={{ color: 'var(--text, var(--foreground))' }}>
             Your roster is stored in your browser's localStorage — nothing leaves your machine
@@ -75,6 +71,13 @@ function AboutPage() {
               style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}
             >
               hsukidev@gmail.com
+            </a>{' '}
+            or find me on{' '}
+            <a
+              href="https://www.reddit.com/user/hsukidev/"
+              style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}
+            >
+              reddit
             </a>
           </p>
         </section>
