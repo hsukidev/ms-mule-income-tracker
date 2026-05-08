@@ -271,7 +271,7 @@ html[data-theme-swap] *::after {
   --row-eyebrow-value-size: 14px;
   --row-income-size: 22px;
   --row-income-w: 130px;
-  --row-identity-gap: 6px;
+  --row-identity-gap: 2px;
   --row-metric-row-gap: 14px;
   --row-metric-icon: 18px;
   --row-pad: 14px 22px;
@@ -295,7 +295,7 @@ html[data-theme-swap] *::after {
   --row-eyebrow-value-size: 13px;
   --row-income-size: 20px;
   --row-income-w: 110px;
-  --row-identity-gap: 4px;
+  --row-identity-gap: 0px;
   --row-metric-row-gap: 12px;
   --row-metric-icon: 16px;
   --row-pad: 5px 14px;
@@ -355,6 +355,25 @@ html[data-theme-swap] *::after {
    * narrowest viewports — bare values remain, and tapping a value opens a
    * tooltip naming the metric (wired in MuleListRow's MetricTooltip). */
   [data-row-eyebrow] {
+    display: none;
+  }
+}
+
+/* Roster List view: drop the share-of-roster line and the class label below
+ * 580px to give the meso bignum the full width of the income column and the
+ * identity row room for the name + Lv pill. */
+@media (max-width: 579px) {
+  [data-row-share],
+  [data-row-class] {
+    display: none;
+  }
+}
+
+/* Roster List view: below 450px hide the inline Lv pill and the weekly
+ * count's /14 cap-denominator. */
+@media (max-width: 449px) {
+  [data-row-level],
+  [data-row-weekly-cap] {
     display: none;
   }
 }

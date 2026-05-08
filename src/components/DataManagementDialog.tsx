@@ -59,7 +59,7 @@ export function DataManagementDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[min(32rem,calc(100vw-2rem))]">
         <DialogHeader>
           <DialogTitle>
             {screen === 'confirm' ? 'Replace your data?' : 'Data Management'}

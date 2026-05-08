@@ -13,6 +13,7 @@ import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar } from './MatrixToolbar';
 import { CharacterAvatar } from './CharacterAvatar';
+import { MetricTooltip } from './MetricTooltip';
 import { useDeleteConfirm } from './MuleDetailDrawer/hooks/useDeleteConfirm';
 import { useMuleIdentityDraft } from './MuleDetailDrawer/hooks/useMuleIdentityDraft';
 import { useMatrixFilter } from './MuleDetailDrawer/hooks/useMatrixFilter';
@@ -54,6 +55,7 @@ export function MuleDetailDrawer({
   );
   const { raw: potentialIncomeRaw } = useIncome(incomeSource);
   const potentialIncome = formatMeso(potentialIncomeRaw, true);
+  const fullPotentialIncome = formatMeso(potentialIncomeRaw, false);
 
   const muleId = mule?.id ?? null;
   const selectedBosses = useMemo(() => mule?.selectedBosses ?? [], [mule?.selectedBosses]);
@@ -151,8 +153,10 @@ export function MuleDetailDrawer({
                     </span>
                   </div>
                   <div className="mt-3 flex flex-col items-center gap-2.5 min-[425px]:items-start">
-                    <div
-                      className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5"
+                    <MetricTooltip
+                      ariaLabel={`Potential weekly meso ${fullPotentialIncome}`}
+                      tooltip={fullPotentialIncome}
+                      className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 px-3 py-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       style={{
                         background: 'color-mix(in srgb, var(--surface-2) 92%, transparent)',
                         boxShadow:
@@ -168,7 +172,7 @@ export function MuleDetailDrawer({
                       <span className="font-display italic text-xs text-muted-foreground">
                         mesos
                       </span>
-                    </div>
+                    </MetricTooltip>
                     <div className="inline-flex items-center">
                       <button
                         type="button"

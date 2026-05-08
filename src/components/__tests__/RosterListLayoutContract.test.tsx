@@ -98,12 +98,12 @@ describe('Roster list layout contract — density tightens row vars', () => {
     expect(rowVarFor('compact', 'row-vgap')).toBe('8px');
   });
 
-  it('comfy declares --row-identity-gap: 6px', () => {
-    expect(rowVarFor('comfy', 'row-identity-gap')).toBe('6px');
+  it('comfy declares --row-identity-gap: 2px', () => {
+    expect(rowVarFor('comfy', 'row-identity-gap')).toBe('2px');
   });
 
-  it('compact declares --row-identity-gap: 4px', () => {
-    expect(rowVarFor('compact', 'row-identity-gap')).toBe('4px');
+  it('compact declares --row-identity-gap: 0px', () => {
+    expect(rowVarFor('compact', 'row-identity-gap')).toBe('0px');
   });
 
   it('comfy declares --row-metric-row-gap: 14px', () => {

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Mule } from '../types';
 import type { WorldIncome } from '../modules/worldIncome';
+import { useMatchMedia } from '../hooks/useMatchMedia';
 import { rosterRowMetrics } from './rosterRowMetrics';
 import { MuleListRow } from './MuleListRow';
 import { AddCard } from './AddCard';
@@ -26,6 +27,11 @@ export function RosterListView({
   onAddMule,
   isPaintEngaged = false,
 }: RosterListViewProps) {
+  // Below 635px the row's income column is too narrow for unabbreviated meso.
+  // Subscribe once at the roster level and prop-drill, so a 50-mule list
+  // doesn't open 50 matchMedia listeners.
+  const forceAbbreviated = useMatchMedia('(max-width: 634px)');
+
   const rowMetrics = useMemo(
     () =>
       mules.map((mule) => ({
@@ -52,6 +58,7 @@ export function RosterListView({
           selected={toDelete.has(mule.id)}
           onToggleSelect={onToggleSelect}
           isPaintEngaged={isPaintEngaged}
+          forceAbbreviated={forceAbbreviated}
         />
       ))}
       {!bulkMode && onAddMule && <AddCard onClick={onAddMule} />}

@@ -9,6 +9,7 @@ import { formatDroppedSlots } from '../data/muleBossSlate';
 import type { Mule } from '../types';
 import type { RosterRowMetrics } from './rosterRowMetrics';
 import { CharacterAvatar } from './CharacterAvatar';
+import { MetricTooltip } from './MetricTooltip';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
 import dailyCrystalPng from '../assets/daily-crystal.png';
 
@@ -21,6 +22,10 @@ interface MuleListRowProps {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   isPaintEngaged?: boolean;
+  /** When true, override `useIncome.abbreviated` and force the abbreviated meso
+   * format. Lifted to RosterListView so a single matchMedia subscription
+   * decides for the whole roster. */
+  forceAbbreviated?: boolean;
 }
 
 export const MONO = 'Geist Mono, monospace';
@@ -49,6 +54,18 @@ const METRIC_VALUE_STYLE: React.CSSProperties = {
   marginLeft: 6,
 };
 
+const LEVEL_PILL_STYLE: React.CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 'var(--row-level-size, 11px)',
+  letterSpacing: '0.1em',
+  color: 'var(--muted-raw, var(--muted-foreground))',
+  padding: '2px 6px',
+  borderRadius: 4,
+  border: '1px solid var(--border)',
+  background: 'var(--surface-2, var(--surface-raised))',
+  whiteSpace: 'nowrap',
+};
+
 export const MuleListRow = memo(function MuleListRow({
   mule,
   metrics,
@@ -58,6 +75,7 @@ export const MuleListRow = memo(function MuleListRow({
   selected = false,
   onToggleSelect,
   isPaintEngaged = false,
+  forceAbbreviated = false,
 }: MuleListRowProps) {
   const [isPressed, setIsPressed] = useState(false);
   const handlePressStart = () => setIsPressed(true);
@@ -76,7 +94,8 @@ export const MuleListRow = memo(function MuleListRow({
     disabled: bulkMode,
   });
   const { abbreviated } = useIncome();
-  const displayedIncome = formatMeso(postCapIncomeMeso, abbreviated);
+  const displayedIncome = formatMeso(postCapIncomeMeso, abbreviated || forceAbbreviated);
+  const fullIncome = formatMeso(postCapIncomeMeso, false);
 
   function handleActivate() {
     if (bulkMode) onToggleSelect?.(mule.id);
@@ -112,7 +131,7 @@ export const MuleListRow = memo(function MuleListRow({
     opacity: mule.active ? 1 : 0.55,
     zIndex: isDragging ? 1 : undefined,
     display: 'grid',
-    gridTemplateColumns: 'var(--row-handle, 24px) var(--row-avatar, 64px) minmax(0, 1fr) auto',
+    gridTemplateColumns: 'var(--row-handle, 24px) var(--row-avatar, 64px) auto minmax(0, 1fr)',
     alignItems: 'center',
     gap: 'var(--row-gap, 10px)',
     padding: 'var(--row-pad, 14px 18px)',
@@ -202,7 +221,7 @@ export const MuleListRow = memo(function MuleListRow({
           gap: 'var(--row-identity-gap, 6px)',
         }}
       >
-        <div className="flex flex-row items-center gap-2" style={{ minWidth: 0, flexWrap: 'wrap' }}>
+        <div className="flex flex-row items-center gap-2">
           <span
             style={{
               color: mule.name
@@ -211,43 +230,26 @@ export const MuleListRow = memo(function MuleListRow({
               fontWeight: 600,
               fontSize: 'var(--row-name-size, 17px)',
               fontStyle: mule.name ? 'normal' : 'italic',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              minWidth: 0,
             }}
           >
             {mule.name || 'Unnamed'}
           </span>
           <span
+            data-row-class
             style={{
               color: 'var(--muted-raw, var(--muted-foreground))',
               fontFamily: MONO,
               fontSize: 'var(--row-class-size, 11px)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              minWidth: 0,
             }}
           >
             {mule.muleClass || 'No class'}
           </span>
           {mule.level > 0 && (
-            <span
-              style={{
-                fontFamily: MONO,
-                fontSize: 'var(--row-level-size, 11px)',
-                letterSpacing: '0.1em',
-                color: 'var(--muted-raw, var(--muted-foreground))',
-                padding: '2px 6px',
-                borderRadius: 4,
-                border: '1px solid var(--border)',
-                background: 'var(--surface-2, var(--surface-raised))',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <span data-row-level style={LEVEL_PILL_STYLE}>
               Lv.{mule.level}
             </span>
           )}
@@ -297,7 +299,12 @@ export const MuleListRow = memo(function MuleListRow({
               <span style={{ color: 'var(--accent-raw, var(--accent))' }}>
                 {metrics.weeklyCount}
               </span>
-              <span style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}>/14</span>
+              <span
+                data-row-weekly-cap
+                style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}
+              >
+                /14
+              </span>
             </span>
           </span>
 
@@ -316,20 +323,22 @@ export const MuleListRow = memo(function MuleListRow({
         </div>
       </div>
 
-      <div style={{ textAlign: 'right', minWidth: 'var(--row-income-w, 110px)' }}>
+      <div style={{ textAlign: 'right', minWidth: 0 }}>
         <div className="flex flex-row items-center justify-end gap-1.5" style={{ minWidth: 0 }}>
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 'var(--row-income-size, 22px)',
-              fontWeight: 600,
-              color: incomeColor,
-              lineHeight: 1.1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {displayedIncome}
-          </span>
+          <MetricTooltip ariaLabel={`Potential meso ${fullIncome}`} tooltip={fullIncome}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 'var(--row-income-size, 22px)',
+                fontWeight: 600,
+                color: incomeColor,
+                lineHeight: 1.1,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {displayedIncome}
+            </span>
+          </MetricTooltip>
           {droppedLines.length > 0 && (
             <Tooltip open={droppedTooltipOpen} onOpenChange={setDroppedTooltipOpen}>
               <TooltipTrigger
@@ -358,6 +367,7 @@ export const MuleListRow = memo(function MuleListRow({
           )}
         </div>
         <div
+          data-row-share
           style={{
             fontFamily: MONO,
             fontSize: 'var(--row-eyebrow-size, 11px)',
@@ -367,11 +377,7 @@ export const MuleListRow = memo(function MuleListRow({
             marginTop: 2,
           }}
         >
-          <MetricTooltip
-            ariaLabel="Share of roster"
-            tooltip="Share of roster"
-            stopBubble={stopBubble}
-          >
+          <MetricTooltip ariaLabel="Share of roster" tooltip="Share of roster">
             <span>{(metrics.sharePct * 100).toFixed(1)}%</span>
             <span data-row-eyebrow style={{ marginLeft: 4 }}>
               SHARE
@@ -382,38 +388,3 @@ export const MuleListRow = memo(function MuleListRow({
     </div>
   );
 });
-
-function MetricTooltip({
-  ariaLabel,
-  tooltip,
-  stopBubble,
-  children,
-}: {
-  ariaLabel: string;
-  tooltip: string;
-  stopBubble: (e: React.SyntheticEvent) => void;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger
-        aria-label={ariaLabel}
-        closeOnClick={false}
-        delay={0}
-        onClick={(e) => {
-          stopBubble(e);
-          setOpen(true);
-        }}
-        onPointerDown={stopBubble}
-        onTouchStart={stopBubble}
-        className="inline-flex items-center bg-transparent p-0 border-0 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent side="top" className="normal-case tracking-normal text-[11px]">
-        {tooltip}
-      </TooltipContent>
-    </Tooltip>
-  );
-}

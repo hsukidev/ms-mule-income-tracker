@@ -142,7 +142,9 @@ export function RosterHeader({
             background: 'linear-gradient(90deg, transparent, var(--accent-raw, var(--accent)))',
           }}
         />
-        <h2 className="font-display text-2xl font-bold tracking-tight">Roster</h2>
+        <h2 className="font-display text-2xl font-bold tracking-tight max-[399px]:hidden">
+          Roster
+        </h2>
         <WorldSelect />
       </div>
       <div className="flex items-center gap-3">
@@ -165,8 +167,8 @@ export function RosterHeader({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               borderRadius: 8,
               background: 'var(--surface)',
               border: '1px solid var(--border)',

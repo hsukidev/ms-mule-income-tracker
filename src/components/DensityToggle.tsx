@@ -34,6 +34,7 @@ export function DensityToggle() {
               borderRadius: 6,
               fontFamily: 'Geist Mono, monospace',
               fontSize: 11,
+              lineHeight: '14px',
               letterSpacing: '0.14em',
               fontWeight: 500,
               border: 'none',
