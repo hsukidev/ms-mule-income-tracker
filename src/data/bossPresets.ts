@@ -238,12 +238,13 @@ export function conform(keys: readonly string[], preset: CanonicalPresetKey): st
 
   for (const key of keys) {
     const parsed = parseKey(key);
-    // Malformed keys pass through. Daily and monthly keys are wiped — the
-    // post-Conform slate must be pure-Canonical under Full-Slate Equality.
+    // Malformed keys pass through; the Selection Invariant filters them downstream.
     if (!parsed) {
       next.push(key);
       continue;
     }
+    // Daily and monthly keys are wiped so the post-Conform slate is pure-Canonical
+    // under Full-Slate Equality.
     if (parsed.cadence !== 'weekly') continue;
     const entry = entries.get(parsed.bossId);
     if (!entry) continue; // weekly on non-preset family → wipe
