@@ -19,19 +19,26 @@ import { DataManagementDialog } from '../DataManagementDialog';
 const TRACKER_KEY = 'maplestory-mule-tracker';
 const WORLD_KEY = 'world';
 const CHANGELOG_KEY = 'lastSeenChangelog';
+const USER_PRESET_KEY = 'maplestory-mule-tracker-user-presets';
 
 function makeValidCode(
-  data: Partial<Record<typeof TRACKER_KEY | typeof WORLD_KEY | typeof CHANGELOG_KEY, string>> = {},
+  data: Partial<
+    Record<
+      typeof TRACKER_KEY | typeof WORLD_KEY | typeof CHANGELOG_KEY | typeof USER_PRESET_KEY,
+      string
+    >
+  > = {},
 ) {
   return compressToEncodedURIComponent(
     JSON.stringify({
       app: 'yabi',
-      exportVersion: 1,
+      exportVersion: 2,
       exportedAt: '2026-05-04T00:00:00.000Z',
       data: {
         [TRACKER_KEY]: data[TRACKER_KEY] ?? '',
         [WORLD_KEY]: data[WORLD_KEY] ?? '',
         [CHANGELOG_KEY]: data[CHANGELOG_KEY] ?? '',
+        [USER_PRESET_KEY]: data[USER_PRESET_KEY] ?? '',
       },
     }),
   );

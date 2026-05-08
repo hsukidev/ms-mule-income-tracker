@@ -73,13 +73,16 @@ export function MuleDetailDrawer({
     onUpdate,
   });
   const { userPresets, createUserPreset, deleteUserPreset } = useUserPresets();
+  const { stablePartySizes } = partySizes;
   const pill = usePresetPill({
     selectedBosses,
+    partySizes: stablePartySizes,
     userPresets,
   });
   const slateActions = useSlateActions({
     muleId,
     selectedBosses,
+    partySizes: stablePartySizes,
     slate,
     userPresets,
     onUpdate,
@@ -116,9 +119,9 @@ export function MuleDetailDrawer({
   );
   const handleSaveUserPreset = useCallback(
     (name: string, slateKeys: readonly string[]) => {
-      createUserPreset(name, slateKeys);
+      createUserPreset(name, slateKeys, stablePartySizes);
     },
-    [createUserPreset],
+    [createUserPreset, stablePartySizes],
   );
 
   return (

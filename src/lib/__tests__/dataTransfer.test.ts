@@ -20,6 +20,7 @@ import {
 const TRACKER_KEY = 'maplestory-mule-tracker';
 const WORLD_KEY = 'world';
 const CHANGELOG_KEY = 'lastSeenChangelog';
+const USER_PRESET_KEY = 'maplestory-mule-tracker-user-presets';
 
 function makeFakePort(initial: Partial<Record<string, string>> = {}): DataTransferStoragePort & {
   store: Record<string, string | undefined>;
@@ -82,9 +83,14 @@ beforeEach(() => {
 describe('buildExport / decodeImport', () => {
   it('round-trips: decoded data is byte-equal to the source localStorage values', () => {
     const tracker = trackerBlob([muleFixture({ id: 'a', worldId: 'heroic-kronos' })]);
+    const presetBlob = JSON.stringify({
+      schemaVersion: 1,
+      userPresets: [{ id: 'p1', name: 'Mine', slateKeys: [], partySizes: {} }],
+    });
     localStorage.setItem(TRACKER_KEY, tracker);
     localStorage.setItem(WORLD_KEY, 'heroic-kronos');
     localStorage.setItem(CHANGELOG_KEY, 'v1.0.0');
+    localStorage.setItem(USER_PRESET_KEY, presetBlob);
 
     const code = buildExport();
     const result = decodeImport(code);
@@ -92,10 +98,11 @@ describe('buildExport / decodeImport', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.payload.app).toBe('yabi');
-    expect(result.payload.exportVersion).toBe(1);
+    expect(result.payload.exportVersion).toBe(2);
     expect(result.payload.data[TRACKER_KEY]).toBe(tracker);
     expect(result.payload.data[WORLD_KEY]).toBe('heroic-kronos');
     expect(result.payload.data[CHANGELOG_KEY]).toBe('v1.0.0');
+    expect(result.payload.data[USER_PRESET_KEY]).toBe(presetBlob);
   });
 
   it('returns { ok: false } for a corrupt non-base64 code without throwing', () => {
@@ -113,28 +120,46 @@ describe('buildExport / decodeImport', () => {
     const code = compressToEncodedURIComponent(
       JSON.stringify({
         app: 'other-tool',
-        exportVersion: 1,
-        exportedAt: '2026-05-04T00:00:00.000Z',
-        data: {
-          [TRACKER_KEY]: '',
-          [WORLD_KEY]: '',
-          [CHANGELOG_KEY]: '',
-        },
-      }),
-    );
-    expect(decodeImport(code).ok).toBe(false);
-  });
-
-  it('rejects a future exportVersion', () => {
-    const code = compressToEncodedURIComponent(
-      JSON.stringify({
-        app: 'yabi',
         exportVersion: 2,
         exportedAt: '2026-05-04T00:00:00.000Z',
         data: {
           [TRACKER_KEY]: '',
           [WORLD_KEY]: '',
           [CHANGELOG_KEY]: '',
+          [USER_PRESET_KEY]: '',
+        },
+      }),
+    );
+    expect(decodeImport(code).ok).toBe(false);
+  });
+
+  it('rejects exportVersion 3 (future)', () => {
+    const code = compressToEncodedURIComponent(
+      JSON.stringify({
+        app: 'yabi',
+        exportVersion: 3,
+        exportedAt: '2026-05-04T00:00:00.000Z',
+        data: {
+          [TRACKER_KEY]: '',
+          [WORLD_KEY]: '',
+          [CHANGELOG_KEY]: '',
+          [USER_PRESET_KEY]: '',
+        },
+      }),
+    );
+    expect(decodeImport(code).ok).toBe(false);
+  });
+
+  it('rejects exportVersion 1 (legacy)', () => {
+    const code = compressToEncodedURIComponent(
+      JSON.stringify({
+        app: 'yabi',
+        exportVersion: 1,
+        exportedAt: '2026-05-04T00:00:00.000Z',
+        data: {
+          [TRACKER_KEY]: 'tracker',
+          [WORLD_KEY]: 'heroic-kronos',
+          [CHANGELOG_KEY]: 'v1.0.0',
         },
       }),
     );
@@ -145,11 +170,12 @@ describe('buildExport / decodeImport', () => {
     const code = compressToEncodedURIComponent(
       JSON.stringify({
         app: 'yabi',
-        exportVersion: 1,
+        exportVersion: 2,
         exportedAt: '2026-05-04T00:00:00.000Z',
         data: {
           [TRACKER_KEY]: '',
           [CHANGELOG_KEY]: '',
+          [USER_PRESET_KEY]: '',
         },
       }),
     );
@@ -161,12 +187,13 @@ describe('applyImport', () => {
   function payloadOf(data: Record<string, string>): ExportEnvelope {
     return {
       app: 'yabi',
-      exportVersion: 1,
+      exportVersion: 2,
       exportedAt: '2026-05-04T00:00:00.000Z',
       data: {
         [TRACKER_KEY]: data[TRACKER_KEY] ?? '',
         [WORLD_KEY]: data[WORLD_KEY] ?? '',
         [CHANGELOG_KEY]: data[CHANGELOG_KEY] ?? '',
+        [USER_PRESET_KEY]: data[USER_PRESET_KEY] ?? '',
       },
     };
   }
@@ -263,6 +290,21 @@ describe('applyImport', () => {
     expect(port.store[CHANGELOG_KEY]).toBe('v1.0.0');
   });
 
+  it('writes USER_PRESET_KEY when the envelope includes it', () => {
+    const port = makeFakePort();
+    const result = applyImport(
+      payloadOf({
+        [TRACKER_KEY]: 'tracker-new',
+        [WORLD_KEY]: 'heroic-kronos',
+        [CHANGELOG_KEY]: 'v2.0.0',
+        [USER_PRESET_KEY]: 'preset-blob',
+      }),
+      port,
+    );
+    expect(result).toEqual({ ok: true });
+    expect(port.store[USER_PRESET_KEY]).toBe('preset-blob');
+  });
+
   it('rolls back the first two keys when the third write throws', () => {
     const port = makeFakePort({
       [TRACKER_KEY]: 'tracker-old',
@@ -291,12 +333,13 @@ describe('summarizeImport', () => {
   function payloadWithMules(mules: ReturnType<typeof muleFixture>[]): ExportEnvelope {
     return {
       app: 'yabi',
-      exportVersion: 1,
+      exportVersion: 2,
       exportedAt: '2026-05-04T00:00:00.000Z',
       data: {
         [TRACKER_KEY]: trackerBlob(mules),
         [WORLD_KEY]: '',
         [CHANGELOG_KEY]: '',
+        [USER_PRESET_KEY]: '',
       },
     };
   }

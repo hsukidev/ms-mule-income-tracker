@@ -1,6 +1,4 @@
 import { memo, useState } from 'react';
-import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { UserPresetPopover } from './UserPresetPopover';
 import type { UserPreset } from '../data/userPresets';
@@ -91,18 +89,16 @@ export const MatrixToolbar = memo(function MatrixToolbar({
   onDeleteUserPreset,
   onApplyUserPreset,
 }: MatrixToolbarProps) {
-  const [infoOpen, setInfoOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  // Wrap apply/save to dismiss the popover after the action runs;
-  // delete leaves the popover open so the user can keep tidying.
+  // Apply dismisses the popover; save and delete leave it open so the
+  // user can confirm the new entry / keep tidying without re-opening.
   const handleApplyUserPreset = (presetId: string) => {
     onApplyUserPreset(presetId);
     setPopoverOpen(false);
   };
   const handleSaveUserPreset = (name: string, keys: readonly string[]) => {
     onSaveUserPreset(name, keys);
-    setPopoverOpen(false);
   };
 
   return (
@@ -161,17 +157,6 @@ export const MatrixToolbar = memo(function MatrixToolbar({
           />
         </Popover>
       </div>
-      <Tooltip open={infoOpen} onOpenChange={setInfoOpen}>
-        <TooltipTrigger
-          aria-label="Weekly preset info"
-          closeOnClick={false}
-          onClick={() => setInfoOpen(true)}
-          className="ml-1.5 inline-flex size-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring max-[292.99px]:hidden"
-        >
-          <Info className="size-3.5 " aria-hidden />
-        </TooltipTrigger>
-        <TooltipContent className="px-3.5 py-2.5">Weekly preset</TooltipContent>
-      </Tooltip>
       <button
         type="button"
         onClick={onReset}

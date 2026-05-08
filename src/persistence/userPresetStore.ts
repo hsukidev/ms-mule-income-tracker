@@ -46,7 +46,18 @@ function validatePreset(raw: unknown): UserPreset | null {
   for (const k of obj.slateKeys) {
     if (typeof k === 'string') slateKeys.push(k);
   }
-  return { id: obj.id, name: obj.name, slateKeys };
+  // `partySizes` is optional on disk: legacy presets persisted before the
+  // partySizes capture rule shipped have no field. Default to `{}` and let
+  // `userPresetMatch`'s default-aware compare treat them as party-size-agnostic.
+  const partySizes: Record<string, number> = {};
+  if (typeof obj.partySizes === 'object' && obj.partySizes !== null) {
+    for (const [family, value] of Object.entries(obj.partySizes as Record<string, unknown>)) {
+      if (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 6) {
+        partySizes[family] = value;
+      }
+    }
+  }
+  return { id: obj.id, name: obj.name, slateKeys, partySizes };
 }
 
 /**

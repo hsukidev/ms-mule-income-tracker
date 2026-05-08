@@ -216,11 +216,11 @@ The fourth **Boss Preset** pill — lights when the **Mule** has weekly **Slate 
 _Avoid_: Fallback preset
 
 **User Preset**:
-A persisted, user-authored named loadout snapshot — `{ id, name, slateKeys[] }` capturing **all** of a **Mule's** **Slate Keys** (weekly, daily, monthly) at save time. Created via "Save current as preset" inside the **User Preset Popover**; applied to another **Mule** via **Apply User Preset**. Distinct from the **Custom Preset** pill (which is the popover's host, not a preset itself) and from **Canonical Presets** (which conform weeklies only).
+A persisted, user-authored named loadout snapshot — `{ id, name, slateKeys[], partySizes }` capturing **all** of a **Mule's** **Slate Keys** (weekly, daily, monthly) **and the per-Boss-Family Party Size** for every family present in the snapshot, at save time. Party Sizes for families _not_ in the snapshot's keys are not captured. Created via "Save current as preset" inside the **User Preset Popover**; applied to another **Mule** via **Apply User Preset**. Distinct from the **Custom Preset** pill (which is the popover's host, not a preset itself) and from **Canonical Presets** (which conform weeklies only).
 _Avoid_: Saved preset, personal preset, my preset, custom preset (the pill)
 
 **Apply User Preset**:
-The **User Preset** click action — atomically replace every **Slate Key** on the **Mule** with the snapshot's keys. Unlike **Conform**, daily and monthly keys are not preserved. Applying a snapshot whose key set matches the **Mule's** current **Boss Slate** is a no-op.
+The **User Preset** click action — atomically replace every **Slate Key** _and_ the entire **Party Sizes** record on the **Mule** with the snapshot's `slateKeys` and `partySizes`. Unlike **Conform**, daily and monthly keys are not preserved; unlike a partial update, **Party Sizes** for families not in the snapshot are wiped. Applying a snapshot that already matches the **Mule's** **Boss Slate** _and_ **Party Sizes** is a no-op.
 _Avoid_: Conform (reserved for **Canonical Presets**)
 
 **CRA**:
@@ -255,7 +255,7 @@ _Avoid_: Strict match, exact match
 The **Active Preset** match rule for **Canonical Presets** — the **Boss Slate** must satisfy the original weekly equality **and** carry zero **Slate Keys** of any other cadence (no dailies, no monthlies). Toggling a single daily cell demotes a Canonical match to **Custom Preset**. Replaces **Same-Cadence Equality**.
 
 **User Preset Match**:
-The **User Preset** match rule — the **Boss Slate's** full key set (every cadence) is order-insensitive set-equal to the snapshot's `slateKeys`. Drives both popover row highlighting and **Custom Preset** pill activation.
+The **User Preset** match rule — the **Boss Slate's** full key set (every cadence) is order-insensitive set-equal to the snapshot's `slateKeys`, **and** for every **Boss Family** present in the snapshot, `(currentMule.partySizes[family] ?? 1) === (snapshot.partySizes[family] ?? 1)`. Extraneous **Party Sizes** entries on the live **Mule** for families not in the snapshot are ignored. Drives both popover row highlighting and **Custom Preset** pill activation.
 
 **Conform**:
 The **Canonical Preset** click action — preserve compatible weekly **Slate Keys**, drop non-accepted ones, add the **Default Tier** for missing entries, wipe weeklies outside the preset's families, **and wipe every daily and monthly key**. The post-**Conform** **Boss Slate** is always pure-Canonical (weekly-only, satisfies **Full-Slate Equality** with the clicked **Canonical Preset**). No-op when the clicked pill is already **Active**.

@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useUserPresets } from '../useUserPresets';
 import { USER_PRESET_STORAGE_KEY } from '../../persistence/userPresetStorage';
 import { CURRENT_USER_PRESET_SCHEMA_VERSION } from '../../persistence/userPresetStore';
+import { bosses } from '../../data/bosses';
 
 let localStorageStore: Record<string, string> = {};
 let sessionStorageStore: Record<string, string> = {};
@@ -59,10 +60,12 @@ describe('useUserPresets', () => {
     it('hydrates from the store', () => {
       localStorageStore[USER_PRESET_STORAGE_KEY] = JSON.stringify({
         schemaVersion: CURRENT_USER_PRESET_SCHEMA_VERSION,
-        userPresets: [{ id: 'p1', name: 'Loaded', slateKeys: ['k1'] }],
+        userPresets: [{ id: 'p1', name: 'Loaded', slateKeys: ['k1'], partySizes: {} }],
       });
       const { result } = renderHook(() => useUserPresets());
-      expect(result.current.userPresets).toEqual([{ id: 'p1', name: 'Loaded', slateKeys: ['k1'] }]);
+      expect(result.current.userPresets).toEqual([
+        { id: 'p1', name: 'Loaded', slateKeys: ['k1'], partySizes: {} },
+      ]);
     });
   });
 
@@ -187,6 +190,39 @@ describe('useUserPresets', () => {
       const saved = JSON.parse(localStorageStore[USER_PRESET_STORAGE_KEY]);
       expect(saved.userPresets).toHaveLength(1);
       expect(saved.userPresets[0].name).toBe('Persisted');
+    });
+  });
+
+  describe('createUserPreset — partySizes capture', () => {
+    it('captures partySizes only for families with slate keys in the snapshot', () => {
+      const pinkBean = bosses.find((b) => b.family === 'pink-bean')!;
+      const slateKeys = [`${pinkBean.id}:chaos:weekly`];
+      const { result } = renderHook(() => useUserPresets());
+      act(() => {
+        result.current.createUserPreset('Mine', slateKeys, {
+          'pink-bean': 3,
+          'unrelated-family': 6,
+        });
+      });
+      expect(result.current.userPresets[0].partySizes).toEqual({ 'pink-bean': 3 });
+    });
+
+    it('defaults a captured family to 1 when the live mule has no entry for it', () => {
+      const pinkBean = bosses.find((b) => b.family === 'pink-bean')!;
+      const slateKeys = [`${pinkBean.id}:chaos:weekly`];
+      const { result } = renderHook(() => useUserPresets());
+      act(() => {
+        result.current.createUserPreset('Mine', slateKeys, {});
+      });
+      expect(result.current.userPresets[0].partySizes).toEqual({ 'pink-bean': 1 });
+    });
+
+    it('defaults to empty partySizes when no partySizes argument is provided (legacy callsite)', () => {
+      const { result } = renderHook(() => useUserPresets());
+      act(() => {
+        result.current.createUserPreset('Mine', ['k1', 'k2']);
+      });
+      expect(result.current.userPresets[0].partySizes).toEqual({});
     });
   });
 });

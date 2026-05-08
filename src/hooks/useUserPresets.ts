@@ -1,9 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserPreset } from '../data/userPresets';
+import { getBossById } from '../data/bosses';
+import { parseKey } from '../data/bossPresets';
 import { createUserPresetStore } from '../persistence/userPresetStore';
 
 const MAX_NAME_LENGTH = 40;
+
+/**
+ * Capture-only-snapshot-families: build the snapshot's `partySizes` from
+ * the live mule's record, restricted to families that appear in
+ * `slateKeys`. Each captured family resolves to `mulePartySizes[family]
+ * ?? 1` so default-aware match in `userPresetMatch` doesn't have to
+ * carry the empty/1 distinction at compare time.
+ */
+function captureSnapshotPartySizes(
+  slateKeys: readonly string[],
+  mulePartySizes: Record<string, number>,
+): Record<string, number> {
+  const families = new Set<string>();
+  for (const key of slateKeys) {
+    const parsed = parseKey(key);
+    if (!parsed) continue;
+    const boss = getBossById(parsed.bossId);
+    if (boss) families.add(boss.family);
+  }
+  const captured: Record<string, number> = {};
+  for (const family of families) {
+    captured[family] = mulePartySizes[family] ?? 1;
+  }
+  return captured;
+}
 
 // Module-scope singleton — the hook is itself used as a singleton
 // (App-wide state) so one store instance is the right shape.
@@ -36,7 +63,11 @@ export type CreateUserPresetResult =
  */
 export function useUserPresets(): {
   userPresets: UserPreset[];
-  createUserPreset: (name: string, slateKeys: readonly string[]) => CreateUserPresetResult;
+  createUserPreset: (
+    name: string,
+    slateKeys: readonly string[],
+    mulePartySizes?: Record<string, number>,
+  ) => CreateUserPresetResult;
   deleteUserPreset: (id: string) => void;
 } {
   const [userPresets, setUserPresets] = useState<UserPreset[]>(store.load);
@@ -67,7 +98,11 @@ export function useUserPresets(): {
   }, [userPresets]);
 
   const createUserPreset = useCallback(
-    (name: string, slateKeys: readonly string[]): CreateUserPresetResult => {
+    (
+      name: string,
+      slateKeys: readonly string[],
+      mulePartySizes: Record<string, number> = {},
+    ): CreateUserPresetResult => {
       const trimmed = name.trim();
       if (trimmed.length === 0) return { ok: false, reason: 'empty' };
       if (trimmed.length > MAX_NAME_LENGTH) return { ok: false, reason: 'too-long' };
@@ -78,6 +113,7 @@ export function useUserPresets(): {
         id: uuidv4(),
         name: trimmed,
         slateKeys: [...slateKeys],
+        partySizes: captureSnapshotPartySizes(slateKeys, mulePartySizes),
       };
       userPresetsRef.current = [...userPresetsRef.current, preset];
       setUserPresets(userPresetsRef.current);

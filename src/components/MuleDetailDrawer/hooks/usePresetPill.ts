@@ -25,20 +25,25 @@ const CANONICAL_PRESETS: readonly CanonicalPresetKey[] = ['CRA', 'LOMIEN', 'CTEN
  */
 export function usePresetPill({
   selectedBosses,
+  partySizes,
   userPresets,
 }: {
   selectedBosses: readonly string[];
+  partySizes: Record<string, number>;
   userPresets: readonly UserPreset[];
 }): {
   activePill: PresetKey | null;
   matchedUserPreset: UserPreset | null;
 } {
   return useMemo(() => {
-    const matchedUserPreset = userPresetMatch(selectedBosses, userPresets);
+    const matchedUserPreset = userPresetMatch(
+      { slateKeys: selectedBosses, partySizes },
+      userPresets,
+    );
     if (matchedUserPreset) return { activePill: 'CUSTOM', matchedUserPreset };
     if (selectedBosses.length === 0) return { activePill: null, matchedUserPreset: null };
     const canonical = CANONICAL_PRESETS.find((p) => isPresetActive(p, selectedBosses));
     if (canonical) return { activePill: canonical, matchedUserPreset: null };
     return { activePill: 'CUSTOM', matchedUserPreset: null };
-  }, [selectedBosses, userPresets]);
+  }, [selectedBosses, partySizes, userPresets]);
 }

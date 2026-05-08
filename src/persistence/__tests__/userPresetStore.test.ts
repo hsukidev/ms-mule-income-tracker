@@ -28,6 +28,7 @@ function presetFixture(overrides: Partial<UserPreset> = {}): UserPreset {
     id: 'p1',
     name: 'My Preset',
     slateKeys: ['k1', 'k2'],
+    partySizes: {},
     ...overrides,
   };
 }
@@ -74,6 +75,37 @@ describe('createUserPresetStore', () => {
     it('returns [] when payload lacks schemaVersion (a Wipe)', () => {
       const port = makeFakePort(JSON.stringify({ userPresets: [presetFixture()] }));
       expect(createUserPresetStore(port).load()).toEqual([]);
+    });
+
+    it('migrates a legacy preset (no partySizes field) to partySizes: {}', () => {
+      const payload = JSON.stringify({
+        schemaVersion: CURRENT_USER_PRESET_SCHEMA_VERSION,
+        userPresets: [{ id: 'legacy-1', name: 'Legacy', slateKeys: ['k1'] }],
+      });
+      const port = makeFakePort(payload);
+      const loaded = createUserPresetStore(port).load();
+      expect(loaded).toEqual([
+        { id: 'legacy-1', name: 'Legacy', slateKeys: ['k1'], partySizes: {} },
+      ]);
+    });
+
+    it('preserves a persisted partySizes map and ignores out-of-range values', () => {
+      const payload = JSON.stringify({
+        schemaVersion: CURRENT_USER_PRESET_SCHEMA_VERSION,
+        userPresets: [
+          {
+            id: 'p1',
+            name: 'With Sizes',
+            slateKeys: ['k1'],
+            partySizes: { fam: 3, ignored: 99, also: 'not-a-number' },
+          },
+        ],
+      });
+      const port = makeFakePort(payload);
+      const loaded = createUserPresetStore(port).load();
+      expect(loaded).toEqual([
+        { id: 'p1', name: 'With Sizes', slateKeys: ['k1'], partySizes: { fam: 3 } },
+      ]);
     });
 
     it('matches userPresetMigrate(port.read()) exactly', () => {

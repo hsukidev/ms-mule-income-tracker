@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
 import { conform, isPresetActive } from '../../../data/bossPresets';
-import type { UserPreset } from '../../../data/userPresets';
+import { userPresetMatch, type UserPreset } from '../../../data/userPresets';
 import { toast } from '../../../lib/toast';
 import type { PresetKey } from '../../MatrixToolbar';
 
@@ -23,9 +23,11 @@ import type { PresetKey } from '../../MatrixToolbar';
  *   `onUpdate`); otherwise it runs **Conform** and persists.
  * - `applyUserPreset(presetId)` looks up the snapshot in
  *   `userPresets[]`, runs `MuleBossSlate.from(snapshot.slateKeys)` for
- *   cap-validity normalisation, and replaces `selectedBosses`
- *   atomically. Snapshots saved from a cap-valid slate stay cap-valid;
- *   the normalisation is defensive (e.g. against a hand-edited
+ *   cap-validity normalisation, and replaces `selectedBosses` *and*
+ *   `partySizes` atomically. Full replacement: residual `partySizes`
+ *   entries on the live mule for families not in the snapshot are
+ *   wiped. Snapshots saved from a cap-valid slate stay cap-valid; the
+ *   slate normalisation is defensive (e.g. against a hand-edited
  *   `localStorage` payload).
  * - `resetBosses()` persists `selectedBosses: []` and `partySizes: {}`.
  *
@@ -34,12 +36,14 @@ import type { PresetKey } from '../../MatrixToolbar';
 export function useSlateActions({
   muleId,
   selectedBosses,
+  partySizes,
   slate,
   userPresets,
   onUpdate,
 }: {
   muleId: string | null;
   selectedBosses: readonly string[];
+  partySizes: Record<string, number>;
   slate: MuleBossSlate;
   userPresets: readonly UserPreset[];
   onUpdate: (id: string, patch: Partial<Omit<Mule, 'id'>>) => void;
@@ -82,11 +86,15 @@ export function useSlateActions({
       if (!muleId) return;
       const snapshot = userPresets.find((p) => p.id === presetId);
       if (!snapshot) return;
+      // Short-circuit when the snapshot already matches the current state — same
+      // contract as `applyPreset` for canonical pills (zero `onUpdate` on re-click).
+      if (userPresetMatch({ slateKeys: selectedBosses, partySizes }, [snapshot])) return;
       onUpdate(muleId, {
         selectedBosses: MuleBossSlate.from(snapshot.slateKeys).keys as string[],
+        partySizes: { ...snapshot.partySizes },
       });
     },
-    [muleId, userPresets, onUpdate],
+    [muleId, selectedBosses, partySizes, userPresets, onUpdate],
   );
 
   const resetBosses = useCallback(() => {

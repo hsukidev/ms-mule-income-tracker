@@ -55,14 +55,14 @@ export interface PresetEntry {
 }
 
 /** Shallow-parsed segments of a `<bossId>:<tier>:<cadence>` selection key. */
-interface ParsedKey {
+export interface ParsedKey {
   bossId: string;
   tier: string;
   cadence: string;
 }
 
 /** Split a selection key on its last two colons; `null` if malformed. */
-function parseKey(key: string): ParsedKey | null {
+export function parseKey(key: string): ParsedKey | null {
   const lastColon = key.lastIndexOf(':');
   if (lastColon < 0) return null;
   const tierColon = key.lastIndexOf(':', lastColon - 1);

@@ -125,12 +125,13 @@ export const UserPresetPopover = memo(function UserPresetPopover({
           value={searchQuery}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={() => setNameError(false)}
           maxLength={40}
           placeholder="Search or name a new preset"
           aria-label="Search or name a new preset"
           aria-invalid={nameError || undefined}
           aria-describedby={nameError ? 'user-preset-name-error' : undefined}
-          className="w-full rounded-md border border-border/60 bg-(--surface-2) px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive"
+          className="w-full rounded-md border border-border/60 bg-(--surface-2) px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-(--accent-raw,var(--accent))/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-(--ring)/20"
         />
         {nameError && (
           <div
@@ -160,7 +161,7 @@ export const UserPresetPopover = memo(function UserPresetPopover({
             disabled={saveDisabled}
             onClick={handleSubmit}
             aria-describedby={hasCollision ? 'user-preset-collision-error' : undefined}
-            className="w-full rounded-md border border-dashed border-border/70 bg-transparent px-3 py-2 text-sm text-foreground transition-colors hover:bg-(--accent-soft) disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+            className="w-full cursor-pointer rounded-md border border-border/60 bg-(--surface-2) px-3 py-2 text-sm text-foreground transition-colors hover:bg-(--accent-soft) disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-(--surface-2)"
           >
             Save current as preset
           </button>
@@ -245,15 +246,17 @@ interface PresetRowProps {
 
 function PresetRow({ preset, active, onApply, onDelete }: PresetRowProps) {
   return (
-    <li className="group flex items-center gap-1">
+    <li
+      className={`group flex items-center rounded-md transition-colors ${
+        active ? 'bg-(--accent-soft)' : 'hover:bg-(--surface-2)'
+      }`}
+    >
       <button
         type="button"
         onClick={() => onApply(preset.id)}
         aria-current={active ? 'true' : undefined}
-        className={`flex-1 truncate rounded-md px-3 py-2 text-left text-sm transition-colors ${
-          active
-            ? 'bg-(--accent-soft) text-foreground font-medium'
-            : 'text-foreground/90 hover:bg-(--surface-2)'
+        className={`flex-1 cursor-pointer truncate rounded-md px-3 py-2 text-left text-sm transition-colors ${
+          active ? 'text-(--accent-raw) font-semibold' : 'text-foreground/90'
         }`}
       >
         {preset.name}
@@ -265,7 +268,7 @@ function PresetRow({ preset, active, onApply, onDelete }: PresetRowProps) {
           e.stopPropagation();
           onDelete(preset.id);
         }}
-        className="invisible mr-1 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 focus-visible:visible focus-visible:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="invisible mr-1 inline-flex size-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 focus-visible:visible focus-visible:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         <X className="size-3.5" aria-hidden />
       </button>

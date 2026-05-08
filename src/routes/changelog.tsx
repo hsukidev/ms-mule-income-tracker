@@ -70,13 +70,7 @@ function ReleaseCard({ release }: { release: Release }) {
   const grouped = groupChanges(release.changes);
 
   return (
-    <article
-      className="rounded-2xl p-6"
-      style={{
-        background: 'var(--surface, var(--card))',
-        border: '1px solid var(--border)',
-      }}
-    >
+    <article className="panel p-6">
       <div
         className="flex flex-wrap items-center justify-between gap-2 text-sm"
         style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}

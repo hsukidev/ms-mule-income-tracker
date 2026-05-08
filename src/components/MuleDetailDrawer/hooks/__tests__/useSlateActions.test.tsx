@@ -32,8 +32,13 @@ function makeSlate(keys: readonly string[]): MuleBossSlate {
   return MuleBossSlate.from(keys);
 }
 
-function preset(id: string, name: string, slateKeys: readonly string[]): UserPreset {
-  return { id, name, slateKeys };
+function preset(
+  id: string,
+  name: string,
+  slateKeys: readonly string[],
+  partySizes: Record<string, number> = {},
+): UserPreset {
+  return { id, name, slateKeys, partySizes };
 }
 
 /**
@@ -457,6 +462,50 @@ describe('useSlateActions', () => {
           selectedBosses: [],
           slate: makeSlate([]),
           userPresets: [preset('p1', 'A', [HARD_LUCID])],
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('p1');
+      });
+      expect(onUpdate).not.toHaveBeenCalled();
+    });
+
+    it('replaces partySizes wholesale with the snapshot (residuals wiped)', () => {
+      const onUpdate = vi.fn();
+      const userPresets = [preset('p1', 'Sized', [HARD_LUCID], { lucid: 4 })];
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: CRA_KEYS,
+          partySizes: {},
+          slate: makeSlate(CRA_KEYS),
+          userPresets,
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('p1');
+      });
+      const update = onUpdate.mock.calls[0][1] as {
+        selectedBosses: string[];
+        partySizes: Record<string, number>;
+      };
+      expect(update.partySizes).toEqual({ lucid: 4 });
+    });
+
+    it('short-circuits (zero onUpdate) when the snapshot already matches the current state', () => {
+      const onUpdate = vi.fn();
+      const userPresets = [preset('p1', 'Sized', [HARD_LUCID], { lucid: 4 })];
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: [HARD_LUCID],
+          partySizes: { lucid: 4 },
+          slate: makeSlate([HARD_LUCID]),
+          userPresets,
           onUpdate,
         }),
       );

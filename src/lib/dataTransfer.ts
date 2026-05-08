@@ -1,8 +1,9 @@
 /**
- * Pure-logic data-transfer module — owns export/import for the three
+ * Pure-logic data-transfer module — owns export/import for the four
  * localStorage keys that constitute a YABI user's "data": the roster blob
- * (`maplestory-mule-tracker`), the selected world (`world`), and the
- * changelog dismissal marker (`lastSeenChangelog`). Theme and density are
+ * (`maplestory-mule-tracker`), the selected world (`world`), the
+ * changelog dismissal marker (`lastSeenChangelog`), and the User Preset
+ * library (`maplestory-mule-tracker-user-presets`). Theme and density are
  * intentionally excluded; they are device-level preferences.
  *
  * This module is React-free so the four functions below are unit-testable
@@ -14,37 +15,55 @@
  *
  *     {
  *       "app": "yabi",
- *       "exportVersion": 1,
+ *       "exportVersion": 2,
  *       "exportedAt": "<ISO timestamp>",
  *       "data": {
- *         "maplestory-mule-tracker": "<raw localStorage string>",
- *         "world":                   "<raw localStorage string>",
- *         "lastSeenChangelog":       "<raw localStorage string>"
+ *         "maplestory-mule-tracker":              "<raw localStorage string>",
+ *         "world":                                "<raw localStorage string>",
+ *         "lastSeenChangelog":                    "<raw localStorage string>",
+ *         "maplestory-mule-tracker-user-presets": "<raw localStorage string>"
  *       }
  *     }
  *
- * The mule blob inside `data` stays a string — `muleMigrate.ts` keeps
- * owning schema versioning on the next load. The envelope's `exportVersion`
- * is independent from the mule schema version.
+ * Each blob inside `data` stays a string — schema versioning lives in the
+ * receiving migrators (`muleMigrate.ts`, `userPresetMigrate` in
+ * `userPresetStore.ts`). The envelope's `exportVersion` is independent
+ * from those. Bumped on schema changes (e.g., new required key); v1
+ * envelopes are rejected and users must re-export.
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { findWorld } from '../data/worlds';
+import { USER_PRESET_STORAGE_KEY } from '../persistence/userPresetStorage';
 
 const TRACKER_KEY = 'maplestory-mule-tracker';
 
 /**
- * Apply transaction key order is fixed and documented for debuggability.
- * The same order is used for snapshot, write, and rollback.
+ * Current envelope schema version. Bumped when `TRACKED_KEYS` changes
+ * shape; older envelopes are rejected at decode so the receiver never
+ * lands in a partial-import state.
  */
-export const TRACKED_KEYS = [TRACKER_KEY, 'world', 'lastSeenChangelog'] as const;
+export const CURRENT_EXPORT_VERSION = 2;
+
+/**
+ * Apply transaction key order is fixed and documented for debuggability.
+ * The same order is used for snapshot, write, and rollback. All keys
+ * are required — adding or removing a key requires bumping
+ * `CURRENT_EXPORT_VERSION`.
+ */
+export const TRACKED_KEYS = [
+  TRACKER_KEY,
+  'world',
+  'lastSeenChangelog',
+  USER_PRESET_STORAGE_KEY,
+] as const;
 
 export type TrackedKey = (typeof TRACKED_KEYS)[number];
 
 /**
  * Storage port for the apply transaction. Generalizes the shape of
  * `defaultStoragePort` in `muleStorage.ts` (which is single-key) to the
- * three-key case, and adds `removeItem` so a key absent pre-import can be
+ * multi-key case, and adds `removeItem` so a key absent pre-import can be
  * rolled back to absence rather than restored as `''`.
  */
 export interface DataTransferStoragePort {
@@ -61,7 +80,7 @@ const defaultPort: DataTransferStoragePort = {
 
 export interface ExportEnvelope {
   app: 'yabi';
-  exportVersion: 1;
+  exportVersion: 2;
   exportedAt: string;
   data: Record<TrackedKey, string>;
 }
@@ -81,12 +100,12 @@ export interface SummaryResult {
 }
 
 /**
- * Reads the three tracked localStorage keys, builds the export envelope,
- * and returns its lz-string-compressed `encodeURIComponent`-safe form. A
+ * Reads every tracked localStorage key, builds the export envelope, and
+ * returns its lz-string-compressed `encodeURIComponent`-safe form. A
  * key whose `getItem` returns `null` (never written on this device) is
  * folded into the envelope as the empty string so `data` always carries
- * all three keys; validation on the receiving side requires them to be
- * present.
+ * every `TRACKED_KEYS` entry; validation on the receiving side requires
+ * them all to be present.
  */
 export function buildExport(): string {
   const data = {} as Record<TrackedKey, string>;
@@ -95,7 +114,7 @@ export function buildExport(): string {
   }
   const envelope: ExportEnvelope = {
     app: 'yabi',
-    exportVersion: 1,
+    exportVersion: CURRENT_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     data,
   };
@@ -125,7 +144,7 @@ function isExportEnvelope(value: unknown): value is ExportEnvelope {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   if (v.app !== 'yabi') return false;
-  if (v.exportVersion !== 1) return false;
+  if (v.exportVersion !== CURRENT_EXPORT_VERSION) return false;
   if (typeof v.exportedAt !== 'string') return false;
   if (typeof v.data !== 'object' || v.data === null) return false;
   const data = v.data as Record<string, unknown>;
@@ -137,7 +156,7 @@ function isExportEnvelope(value: unknown): value is ExportEnvelope {
 
 /**
  * Four-phase transactional write — snapshot → write → rollback-on-throw →
- * success. Returns `{ ok: true }` when all three writes land; returns
+ * success. Returns `{ ok: true }` when every write lands; returns
  * `{ ok: false }` if any `setItem` throws mid-write, after rolling back
  * the keys that *did* land. A snapshot key whose pre-import value was
  * `null` rolls back via `removeItem`, not `setItem('')`.
