@@ -6,6 +6,7 @@ import { WorldProvider } from '../context/WorldProvider';
 import { IncomeProvider } from '../modules/income';
 import { Header } from '../components/Header';
 import { Toaster } from '../components/ui/sonner';
+import { TooltipProvider } from '../components/ui/tooltip';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -14,19 +15,21 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <ThemeProvider defaultTheme="dark">
-      <DensityProvider>
-        <DisplayProvider>
-          <WorldProvider>
-            <IncomeProvider>
-              <div className="min-h-screen bg-background text-foreground">
-                <Header />
-                <Outlet />
-              </div>
-            </IncomeProvider>
-          </WorldProvider>
-        </DisplayProvider>
-      </DensityProvider>
-      <Toaster />
+      <TooltipProvider>
+        <DensityProvider>
+          <DisplayProvider>
+            <WorldProvider>
+              <IncomeProvider>
+                <div className="min-h-screen bg-background text-foreground">
+                  <Header />
+                  <Outlet />
+                </div>
+              </IncomeProvider>
+            </WorldProvider>
+          </DisplayProvider>
+        </DensityProvider>
+        <Toaster />
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

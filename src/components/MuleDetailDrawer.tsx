@@ -217,7 +217,7 @@ export function MuleDetailDrawer({
                           <Info className="size-3.5" aria-hidden />
                         </TooltipTrigger>
                         <TooltipContent className="px-3.5 py-2.5">
-                          Click to toggle ACTIVE/INACTIVE
+                          TOGGLE ACTIVE/INACTIVE
                         </TooltipContent>
                       </Tooltip>
                     </div>

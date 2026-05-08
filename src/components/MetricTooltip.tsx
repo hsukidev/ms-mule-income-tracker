@@ -28,7 +28,6 @@ export function MetricTooltip({
       <TooltipTrigger
         aria-label={ariaLabel}
         closeOnClick={false}
-        delay={0}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(true);

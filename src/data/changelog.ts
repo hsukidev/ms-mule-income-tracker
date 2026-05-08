@@ -56,7 +56,7 @@ export const releases: Release[] = [
       },
       {
         category: 'feature',
-        text: 'Drop lowest value bosses to retain 180 cap. Shown in info icon tooltip next to mule income',
+        text: 'Drop lowest value bosses to retain 180 cap. Shows info tooltip next to mule income if dropped',
       },
       {
         category: 'fix',
