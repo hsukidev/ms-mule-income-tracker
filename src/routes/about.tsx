@@ -43,7 +43,7 @@ function AboutPage() {
             build a roster and select bosses to display the per-world weekly meso totals.
           </p>
           <p className="mt-3" style={{ color: 'var(--text, var(--foreground))' }}>
-            Your roster is stored in your browser's localStorage — nothing leaves your machine
+            Your roster data is stored in the browser's localStorage — nothing leaves your machine
             except optional character lookups, which is fetched from Nexon's public Ranking API.
           </p>
         </section>
