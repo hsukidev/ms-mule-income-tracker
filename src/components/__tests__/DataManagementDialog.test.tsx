@@ -193,7 +193,12 @@ describe('DataManagementDialog (confirm screen)', () => {
     await openConfirmWith(makeValidCode());
     expect(screen.getByText('Replace your data?')).toBeTruthy();
     expect(
-      screen.getByText('Importing will replace all your current data. This cannot be undone.'),
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'P' &&
+          element?.textContent ===
+            'Importing will replace all your current data. This cannot be undone.',
+      ),
     ).toBeTruthy();
   });
 

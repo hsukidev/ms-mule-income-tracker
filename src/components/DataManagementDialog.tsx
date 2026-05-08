@@ -260,7 +260,8 @@ function ConfirmScreen({ summary, onBack, onApply }: ConfirmScreenProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        Importing will replace all your current data. This cannot be undone.
+        Importing will replace all your current data.{' '}
+        <span className="text-destructive">This cannot be undone.</span>
       </p>
       <SummarySection label="Before" counts={summary.before} />
       <SummarySection label="After" counts={summary.after} />
