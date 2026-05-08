@@ -5,6 +5,9 @@ export type NavItem = {
   to: NonNullable<LinkProps['to']>;
 };
 
-export const navItems: readonly NavItem[] = [{ label: 'Changelog', to: '/changelog' }];
+export const navItems: readonly NavItem[] = [
+  { label: 'About', to: '/about' },
+  { label: 'Changelog', to: '/changelog' },
+];
 
 export const drawerNavItems: readonly NavItem[] = [{ label: 'Home', to: '/' }, ...navItems];

@@ -1,0 +1,84 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect } from 'react';
+
+export const Route = createFileRoute('/about')({
+  component: AboutPage,
+});
+
+function AboutPage() {
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = 'About — YABI';
+    return () => {
+      document.title = previousTitle;
+    };
+  }, []);
+
+  return (
+    <main className="container mx-auto max-w-3xl px-4 sm:px-6 py-10">
+      <header className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+        <h1
+          className="text-4xl font-semibold tracking-tight"
+          style={{ color: 'var(--accent-primary)' }}
+        >
+          About
+        </h1>
+      </header>
+
+      <article className="panel p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+        <section>
+          <h2
+            className="text-lg uppercase tracking-wide font-medium"
+            style={{ color: 'var(--accent-primary)' }}
+          >
+            What is YABI?
+          </h2>
+          <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
+            YABI is a weekly boss income tracker for MapleStory inspired by{' '}
+            <a href="https://maplehub.app" style={{ color: 'var(--accent-primary)' }}>
+              Maplehub
+            </a>
+            . With a simplified user experience for both desktop and mobile, users can build a
+            roster, select bosses, and YABI will display the per-world weekly meso total under
+            MapleStory's actual caps.
+          </p>
+          <p className="mt-3" style={{ color: 'var(--text, var(--foreground))' }}>
+            Your roster is stored in your browser's localStorage — nothing leaves your machine
+            except optional character lookups, which is fetched from Nexon's public Ranking API.
+          </p>
+        </section>
+
+        <section className="mt-6">
+          <h2
+            className="text-lg uppercase tracking-wide font-medium"
+            style={{ color: 'var(--accent-primary)' }}
+          >
+            Credits
+          </h2>
+          <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
+            YABI is an unofficial fan tool. MapleStory is © Nexon Korea Corp. YABI is not affiliated
+            with or endorsed by Nexon.
+          </p>
+        </section>
+
+        <section className="mt-6">
+          <h2
+            className="text-lg uppercase tracking-wide font-medium"
+            style={{ color: 'var(--accent-primary)' }}
+          >
+            Contact
+          </h2>
+          <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
+            Questions or feedback?{' '}
+            <a
+              href="mailto:hsukidev@gmail.com"
+              style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}
+            >
+              hsukidev@gmail.com
+            </a>
+          </p>
+        </section>
+      </article>
+    </main>
+  );
+}
