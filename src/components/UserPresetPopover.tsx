@@ -1,5 +1,5 @@
 import { memo, useRef, useState, type KeyboardEvent } from 'react';
-import { Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { PopoverContent } from '@/components/ui/popover';
 import type { UserPreset } from '../data/userPresets';
 
@@ -267,7 +267,7 @@ function PresetRow({ preset, active, onApply, onDelete }: PresetRowProps) {
         }}
         className="invisible mr-1 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 focus-visible:visible focus-visible:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <Trash2 className="size-3.5" aria-hidden />
+        <X className="size-3.5" aria-hidden />
       </button>
     </li>
   );

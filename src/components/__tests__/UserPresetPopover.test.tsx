@@ -185,7 +185,7 @@ describe('UserPresetPopover', () => {
     });
   });
 
-  describe('delete', () => {
+  describe('delete (Slice 4)', () => {
     it('clicking the delete affordance on a row calls onDelete with the preset id', () => {
       const onDelete = vi.fn();
       renderOpenPopover({
@@ -194,6 +194,109 @@ describe('UserPresetPopover', () => {
         onDelete,
       });
       fireEvent.click(screen.getByRole('button', { name: /delete mine/i }));
+      expect(onDelete).toHaveBeenCalledWith('p1');
+    });
+
+    it('every row exposes a delete affordance (one × per row, queryable by aria-label)', () => {
+      renderOpenPopover({
+        userPresets: [preset('p1', 'Alpha'), preset('p2', 'Beta'), preset('p3', 'Gamma')],
+        slateKeys: ['k1'],
+      });
+      expect(screen.getByRole('button', { name: /delete alpha/i })).toBeTruthy();
+      expect(screen.getByRole('button', { name: /delete beta/i })).toBeTruthy();
+      expect(screen.getByRole('button', { name: /delete gamma/i })).toBeTruthy();
+    });
+
+    it('the delete affordance is reveal-on-hover styled (invisible by default, group-hover:visible)', () => {
+      // Hover state cannot be simulated in jsdom, so assert the CSS contract
+      // directly: the row carries `group`, the × button is `invisible` and
+      // becomes visible via `group-hover:visible` (and `focus-visible:visible`
+      // for keyboard tab order).
+      renderOpenPopover({
+        userPresets: [preset('p1', 'Mine')],
+        slateKeys: ['k1'],
+      });
+      const deleteBtn = screen.getByRole('button', { name: /delete mine/i });
+      const row = deleteBtn.closest('li');
+      expect(row?.className).toContain('group');
+      expect(deleteBtn.className).toContain('invisible');
+      expect(deleteBtn.className).toContain('group-hover:visible');
+      expect(deleteBtn.className).toContain('focus-visible:visible');
+    });
+
+    it('the delete affordance is reachable via keyboard focus', () => {
+      renderOpenPopover({
+        userPresets: [preset('p1', 'Mine')],
+        slateKeys: ['k1'],
+      });
+      const deleteBtn = screen.getByRole('button', { name: /delete mine/i }) as HTMLButtonElement;
+      deleteBtn.focus();
+      expect(document.activeElement).toBe(deleteBtn);
+    });
+
+    it('clicking delete removes the row from the list (state-driven host)', () => {
+      function Host() {
+        const [presets, setPresets] = useState<readonly UserPreset[]>([
+          preset('p1', 'Mine'),
+          preset('p2', 'Other'),
+        ]);
+        return (
+          <Popover open>
+            <UserPresetPopover
+              userPresets={presets}
+              slateKeys={['k1']}
+              matchedUserPreset={null}
+              onApply={vi.fn()}
+              onSave={vi.fn()}
+              onDelete={(id) => setPresets((prev) => prev.filter((p) => p.id !== id))}
+            />
+          </Popover>
+        );
+      }
+      render(<Host />);
+      expect(screen.getByRole('button', { name: 'Mine' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Other' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: /delete mine/i }));
+      expect(screen.queryByRole('button', { name: 'Mine' })).toBeNull();
+      expect(screen.queryByRole('button', { name: /delete mine/i })).toBeNull();
+      // Sibling row stays put.
+      expect(screen.getByRole('button', { name: 'Other' })).toBeTruthy();
+    });
+
+    it('hovering a non-matched row does not disturb the matched-row highlight', () => {
+      const matched = preset('p1', 'Matched', ['k1']);
+      const other = preset('p2', 'Other', ['k2']);
+      renderOpenPopover({
+        userPresets: [matched, other],
+        slateKeys: ['k1'],
+        matchedUserPreset: matched,
+      });
+      const matchedRow = screen.getByRole('button', { name: 'Matched' });
+      const otherRow = screen.getByRole('button', { name: 'Other' });
+      expect(matchedRow.getAttribute('aria-current')).toBe('true');
+      expect(otherRow.getAttribute('aria-current')).toBeNull();
+      // Mouse over the non-matched row — the highlight must remain anchored
+      // on the matched row (aria-current is derived from props, not hover).
+      fireEvent.mouseEnter(otherRow);
+      fireEvent.mouseOver(otherRow);
+      expect(matchedRow.getAttribute('aria-current')).toBe('true');
+      expect(otherRow.getAttribute('aria-current')).toBeNull();
+    });
+
+    it('clicking the × on the matched row hands off the deletion (parent then re-derives the pill)', () => {
+      // The popover is a leaf: it does not own the pill state. The match
+      // demotion is the parent's job (usePresetPill re-runs when the
+      // userPresets array shrinks). We only have to confirm the click
+      // reaches `onDelete` with the matched preset's id.
+      const matched = preset('p1', 'Matched', ['k1']);
+      const onDelete = vi.fn();
+      renderOpenPopover({
+        userPresets: [matched],
+        slateKeys: ['k1'],
+        matchedUserPreset: matched,
+        onDelete,
+      });
+      fireEvent.click(screen.getByRole('button', { name: /delete matched/i }));
       expect(onDelete).toHaveBeenCalledWith('p1');
     });
   });
