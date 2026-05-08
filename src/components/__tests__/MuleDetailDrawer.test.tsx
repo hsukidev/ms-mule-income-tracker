@@ -194,11 +194,13 @@ describe('MuleDetailDrawer (smoke)', () => {
       expect(cadence('Daily').className).not.toContain('on');
     });
 
-    it('clicking CUSTOM while filter is Daily flips filter to All', () => {
+    it('clicking CUSTOM while filter is Daily does not flip filter (CUSTOM is the popover trigger)', () => {
       renderDrawer();
       fireEvent.click(cadence('Daily'));
       fireEvent.click(preset('CUSTOM'));
-      expect(cadence('All').className).toContain('on');
+      // CUSTOM is now the popover trigger and never alters the filter or
+      // the slate; the cadence stays where the user put it.
+      expect(cadence('Daily').className).toContain('on');
     });
 
     it('clicking CRA while filter is Weekly does not change the filter', () => {
