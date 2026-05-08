@@ -42,8 +42,8 @@ const baseMetrics: RosterRowMetrics = {
 };
 
 function rowVarFor(scope: 'comfy' | 'compact', name: string): string {
-  // Match the LAST occurrence inside the density block so phone-mode overrides
-  // (which append at the end) don't leak in via greedy matching.
+  // First match wins; the desktop density block appears before the <768px
+  // override block in index.css, so this resolves to the desktop value.
   const re = new RegExp(
     String.raw`\[data-density=['"]${scope}['"]\]\s*\{[^}]*?--${name}:\s*([^;]+);`,
     'm',
@@ -53,7 +53,6 @@ function rowVarFor(scope: 'comfy' | 'compact', name: string): string {
   return m[1].trim();
 }
 
-// Reads the value of a row-grain var inside the `<768px` comfy override block.
 // Below 768px the Density Toggle is hidden, so Comfy's row dimensions tighten
 // here to keep List view scannable on phone/tablet.
 function mobileComfyVarFor(name: string): string {
