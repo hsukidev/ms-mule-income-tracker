@@ -212,8 +212,16 @@ _Avoid_: Preset (always qualify against **Mule Preset**)
 A click-actionable **Boss Preset** — exactly **CRA**, **LOMIEN**, or **CTENE**.
 
 **Custom Preset**:
-The reflective indicator that lights when the **Mule** has weekly **Slate Keys** but no **Canonical Preset** matches; inert on click.
+The fourth **Boss Preset** pill — lights when the **Mule** has weekly **Slate Keys** but no **Canonical Preset** matches. Click opens the **User Preset Popover**; the pill itself is reflective (no **Conform** of its own).
 _Avoid_: Fallback preset
+
+**User Preset**:
+A persisted, user-authored named loadout snapshot — `{ id, name, slateKeys[] }` capturing **all** of a **Mule's** **Slate Keys** (weekly, daily, monthly) at save time. Created via "Save current as preset" inside the **User Preset Popover**; applied to another **Mule** via **Apply User Preset**. Distinct from the **Custom Preset** pill (which is the popover's host, not a preset itself) and from **Canonical Presets** (which conform weeklies only).
+_Avoid_: Saved preset, personal preset, my preset, custom preset (the pill)
+
+**Apply User Preset**:
+The **User Preset** click action — atomically replace every **Slate Key** on the **Mule** with the snapshot's keys. Unlike **Conform**, daily and monthly keys are not preserved. Applying a snapshot whose key set matches the **Mule's** current **Boss Slate** is a no-op.
+_Avoid_: Conform (reserved for **Canonical Presets**)
 
 **CRA**:
 The **Canonical Preset** covering the eleven Chaos Root Abyss-era families, each pinned to its **Hardest Tier**.
@@ -240,11 +248,17 @@ A **Preset Entry** with more than one **Accepted Tier**; only LOMIEN's Lotus and
 The **Boss Preset** the **Mule's** current **Boss Slate** matches — at most one at a time, derived per render (never persisted).
 
 **Same-Cadence Equality**:
-The **Active Preset** match rule — weekly **Slate Keys** must exactly cover every **Preset Entry** with tier in **Accepted Tiers**, and zero weekly keys on outside families. Daily **Slate Keys** are orthogonal.
+_[Retired in favour of **Full-Slate Equality** once **User Preset** ships.]_ The original **Active Preset** match rule for **Canonical Presets** — weekly **Slate Keys** must exactly cover every **Preset Entry** with tier in **Accepted Tiers**, zero weekly keys on outside families, daily **Slate Keys** orthogonal.
 _Avoid_: Strict match, exact match
 
+**Full-Slate Equality**:
+The **Active Preset** match rule for **Canonical Presets** — the **Boss Slate** must satisfy the original weekly equality **and** carry zero **Slate Keys** of any other cadence (no dailies, no monthlies). Toggling a single daily cell demotes a Canonical match to **Custom Preset**. Replaces **Same-Cadence Equality**.
+
+**User Preset Match**:
+The **User Preset** match rule — the **Boss Slate's** full key set (every cadence) is order-insensitive set-equal to the snapshot's `slateKeys`. Drives both popover row highlighting and **Custom Preset** pill activation.
+
 **Conform**:
-The **Canonical Preset** click action — preserve compatible weekly **Slate Keys**, drop non-accepted ones, add the **Default Tier** for missing entries, wipe weeklies outside the preset's families. Dailies untouched. No-op when the clicked pill is already **Active**.
+The **Canonical Preset** click action — preserve compatible weekly **Slate Keys**, drop non-accepted ones, add the **Default Tier** for missing entries, wipe weeklies outside the preset's families, **and wipe every daily and monthly key**. The post-**Conform** **Boss Slate** is always pure-Canonical (weekly-only, satisfies **Full-Slate Equality** with the clicked **Canonical Preset**). No-op when the clicked pill is already **Active**.
 _Avoid_: Apply preset
 
 **Preset Swap**:
@@ -408,9 +422,13 @@ _Avoid_: Character fetch, name search
 - **Total Weekly Income** = sum of **Active Mules'** **Contributed Meso** in the **Selected World** — diverges from the sum of **Potential Meso** whenever the **World Cap Cut** drops at least one slot.
 - An **Inactive Mule** contributes zero to **Total Weekly Income** regardless of selection; its **Character Card** still shows its **Potential Meso** in muted styling.
 - **World Weekly Crystal Cap** is per-**World** — every **Selected World** has its own independent **World Slot Pool** and its own 180-slot ceiling. A player with **Mules** across multiple **Worlds** has no cross-world budget.
-- A **Canonical Preset** is **Active** iff the **Mule's** weekly **Slate Keys** satisfy **Same-Cadence Equality** against its **Preset Entries**.
-- The **Custom Preset** is **Active** iff ≥1 weekly **Slate Key** exists and no **Canonical Preset** is **Active**; with zero weekly keys, no preset is **Active**.
+- **Active Preset** is derived per render in this priority order:
+  1. If the **Boss Slate** satisfies **User Preset Match** against any saved **User Preset**, the **Custom Preset** pill is **Active** and that **User Preset** is the highlighted row in the **User Preset Popover**.
+  2. Else if the **Boss Slate** satisfies **Full-Slate Equality** with a **Canonical Preset**, that **Canonical Preset** is **Active**.
+  3. Else if the **Boss Slate** has ≥1 **Slate Key** of any cadence, the **Custom Preset** pill is **Active** with no highlighted row in the popover.
+  4. Else (empty **Boss Slate**), no preset is **Active**.
 - At most one **Boss Preset** is **Active** at a time; **Active Preset** is derived per render from the **Boss Slate** — never persisted.
+- **User Presets** are global — one library shared across the **Roster**, independent of **Selected World** or which **Mule** is open in the **Drawer**.
 - The **Roster**, **KPI Card**, **PieChart Card**, **Total Weekly Income**, and the **Crystal Tally** counts all read **World Lens**-filtered **Mules** only.
 - The **Reset Anchor** is always Thursday 00:00 UTC; the **Reset Countdown** is a duration, not a wall-clock target — same remaining time regardless of timezone.
 - The **PieChart Card's** slices size on **Contributed Meso**, not **Potential Meso** — a fully-dropped **Mule** renders no slice; its **Character Card** still shows full **Potential Meso** plus a **Cap Drop Badge**.
