@@ -14,6 +14,7 @@ import { useSlateActions } from '../useSlateActions';
 import { bosses } from '../../../../data/bosses';
 import { PRESET_FAMILIES, presetEntryKey } from '../../../../data/bossPresets';
 import { MuleBossSlate } from '../../../../data/muleBossSlate';
+import type { UserPreset } from '../../../../data/userPresets';
 
 const LUCID_BOSS = bosses.find((b) => b.family === 'lucid')!;
 const HARD_LUCID = `${LUCID_BOSS.id}:hard:weekly`;
@@ -27,17 +28,12 @@ const ARKARIUM_BOSS = bosses.find((b) => b.family === 'arkarium')!;
 const CRA_KEYS = PRESET_FAMILIES.CRA.map((entry) => presetEntryKey(entry)!);
 const CTENE_KEYS = PRESET_FAMILIES.CTENE.map((entry) => presetEntryKey(entry)!);
 
-function makePill() {
-  return {
-    clickCustom: vi.fn<() => void>(),
-    clickCanonical: vi.fn<() => void>(),
-    notifyWeeklyToggle: vi.fn<() => void>(),
-    notifyReset: vi.fn<() => void>(),
-  };
-}
-
 function makeSlate(keys: readonly string[]): MuleBossSlate {
   return MuleBossSlate.from(keys);
+}
+
+function preset(id: string, name: string, slateKeys: readonly string[]): UserPreset {
+  return { id, name, slateKeys };
 }
 
 /**
@@ -68,13 +64,12 @@ describe('useSlateActions', () => {
   describe('toggleKey', () => {
     it('dispatches onUpdate with slate.toggle(key).keys', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -87,13 +82,12 @@ describe('useSlateActions', () => {
 
     it('tier-swaps within a (bossId, cadence) bucket', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [NORMAL_LUCID],
           slate: makeSlate([NORMAL_LUCID]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -104,87 +98,14 @@ describe('useSlateActions', () => {
       expect(onUpdate).toHaveBeenCalledWith('mule-1', { selectedBosses: [HARD_LUCID] });
     });
 
-    it('calls pill.notifyWeeklyToggle when weeklyCount changes (toggle ON)', () => {
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: [],
-          slate: makeSlate([]),
-          pill,
-          onUpdate: vi.fn(),
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(HARD_LUCID);
-      });
-      expect(pill.notifyWeeklyToggle).toHaveBeenCalledTimes(1);
-    });
-
-    it('calls pill.notifyWeeklyToggle when weeklyCount changes (toggle OFF)', () => {
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: [HARD_LUCID],
-          slate: makeSlate([HARD_LUCID]),
-          pill,
-          onUpdate: vi.fn(),
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(HARD_LUCID);
-      });
-      expect(pill.notifyWeeklyToggle).toHaveBeenCalledTimes(1);
-    });
-
-    it('does NOT call pill.notifyWeeklyToggle on a tier-swap (weeklyCount unchanged)', () => {
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: [NORMAL_LUCID],
-          slate: makeSlate([NORMAL_LUCID]),
-          pill,
-          onUpdate: vi.fn(),
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(HARD_LUCID);
-      });
-      expect(pill.notifyWeeklyToggle).not.toHaveBeenCalled();
-    });
-
-    it('does NOT call pill.notifyWeeklyToggle when toggling a daily key', () => {
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: [],
-          slate: makeSlate([]),
-          pill,
-          onUpdate: vi.fn(),
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(HORNTAIL_DAILY);
-      });
-      expect(pill.notifyWeeklyToggle).not.toHaveBeenCalled();
-    });
-
     it('no-ops when muleId is null', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -193,22 +114,20 @@ describe('useSlateActions', () => {
         result.current.toggleKey(HARD_LUCID);
       });
       expect(onUpdate).not.toHaveBeenCalled();
-      expect(pill.notifyWeeklyToggle).not.toHaveBeenCalled();
     });
   });
 
   describe('toggleKey — Weekly Crystal Cap gate', () => {
-    it('rejects a 15th weekly add: fires toast.error with the documented copy and skips onUpdate/pill', () => {
+    it('rejects a 15th weekly add: fires toast.error with the documented copy and skips onUpdate', () => {
       const fourteen = pickDistinctWeeklyKeys(14);
       const fifteenth = pickDistinctWeeklyKeys(15)[14];
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
           slate: makeSlate(fourteen),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -221,7 +140,6 @@ describe('useSlateActions', () => {
         description: 'Remove a boss first',
       });
       expect(onUpdate).not.toHaveBeenCalled();
-      expect(pill.notifyWeeklyToggle).not.toHaveBeenCalled();
     });
 
     it('allows a weekly tier-swap at the cap: no toast, onUpdate fires', () => {
@@ -230,13 +148,12 @@ describe('useSlateActions', () => {
       expect(lucidIdx).toBeGreaterThanOrEqual(0);
       fourteen[lucidIdx] = NORMAL_LUCID;
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
           slate: makeSlate(fourteen),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -251,13 +168,12 @@ describe('useSlateActions', () => {
     it('allows a weekly remove at the cap: no toast, onUpdate fires', () => {
       const fourteen = pickDistinctWeeklyKeys(14);
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
           slate: makeSlate(fourteen),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -272,13 +188,12 @@ describe('useSlateActions', () => {
     it('allows a daily add at the weekly cap: no toast, onUpdate fires', () => {
       const fourteen = pickDistinctWeeklyKeys(14);
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: fourteen,
           slate: makeSlate(fourteen),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -289,63 +204,17 @@ describe('useSlateActions', () => {
       expect(toastMock.toast.error).not.toHaveBeenCalled();
       expect(onUpdate).toHaveBeenCalledTimes(1);
     });
-
-    it('allows a monthly add at the weekly cap: no toast, onUpdate fires', () => {
-      const fourteen = pickDistinctWeeklyKeys(14);
-      const blackMageBoss = bosses.find((b) => b.family === 'black-mage')!;
-      const bmExtreme = `${blackMageBoss.id}:extreme:monthly`;
-      const onUpdate = vi.fn();
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: fourteen,
-          slate: makeSlate(fourteen),
-          pill,
-          onUpdate,
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(bmExtreme);
-      });
-      expect(toastMock.toast.error).not.toHaveBeenCalled();
-      expect(onUpdate).toHaveBeenCalledTimes(1);
-    });
-
-    it('rapid repeat clicks at the cap fire one toast per click (no dedupe at this layer)', () => {
-      const fourteen = pickDistinctWeeklyKeys(14);
-      const fifteenth = pickDistinctWeeklyKeys(15)[14];
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: fourteen,
-          slate: makeSlate(fourteen),
-          pill,
-          onUpdate: vi.fn(),
-        }),
-      );
-
-      act(() => {
-        result.current.toggleKey(fifteenth);
-        result.current.toggleKey(fifteenth);
-        result.current.toggleKey(fifteenth);
-      });
-      expect(toastMock.toast.error).toHaveBeenCalledTimes(3);
-    });
   });
 
   describe('applyPreset', () => {
-    it('CUSTOM click calls pill.clickCustom and does not persist', () => {
+    it('CUSTOM click is a no-op (no onUpdate, no errors)', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -353,37 +222,35 @@ describe('useSlateActions', () => {
       act(() => {
         result.current.applyPreset('CUSTOM');
       });
-      expect(pill.clickCustom).toHaveBeenCalledTimes(1);
       expect(onUpdate).not.toHaveBeenCalled();
     });
 
-    it('CUSTOM click does not call pill.clickCanonical', () => {
-      const pill = makePill();
+    it('CUSTOM click on a CRA-equal slate is still a no-op', () => {
+      const onUpdate = vi.fn();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
           slate: makeSlate(CRA_KEYS),
-          pill,
-          onUpdate: vi.fn(),
+          userPresets: [],
+          onUpdate,
         }),
       );
 
       act(() => {
         result.current.applyPreset('CUSTOM');
       });
-      expect(pill.clickCanonical).not.toHaveBeenCalled();
+      expect(onUpdate).not.toHaveBeenCalled();
     });
 
-    it('canonical click on Active Pill short-circuits (zero onUpdate, but clears override)', () => {
+    it('canonical click on Active Pill short-circuits (zero onUpdate)', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
           slate: makeSlate(CRA_KEYS),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -392,20 +259,16 @@ describe('useSlateActions', () => {
         result.current.applyPreset('CRA');
       });
       expect(onUpdate).not.toHaveBeenCalled();
-      // Override clearing must happen even on the Active Pill so a stale
-      // CUSTOM override doesn't survive a confirming canonical click.
-      expect(pill.clickCanonical).toHaveBeenCalledTimes(1);
     });
 
     it('canonical click runs Conform when not the Active Pill', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -416,20 +279,18 @@ describe('useSlateActions', () => {
       expect(onUpdate).toHaveBeenCalledTimes(1);
       const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
       expect(new Set(update.selectedBosses)).toEqual(new Set(CRA_KEYS));
-      expect(pill.clickCanonical).toHaveBeenCalledTimes(1);
     });
 
     it('canonical click wipes non-preset weeklies (CRA + Arkarium → CRA)', () => {
       const arkariumKey = `${ARKARIUM_BOSS.id}:normal:weekly`;
       const onUpdate = vi.fn();
-      const pill = makePill();
       const initial = [...CRA_KEYS, arkariumKey];
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: initial,
           slate: makeSlate(initial),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -444,13 +305,12 @@ describe('useSlateActions', () => {
 
     it('canonical swap CRA → CTENE adds CTENE keys', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: CRA_KEYS,
           slate: makeSlate(CRA_KEYS),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -464,13 +324,12 @@ describe('useSlateActions', () => {
 
     it('wipes daily keys on conform (Full-Slate Equality: post-Conform is pure-Canonical)', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [HORNTAIL_DAILY],
           slate: makeSlate([HORNTAIL_DAILY]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -483,37 +342,14 @@ describe('useSlateActions', () => {
       for (const k of CRA_KEYS) expect(update.selectedBosses).toContain(k);
     });
 
-    it('wipes monthly keys on conform', () => {
-      const blackMageBoss = bosses.find((b) => b.family === 'black-mage')!;
-      const bmExtreme = `${blackMageBoss.id}:extreme:monthly`;
-      const onUpdate = vi.fn();
-      const pill = makePill();
-      const { result } = renderHook(() =>
-        useSlateActions({
-          muleId: 'mule-1',
-          selectedBosses: [bmExtreme],
-          slate: makeSlate([bmExtreme]),
-          pill,
-          onUpdate,
-        }),
-      );
-
-      act(() => {
-        result.current.applyPreset('CRA');
-      });
-      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
-      expect(update.selectedBosses).not.toContain(bmExtreme);
-    });
-
     it('normalizes resulting keys through MuleBossSlate.from (Selection Invariant)', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -529,13 +365,12 @@ describe('useSlateActions', () => {
 
     it('no-ops when muleId is null', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -544,20 +379,104 @@ describe('useSlateActions', () => {
         result.current.applyPreset('CRA');
       });
       expect(onUpdate).not.toHaveBeenCalled();
-      expect(pill.clickCanonical).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('applyUserPreset', () => {
+    it('replaces selectedBosses with the snapshot atomically', () => {
+      const onUpdate = vi.fn();
+      const customKeys = [HARD_LUCID, HORNTAIL_DAILY];
+      const userPresets = [preset('p1', 'My Mix', customKeys)];
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: CRA_KEYS,
+          slate: makeSlate(CRA_KEYS),
+          userPresets,
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('p1');
+      });
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
+      expect(new Set(update.selectedBosses)).toEqual(new Set(customKeys));
+      // Full replacement — none of the prior CRA keys leak through
+      // (except those that happen to be in the snapshot, which here is none).
+      for (const k of CRA_KEYS) {
+        expect(update.selectedBosses).not.toContain(k);
+      }
+    });
+
+    it('normalises the snapshot through MuleBossSlate.from (cap-validity)', () => {
+      const onUpdate = vi.fn();
+      // A snapshot containing a malformed key — MuleBossSlate.from drops it.
+      const userPresets = [preset('p1', 'Mix', [HARD_LUCID, 'malformed:key'])];
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          slate: makeSlate([]),
+          userPresets,
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('p1');
+      });
+      const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
+      expect(update.selectedBosses).toEqual([HARD_LUCID]);
+    });
+
+    it('no-ops on an unknown presetId', () => {
+      const onUpdate = vi.fn();
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: 'mule-1',
+          selectedBosses: [],
+          slate: makeSlate([]),
+          userPresets: [preset('p1', 'A', [HARD_LUCID])],
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('does-not-exist');
+      });
+      expect(onUpdate).not.toHaveBeenCalled();
+    });
+
+    it('no-ops when muleId is null', () => {
+      const onUpdate = vi.fn();
+      const { result } = renderHook(() =>
+        useSlateActions({
+          muleId: null,
+          selectedBosses: [],
+          slate: makeSlate([]),
+          userPresets: [preset('p1', 'A', [HARD_LUCID])],
+          onUpdate,
+        }),
+      );
+
+      act(() => {
+        result.current.applyUserPreset('p1');
+      });
+      expect(onUpdate).not.toHaveBeenCalled();
     });
   });
 
   describe('resetBosses', () => {
-    it('calls pill.notifyReset and persists [] + {}', () => {
+    it('persists [] + {}', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
           selectedBosses: [HARD_LUCID],
           slate: makeSlate([HARD_LUCID]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -565,7 +484,6 @@ describe('useSlateActions', () => {
       act(() => {
         result.current.resetBosses();
       });
-      expect(pill.notifyReset).toHaveBeenCalledTimes(1);
       expect(onUpdate).toHaveBeenCalledWith('mule-1', {
         selectedBosses: [],
         partySizes: {},
@@ -579,7 +497,7 @@ describe('useSlateActions', () => {
           muleId: 'mule-1',
           selectedBosses: [HARD_LUCID],
           slate: makeSlate([HARD_LUCID]),
-          pill: makePill(),
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -593,13 +511,12 @@ describe('useSlateActions', () => {
 
     it('no-ops when muleId is null', () => {
       const onUpdate = vi.fn();
-      const pill = makePill();
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
           selectedBosses: [],
           slate: makeSlate([]),
-          pill,
+          userPresets: [],
           onUpdate,
         }),
       );
@@ -608,7 +525,6 @@ describe('useSlateActions', () => {
         result.current.resetBosses();
       });
       expect(onUpdate).not.toHaveBeenCalled();
-      expect(pill.notifyReset).not.toHaveBeenCalled();
     });
   });
 });

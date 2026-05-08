@@ -12,6 +12,12 @@ function renderToolbar(overrides: Partial<Parameters<typeof MatrixToolbar>[0]> =
     activePill: null as Parameters<typeof MatrixToolbar>[0]['activePill'],
     onApplyPreset: vi.fn(),
     onReset: vi.fn(),
+    userPresets: [] as Parameters<typeof MatrixToolbar>[0]['userPresets'],
+    slateKeys: [] as Parameters<typeof MatrixToolbar>[0]['slateKeys'],
+    matchedUserPreset: null as Parameters<typeof MatrixToolbar>[0]['matchedUserPreset'],
+    onSaveUserPreset: vi.fn(),
+    onDeleteUserPreset: vi.fn(),
+    onApplyUserPreset: vi.fn(),
     ...overrides,
   };
   return {
@@ -290,11 +296,19 @@ describe('MatrixToolbar', () => {
         );
       });
 
-      it('calls onApplyPreset with "CUSTOM" when CUSTOM is clicked', () => {
+      it('clicking CUSTOM does not call onApplyPreset (the pill is the popover trigger)', () => {
         const onApplyPreset = vi.fn();
         renderToolbar({ onApplyPreset });
         fireEvent.click(screen.getByRole('button', { name: /^custom$/i }));
-        expect(onApplyPreset).toHaveBeenCalledWith('CUSTOM');
+        expect(onApplyPreset).not.toHaveBeenCalled();
+      });
+
+      it('clicking CUSTOM opens the User Preset Popover', () => {
+        renderToolbar();
+        const customBtn = screen.getByRole('button', { name: /^custom$/i });
+        expect(customBtn.getAttribute('aria-expanded')).toBe('false');
+        fireEvent.click(customBtn);
+        expect(customBtn.getAttribute('aria-expanded')).toBe('true');
       });
 
       it('CUSTOM pill shares the canonical-pill segmented-control group', () => {

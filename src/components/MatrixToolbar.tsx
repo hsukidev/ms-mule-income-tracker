@@ -1,6 +1,9 @@
 import { memo, useState } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { UserPresetPopover } from './UserPresetPopover';
+import type { UserPreset } from '../data/userPresets';
 
 export type CadenceFilter = 'All' | 'Weekly' | 'Daily';
 export type PresetKey = 'CRA' | 'LOMIEN' | 'CTENE' | 'CUSTOM';
@@ -10,9 +13,26 @@ interface MatrixToolbarProps {
   onFilterChange: (next: CadenceFilter) => void;
   /** The single currently-lit **Preset Pill**, or `null` when none matches. */
   activePill: PresetKey | null;
+  /**
+   * Apply a **Canonical Preset** (CRA / LOMIEN / CTENE). The toolbar
+   * never invokes this with `'CUSTOM'` — that pill is the popover
+   * trigger and handled in-component.
+   */
   onApplyPreset: (preset: PresetKey) => void;
   /** Invoked when the Matrix Reset button is clicked. */
   onReset: () => void;
+  /** Library of saved User Presets — threaded into the popover. */
+  userPresets: readonly UserPreset[];
+  /** Current Boss Slate keys; the popover snapshots these on save. */
+  slateKeys: readonly string[];
+  /** The currently-matching User Preset, if any (highlighted in the popover). */
+  matchedUserPreset: UserPreset | null;
+  /** Save the current slate as a new User Preset under `name`. */
+  onSaveUserPreset: (name: string, slateKeys: readonly string[]) => void;
+  /** Delete a saved User Preset by id. */
+  onDeleteUserPreset: (presetId: string) => void;
+  /** Apply a saved User Preset by id (replaces the slate atomically). */
+  onApplyUserPreset: (presetId: string) => void;
 }
 
 function CadenceIcon({ children }: { children: React.ReactNode }) {
@@ -56,7 +76,7 @@ const CADENCES: ReadonlyArray<{ value: CadenceFilter; icon: React.ReactNode }> =
   },
 ];
 
-const PRESETS: readonly PresetKey[] = ['CRA', 'LOMIEN', 'CTENE', 'CUSTOM'];
+const CANONICAL_PRESETS: readonly Exclude<PresetKey, 'CUSTOM'>[] = ['CRA', 'LOMIEN', 'CTENE'];
 
 export const MatrixToolbar = memo(function MatrixToolbar({
   filter,
@@ -64,8 +84,27 @@ export const MatrixToolbar = memo(function MatrixToolbar({
   activePill,
   onApplyPreset,
   onReset,
+  userPresets,
+  slateKeys,
+  matchedUserPreset,
+  onSaveUserPreset,
+  onDeleteUserPreset,
+  onApplyUserPreset,
 }: MatrixToolbarProps) {
   const [infoOpen, setInfoOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  // Wrap apply/save to dismiss the popover after the action runs;
+  // delete leaves the popover open so the user can keep tidying.
+  const handleApplyUserPreset = (presetId: string) => {
+    onApplyUserPreset(presetId);
+    setPopoverOpen(false);
+  };
+  const handleSaveUserPreset = (name: string, keys: readonly string[]) => {
+    onSaveUserPreset(name, keys);
+    setPopoverOpen(false);
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-y-2">
       <div className="@max-[544.99px]/drawer:basis-full">
@@ -89,7 +128,7 @@ export const MatrixToolbar = memo(function MatrixToolbar({
         style={{ margin: '0 8px' }}
       />
       <div className="d-c-toggle" role="group" aria-label="Boss presets">
-        {PRESETS.map((preset) => (
+        {CANONICAL_PRESETS.map((preset) => (
           <button
             key={preset}
             type="button"
@@ -99,6 +138,28 @@ export const MatrixToolbar = memo(function MatrixToolbar({
             {preset}
           </button>
         ))}
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger
+            render={
+              <button
+                type="button"
+                className={activePill === 'CUSTOM' ? 'on' : ''}
+                aria-haspopup="dialog"
+                aria-expanded={popoverOpen}
+              >
+                CUSTOM
+              </button>
+            }
+          />
+          <UserPresetPopover
+            userPresets={userPresets}
+            slateKeys={slateKeys}
+            matchedUserPreset={matchedUserPreset}
+            onApply={handleApplyUserPreset}
+            onSave={handleSaveUserPreset}
+            onDelete={onDeleteUserPreset}
+          />
+        </Popover>
       </div>
       <Tooltip open={infoOpen} onOpenChange={setInfoOpen}>
         <TooltipTrigger

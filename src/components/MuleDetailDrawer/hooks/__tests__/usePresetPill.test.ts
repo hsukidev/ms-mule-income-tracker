@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 import { usePresetPill } from '../usePresetPill';
 import { bosses } from '../../../../data/bosses';
 import { PRESET_FAMILIES, presetEntryKey } from '../../../../data/bossPresets';
-import { MuleBossSlate } from '../../../../data/muleBossSlate';
+import type { UserPreset } from '../../../../data/userPresets';
 
 const CRA_KEYS = PRESET_FAMILIES.CRA.map((entry) => presetEntryKey(entry)!);
 const LOMIEN_KEYS = PRESET_FAMILIES.LOMIEN.map((entry) => presetEntryKey(entry)!);
@@ -12,219 +12,105 @@ const LOMIEN_KEYS = PRESET_FAMILIES.LOMIEN.map((entry) => presetEntryKey(entry)!
 const BALDRIX_BOSS = bosses.find((b) => b.family === 'baldrix')!;
 const BALDRIX_KEY = `${BALDRIX_BOSS.id}:hard:weekly`;
 
-function weeklyCountOf(keys: readonly string[]): number {
-  return MuleBossSlate.from(keys).weeklyCount;
+const HORNTAIL_BOSS = bosses.find((b) => b.family === 'horntail')!;
+const HORNTAIL_DAILY = `${HORNTAIL_BOSS.id}:chaos:daily`;
+
+function preset(id: string, name: string, slateKeys: readonly string[]): UserPreset {
+  return { id, name, slateKeys };
 }
 
 describe('usePresetPill', () => {
-  it('clickCustom lights "CUSTOM" even on empty selection', () => {
-    const { result } = renderHook(() =>
-      usePresetPill({ muleId: 'mule-1', selectedBosses: [], weeklyCount: 0 }),
-    );
+  it('returns null on empty selection with no presets', () => {
+    const { result } = renderHook(() => usePresetPill({ selectedBosses: [], userPresets: [] }));
     expect(result.current.activePill).toBeNull();
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
+    expect(result.current.matchedUserPreset).toBeNull();
   });
 
-  it('clickCanonical clears the override and lets derivation pick', () => {
+  it('returns the canonical match when no User Preset matches', () => {
     const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: CRA_KEYS,
-        weeklyCount: weeklyCountOf(CRA_KEYS),
-      }),
-    );
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
-
-    act(() => {
-      result.current.clickCanonical();
-    });
-    // Override cleared; derivation picks the canonical match.
-    expect(result.current.activePill).toBe('CRA');
-  });
-
-  it('notifyWeeklyToggle clears the override', () => {
-    const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: CRA_KEYS,
-        weeklyCount: weeklyCountOf(CRA_KEYS),
-      }),
-    );
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
-
-    act(() => {
-      result.current.notifyWeeklyToggle();
-    });
-    // Override cleared; derivation reasserts canonical match.
-    expect(result.current.activePill).toBe('CRA');
-  });
-
-  it('notifyReset clears the override', () => {
-    const { result } = renderHook(() =>
-      usePresetPill({ muleId: 'mule-1', selectedBosses: [], weeklyCount: 0 }),
-    );
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
-
-    act(() => {
-      result.current.notifyReset();
-    });
-    expect(result.current.activePill).toBeNull();
-  });
-
-  it('Mule Switch (rerender with new muleId) clears the override', () => {
-    const { result, rerender } = renderHook(
-      ({ muleId }: { muleId: string | null }) =>
-        usePresetPill({
-          muleId,
-          selectedBosses: CRA_KEYS,
-          weeklyCount: weeklyCountOf(CRA_KEYS),
-        }),
-      { initialProps: { muleId: 'mule-1' as string | null } },
-    );
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
-
-    rerender({ muleId: 'mule-2' });
-    expect(result.current.activePill).toBe('CRA');
-  });
-
-  it('selection-empty transition clears the override', () => {
-    const { result, rerender } = renderHook(
-      ({ selectedBosses, weeklyCount }: { selectedBosses: string[]; weeklyCount: number }) =>
-        usePresetPill({ muleId: 'mule-1', selectedBosses, weeklyCount }),
-      {
-        initialProps: {
-          selectedBosses: CRA_KEYS,
-          weeklyCount: weeklyCountOf(CRA_KEYS),
-        },
-      },
-    );
-
-    act(() => {
-      result.current.clickCustom();
-    });
-    expect(result.current.activePill).toBe('CUSTOM');
-
-    rerender({ selectedBosses: [], weeklyCount: 0 });
-    // Selection went non-empty → empty: override cleared.
-    expect(result.current.activePill).toBeNull();
-  });
-
-  it('activePill returns the canonical match when no override is active', () => {
-    const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: LOMIEN_KEYS,
-        weeklyCount: weeklyCountOf(LOMIEN_KEYS),
-      }),
+      usePresetPill({ selectedBosses: LOMIEN_KEYS, userPresets: [] }),
     );
     expect(result.current.activePill).toBe('LOMIEN');
+    expect(result.current.matchedUserPreset).toBeNull();
   });
 
-  it('activePill returns null on empty weekly with no override', () => {
+  it('returns CUSTOM when a User Preset Match exists, even on a CRA-equal slate', () => {
+    const userPreset = preset('p1', 'My CRA', CRA_KEYS);
     const { result } = renderHook(() =>
-      usePresetPill({ muleId: 'mule-1', selectedBosses: [], weeklyCount: 0 }),
+      usePresetPill({ selectedBosses: CRA_KEYS, userPresets: [userPreset] }),
     );
-    expect(result.current.activePill).toBeNull();
+    expect(result.current.activePill).toBe('CUSTOM');
+    expect(result.current.matchedUserPreset).toBe(userPreset);
   });
 
-  it('activePill demotes to "CUSTOM" when CRA weeklies are joined by a daily key (Full-Slate Equality)', () => {
-    const horntail = bosses.find((b) => b.family === 'horntail')!;
-    const horntailDaily = `${horntail.id}:chaos:daily`;
-    const keys = [...CRA_KEYS, horntailDaily];
+  it('returns matchedUserPreset when slate matches saved preset (custom keys)', () => {
+    const customKeys = [BALDRIX_KEY, HORNTAIL_DAILY];
+    const userPreset = preset('p1', 'Mine', customKeys);
     const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: keys,
-        weeklyCount: weeklyCountOf(keys),
-      }),
+      usePresetPill({ selectedBosses: customKeys, userPresets: [userPreset] }),
     );
+    expect(result.current.activePill).toBe('CUSTOM');
+    expect(result.current.matchedUserPreset).toBe(userPreset);
+  });
+
+  it('returns CUSTOM (no match) when ≥1 slate key but no User Preset Match and no canonical match', () => {
+    const { result } = renderHook(() =>
+      usePresetPill({ selectedBosses: [BALDRIX_KEY], userPresets: [] }),
+    );
+    expect(result.current.activePill).toBe('CUSTOM');
+    expect(result.current.matchedUserPreset).toBeNull();
+  });
+
+  it('demotes a CRA-equal slate to CUSTOM when a daily key is present (Full-Slate Equality)', () => {
+    const keys = [...CRA_KEYS, HORNTAIL_DAILY];
+    const { result } = renderHook(() => usePresetPill({ selectedBosses: keys, userPresets: [] }));
     expect(result.current.activePill).toBe('CUSTOM');
   });
 
-  it('activePill demotes to "CUSTOM" when CRA weeklies are joined by a monthly key', () => {
+  it('demotes a CRA-equal slate to CUSTOM when a monthly key is present', () => {
     const blackMage = bosses.find((b) => b.family === 'black-mage')!;
     const bmExtreme = `${blackMage.id}:extreme:monthly`;
     const keys = [...CRA_KEYS, bmExtreme];
+    const { result } = renderHook(() => usePresetPill({ selectedBosses: keys, userPresets: [] }));
+    expect(result.current.activePill).toBe('CUSTOM');
+  });
+
+  it('lights CUSTOM on a daily-only slate', () => {
     const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: keys,
-        weeklyCount: weeklyCountOf(keys),
-      }),
+      usePresetPill({ selectedBosses: [HORNTAIL_DAILY], userPresets: [] }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
   });
 
-  it('activePill returns "CUSTOM" when weekly ≥ 1 but no canonical preset matches', () => {
-    // Baldrix is weekly-cadence and outside every canonical preset.
-    const { result } = renderHook(() =>
-      usePresetPill({
-        muleId: 'mule-1',
-        selectedBosses: [BALDRIX_KEY],
-        weeklyCount: weeklyCountOf([BALDRIX_KEY]),
-      }),
-    );
-    expect(result.current.activePill).toBe('CUSTOM');
-  });
-
-  it('returned object identity is stable across rerenders that do not change activePill', () => {
+  it('returned object identity is stable across rerenders that do not change inputs', () => {
+    const stableSelected: string[] = CRA_KEYS as string[];
+    const stableUserPresets: UserPreset[] = [];
     const { result, rerender } = renderHook(
-      ({ selectedBosses, weeklyCount }: { selectedBosses: string[]; weeklyCount: number }) =>
-        usePresetPill({ muleId: 'mule-1', selectedBosses, weeklyCount }),
-      {
-        initialProps: {
-          selectedBosses: CRA_KEYS,
-          weeklyCount: weeklyCountOf(CRA_KEYS),
-        },
-      },
+      ({ selectedBosses, userPresets }: { selectedBosses: string[]; userPresets: UserPreset[] }) =>
+        usePresetPill({ selectedBosses, userPresets }),
+      { initialProps: { selectedBosses: stableSelected, userPresets: stableUserPresets } },
     );
 
     const first = result.current;
     expect(first.activePill).toBe('CRA');
 
-    // Rerender with a new array reference but identical contents — activePill
-    // is still 'CRA', so the returned object identity must be preserved.
-    rerender({
-      selectedBosses: [...CRA_KEYS],
-      weeklyCount: weeklyCountOf(CRA_KEYS),
-    });
-
+    // Rerender with the same input references — memo should preserve identity.
+    rerender({ selectedBosses: stableSelected, userPresets: stableUserPresets });
     expect(Object.is(result.current, first)).toBe(true);
   });
 
-  it('returned object identity changes when an action shifts activePill', () => {
-    const { result } = renderHook(() =>
-      usePresetPill({ muleId: 'mule-1', selectedBosses: [], weeklyCount: 0 }),
+  it('returned object identity changes when selectedBosses changes', () => {
+    const { result, rerender } = renderHook(
+      ({ selectedBosses }: { selectedBosses: string[] }) =>
+        usePresetPill({ selectedBosses, userPresets: [] }),
+      { initialProps: { selectedBosses: [] as string[] } },
     );
 
     const before = result.current;
     expect(before.activePill).toBeNull();
 
-    act(() => {
-      result.current.clickCustom();
-    });
-
-    expect(result.current.activePill).toBe('CUSTOM');
+    rerender({ selectedBosses: CRA_KEYS as string[] });
+    expect(result.current.activePill).toBe('CRA');
     expect(Object.is(result.current, before)).toBe(false);
   });
 });

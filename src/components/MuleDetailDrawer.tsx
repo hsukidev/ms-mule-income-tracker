@@ -9,6 +9,7 @@ import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
 import type { PresetKey } from './MatrixToolbar';
 import { resolveWorldGroup } from '../data/worlds';
+import { useUserPresets } from '../hooks/useUserPresets';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar } from './MatrixToolbar';
@@ -71,16 +72,16 @@ export function MuleDetailDrawer({
     partySizes: mule?.partySizes,
     onUpdate,
   });
+  const { userPresets, createUserPreset, deleteUserPreset } = useUserPresets();
   const pill = usePresetPill({
-    muleId,
     selectedBosses,
-    weeklyCount: slate.weeklyCount,
+    userPresets,
   });
   const slateActions = useSlateActions({
     muleId,
     selectedBosses,
     slate,
-    pill,
+    userPresets,
     onUpdate,
   });
 
@@ -98,13 +99,26 @@ export function MuleDetailDrawer({
   // Deps below are individual values — `matrixFilter` / `slateActions` are
   // fresh objects every render. See CLAUDE.md (drawer keystroke perf).
   const { filter: cadenceFilter, setFilter: setCadenceFilter } = matrixFilter;
-  const { applyPreset } = slateActions;
+  const { applyPreset, applyUserPreset } = slateActions;
   const handleApplyPreset = useCallback(
     (preset: PresetKey) => {
       if (cadenceFilter === 'Daily') setCadenceFilter('All');
       applyPreset(preset);
     },
     [cadenceFilter, setCadenceFilter, applyPreset],
+  );
+  const handleApplyUserPreset = useCallback(
+    (presetId: string) => {
+      if (cadenceFilter === 'Daily') setCadenceFilter('All');
+      applyUserPreset(presetId);
+    },
+    [cadenceFilter, setCadenceFilter, applyUserPreset],
+  );
+  const handleSaveUserPreset = useCallback(
+    (name: string, slateKeys: readonly string[]) => {
+      createUserPreset(name, slateKeys);
+    },
+    [createUserPreset],
   );
 
   return (
@@ -273,6 +287,12 @@ export function MuleDetailDrawer({
                   activePill={pill.activePill}
                   onApplyPreset={handleApplyPreset}
                   onReset={slateActions.resetBosses}
+                  userPresets={userPresets}
+                  slateKeys={selectedBosses}
+                  matchedUserPreset={pill.matchedUserPreset}
+                  onSaveUserPreset={handleSaveUserPreset}
+                  onDeleteUserPreset={deleteUserPreset}
+                  onApplyUserPreset={handleApplyUserPreset}
                 />
                 <div className="mt-2">
                   <BossSearch fused value={matrixFilter.search} onChange={matrixFilter.setSearch} />
