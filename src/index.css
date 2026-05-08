@@ -351,19 +351,18 @@ html[data-theme-swap] *::after {
     --card-pad: 8px;
     --roster-gap: 8px;
   }
-  /* Roster List view: WEEKLY / DAILY / SHARE eyebrow labels collapse on the
-   * narrowest viewports — bare values remain, and tapping a value opens a
-   * tooltip naming the metric (wired in MuleListRow's MetricTooltip). */
-  [data-row-eyebrow] {
+  /* Roster List view: WEEKLY / DAILY eyebrow labels collapse on the narrowest
+   * viewports — bare values remain, and tapping a value opens a tooltip naming
+   * the metric (wired in MuleListRow's MetricTooltip). SHARE is exempt: its
+   * row stays visible at every breakpoint, label included. */
+  [data-row-eyebrow]:not([data-row-share] [data-row-eyebrow]) {
     display: none;
   }
 }
 
-/* Roster List view: drop the share-of-roster line and the class label below
- * 580px to give the meso bignum the full width of the income column and the
- * identity row room for the name + Lv pill. */
+/* Roster List view: drop the class label below 580px to give the identity row
+ * room for the name + Lv pill. */
 @media (max-width: 579px) {
-  [data-row-share],
   [data-row-class] {
     display: none;
   }

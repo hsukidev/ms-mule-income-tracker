@@ -243,12 +243,7 @@ describe('MuleListRow — notes indicator', () => {
   });
 });
 
-describe('MuleListRow — metric labels and SHARE tooltip', () => {
-  it('share value is wrapped in a Tooltip whose trigger names the metric', () => {
-    renderRow();
-    expect(screen.getByRole('button', { name: /share of roster/i })).toBeTruthy();
-  });
-
+describe('MuleListRow — metric labels', () => {
   it('eyebrow icons/labels are tagged with [data-row-eyebrow] so the <480px media rule can hide them', () => {
     const { container } = renderRow();
     expect(container.querySelectorAll('[data-row-eyebrow]').length).toBeGreaterThanOrEqual(3);

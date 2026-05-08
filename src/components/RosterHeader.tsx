@@ -137,7 +137,7 @@ export function RosterHeader({
       <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className="h-px w-8"
+          className="h-px w-8 max-[399px]:hidden"
           style={{
             background: 'linear-gradient(90deg, transparent, var(--accent-raw, var(--accent)))',
           }}

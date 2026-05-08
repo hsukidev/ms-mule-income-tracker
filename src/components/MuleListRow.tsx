@@ -370,19 +370,17 @@ export const MuleListRow = memo(function MuleListRow({
           data-row-share
           style={{
             fontFamily: MONO,
-            fontSize: 'var(--row-eyebrow-size, 11px)',
+            fontSize: 'calc(var(--row-eyebrow-size, 11px) + 1px)',
             color: 'var(--muted-raw, var(--muted-foreground))',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             marginTop: 2,
           }}
         >
-          <MetricTooltip ariaLabel="Share of roster" tooltip="Share of roster">
-            <span>{(metrics.sharePct * 100).toFixed(1)}%</span>
-            <span data-row-eyebrow style={{ marginLeft: 4 }}>
-              SHARE
-            </span>
-          </MetricTooltip>
+          <span>{(metrics.sharePct * 100).toFixed(1)}%</span>
+          <span data-row-eyebrow style={{ marginLeft: 4 }}>
+            SHARE
+          </span>
         </div>
       </div>
     </div>
