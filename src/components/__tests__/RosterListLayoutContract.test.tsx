@@ -66,20 +66,20 @@ function mobileComfyVarFor(name: string): string {
 }
 
 describe('Roster list layout contract — density tightens row vars', () => {
-  it('comfy declares --row-pad: 20px 22px', () => {
-    expect(rowVarFor('comfy', 'row-pad')).toBe('20px 22px');
+  it('comfy declares --row-pad: 14px 22px', () => {
+    expect(rowVarFor('comfy', 'row-pad')).toBe('14px 22px');
   });
 
-  it('compact declares --row-pad: 10px 14px', () => {
-    expect(rowVarFor('compact', 'row-pad')).toBe('10px 14px');
+  it('compact declares --row-pad: 5px 14px', () => {
+    expect(rowVarFor('compact', 'row-pad')).toBe('5px 14px');
   });
 
-  it('comfy declares --row-avatar: 52px', () => {
-    expect(rowVarFor('comfy', 'row-avatar')).toBe('52px');
+  it('comfy declares --row-avatar: 64px', () => {
+    expect(rowVarFor('comfy', 'row-avatar')).toBe('64px');
   });
 
-  it('compact declares --row-avatar: 38px', () => {
-    expect(rowVarFor('compact', 'row-avatar')).toBe('38px');
+  it('compact declares --row-avatar: 48px', () => {
+    expect(rowVarFor('compact', 'row-avatar')).toBe('48px');
   });
 
   it('comfy declares --row-gap: 14px', () => {
@@ -97,15 +97,39 @@ describe('Roster list layout contract — density tightens row vars', () => {
   it('compact declares --row-vgap: 8px', () => {
     expect(rowVarFor('compact', 'row-vgap')).toBe('8px');
   });
+
+  it('comfy declares --row-identity-gap: 6px', () => {
+    expect(rowVarFor('comfy', 'row-identity-gap')).toBe('6px');
+  });
+
+  it('compact declares --row-identity-gap: 4px', () => {
+    expect(rowVarFor('compact', 'row-identity-gap')).toBe('4px');
+  });
+
+  it('comfy declares --row-metric-row-gap: 14px', () => {
+    expect(rowVarFor('comfy', 'row-metric-row-gap')).toBe('14px');
+  });
+
+  it('compact declares --row-metric-row-gap: 12px', () => {
+    expect(rowVarFor('compact', 'row-metric-row-gap')).toBe('12px');
+  });
+
+  it('comfy declares --row-income-w: 130px', () => {
+    expect(rowVarFor('comfy', 'row-income-w')).toBe('130px');
+  });
+
+  it('compact declares --row-income-w: 110px', () => {
+    expect(rowVarFor('compact', 'row-income-w')).toBe('110px');
+  });
 });
 
 describe('Roster list layout contract — <768px Comfy override', () => {
-  it('comfy below 768px declares --row-pad: 14px 16px', () => {
-    expect(mobileComfyVarFor('row-pad')).toBe('14px 16px');
+  it('comfy below 768px declares --row-pad: 8px 16px', () => {
+    expect(mobileComfyVarFor('row-pad')).toBe('8px 16px');
   });
 
-  it('comfy below 768px declares --row-avatar: 44px', () => {
-    expect(mobileComfyVarFor('row-avatar')).toBe('44px');
+  it('comfy below 768px declares --row-avatar: 56px', () => {
+    expect(mobileComfyVarFor('row-avatar')).toBe('56px');
   });
 
   it('comfy below 768px declares --row-gap: 10px', () => {
@@ -168,5 +192,40 @@ describe('MuleListRow inline styles reference the density-scoped row vars', () =
     );
     const row = container.querySelector('[data-mule-row]') as HTMLElement;
     expect(row.style.gridTemplateColumns).toContain('var(--row-avatar');
+  });
+
+  it('row grid template uses var(--row-handle) for the leading drag-handle column', () => {
+    const { container } = render(
+      <DndContext>
+        <SortableContext items={[baseMule.id]} strategy={verticalListSortingStrategy}>
+          <MuleListRow
+            mule={baseMule}
+            metrics={baseMetrics}
+            postCapIncomeMeso={0}
+            onClick={() => {}}
+          />
+        </SortableContext>
+      </DndContext>,
+    );
+    const row = container.querySelector('[data-mule-row]') as HTMLElement;
+    expect(row.style.gridTemplateColumns).toContain('var(--row-handle');
+  });
+});
+
+describe('Roster list layout contract — drag handle column width by density', () => {
+  it('comfy declares --row-handle: 24px (the full-row-height drag handle column)', () => {
+    expect(rowVarFor('comfy', 'row-handle')).toBe('24px');
+  });
+
+  it('compact declares --row-handle: 24px', () => {
+    expect(rowVarFor('compact', 'row-handle')).toBe('24px');
+  });
+
+  it('comfy declares --row-handle-icon: 18px (the GripVertical glyph size)', () => {
+    expect(rowVarFor('comfy', 'row-handle-icon')).toBe('18px');
+  });
+
+  it('compact declares --row-handle-icon: 16px', () => {
+    expect(rowVarFor('compact', 'row-handle-icon')).toBe('16px');
   });
 });

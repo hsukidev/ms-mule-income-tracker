@@ -79,24 +79,21 @@ describe('MuleListRow — comfy spec', () => {
     expect(screen.getByText('Lv.250')).toBeTruthy();
   });
 
-  it('renders WEEKLY eyebrow with N/14', () => {
+  it('renders the Weekly metric block labeled "Weekly count" with N/14', () => {
     renderRow();
-    expect(screen.getByText(/weekly/i)).toBeTruthy();
+    expect(screen.getByLabelText(/weekly count/i)).toBeTruthy();
     // The fraction may be split between accent + muted spans; assert against
     // the row's text content.
     const row = screen.getByTestId('mule-row-row-mule-1');
     expect(row.textContent).toMatch(/8\s*\/\s*14/);
   });
 
-  it('renders DAILY eyebrow with bare N (no denominator)', () => {
+  it('renders the Daily metric block labeled "Daily count" with a bare N (no denominator)', () => {
     renderRow();
-    expect(screen.getByText(/daily/i)).toBeTruthy();
+    expect(screen.getByLabelText(/daily count/i)).toBeTruthy();
     const row = screen.getByTestId('mule-row-row-mule-1');
-    // Daily count is 3; the daily column should contain just `3` with no
-    // `/<denominator>` suffix.
-    expect(row.textContent).toMatch(/DAILY[\s\S]*3/);
-    // Belt-and-suspenders: a `3/7`-style daily fraction would imply a
-    // denominator we don't want.
+    expect(row.textContent).toMatch(/3/);
+    // A `3/7`-style daily fraction would imply a denominator we don't want.
     expect(row.textContent).not.toMatch(/3\s*\/\s*7/);
   });
 
@@ -135,16 +132,60 @@ describe('MuleListRow — comfy spec', () => {
   });
 });
 
+describe('MuleListRow — drag handle', () => {
+  const HANDLE = /drag to reorder/i;
+
+  it('renders the drag handle as a focusable button in non-bulk mode', () => {
+    renderRow();
+    const handle = screen.getByRole('button', { name: HANDLE });
+    expect(handle.tagName.toLowerCase()).toBe('button');
+  });
+
+  it('clicking the drag handle does not invoke the row onClick', () => {
+    const onClick = vi.fn();
+    renderRow({ onClick });
+    fireEvent.click(screen.getByRole('button', { name: HANDLE }));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('the dnd-kit sortable activator is the handle, not the row body', () => {
+    const { container } = renderRow();
+    const row = container.querySelector('[data-mule-row]') as HTMLElement;
+    const handle = screen.getByRole('button', { name: HANDLE });
+    expect(row.getAttribute('aria-roledescription')).toBeNull();
+    expect(handle.getAttribute('aria-roledescription')).toBe('sortable');
+  });
+
+  it('the row body keeps role=button and tabIndex=0 so keyboard Enter/Space still activates the drawer', () => {
+    const { container } = renderRow();
+    const row = container.querySelector('[data-mule-row]') as HTMLElement;
+    expect(row.getAttribute('role')).toBe('button');
+    expect(row.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('Enter on the row body fires onClick (drawer-open path is keyboard-accessible)', () => {
+    const onClick = vi.fn();
+    const { container } = renderRow({ onClick });
+    const row = container.querySelector('[data-mule-row]') as HTMLElement;
+    fireEvent.keyDown(row, { key: 'Enter' });
+    expect(onClick).toHaveBeenCalledWith('row-mule-1');
+  });
+
+  it('the drag handle stretches to fill its grid cell so the hit zone matches the column', () => {
+    renderRow();
+    const handle = screen.getByRole('button', { name: HANDLE });
+    expect(handle.style.width).toBe('100%');
+    expect(handle.style.height).toBe('100%');
+  });
+});
+
 describe('MuleListRow — bulk mode', () => {
-  it('replaces the grip with a destructive checkbox when bulkMode = true', () => {
+  it('replaces the drag handle with a destructive checkbox when bulkMode = true', () => {
     const { container } = renderRow({ bulkMode: true });
     const indicator = container.querySelector('[data-selection-indicator]') as HTMLElement;
     expect(indicator).toBeTruthy();
     expect(indicator.getAttribute('aria-hidden')).not.toBeNull();
-    // Row should not show the grip when bulk mode is on (the leftmost slot
-    // is now the checkbox).
-    const grip = container.querySelector('[data-mule-row-grip]');
-    expect(grip).toBeNull();
+    expect(screen.queryByRole('button', { name: /drag to reorder/i })).toBeNull();
   });
 
   it('selected row picks up destructive border + soft destructive bg', () => {
@@ -202,33 +243,15 @@ describe('MuleListRow — notes indicator', () => {
   });
 });
 
-describe('MuleListRow — narrow-width tap tooltips on metric values', () => {
-  it('weekly value is wrapped in a Tooltip whose trigger names the metric', () => {
-    renderRow();
-    const trigger = screen.getByRole('button', { name: /weekly count/i });
-    expect(trigger).toBeTruthy();
-  });
-
-  it('daily value is wrapped in a Tooltip whose trigger names the metric', () => {
-    renderRow();
-    expect(screen.getByRole('button', { name: /daily count/i })).toBeTruthy();
-  });
-
+describe('MuleListRow — metric labels and SHARE tooltip', () => {
   it('share value is wrapped in a Tooltip whose trigger names the metric', () => {
     renderRow();
     expect(screen.getByRole('button', { name: /share of roster/i })).toBeTruthy();
   });
 
-  it('eyebrow labels are tagged with [data-row-eyebrow] so the <480px media rule can hide them', () => {
+  it('eyebrow icons/labels are tagged with [data-row-eyebrow] so the <480px media rule can hide them', () => {
     const { container } = renderRow();
     expect(container.querySelectorAll('[data-row-eyebrow]').length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('clicking a metric tooltip trigger does not invoke the row onClick', () => {
-    const onClick = vi.fn();
-    renderRow({ onClick });
-    fireEvent.click(screen.getByRole('button', { name: /weekly count/i }));
-    expect(onClick).not.toHaveBeenCalled();
   });
 });
 

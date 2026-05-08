@@ -41,16 +41,19 @@ export function AddCard({ onClick }: AddCardProps) {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 10,
-          minHeight: 'var(--row-avatar, 44px)',
+          minHeight: 'var(--row-height, 92px)',
           color: isHovered
             ? 'var(--accent-raw, var(--accent))'
             : 'var(--muted-raw, var(--muted-foreground))',
-          fontSize: 13,
-          fontWeight: 500,
+          fontSize: 'var(--row-name-size, 16px)',
+          fontWeight: 600,
           transition: 'border-color 150ms, background 150ms, color 150ms',
         }}
       >
-        <span aria-hidden style={{ fontSize: 18, lineHeight: 1 }}>
+        <span
+          aria-hidden
+          style={{ fontSize: 'calc(var(--row-name-size, 16px) * 1.25)', lineHeight: 1 }}
+        >
           +
         </span>
         <span>Add Mule</span>

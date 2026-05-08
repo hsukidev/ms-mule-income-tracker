@@ -222,7 +222,7 @@ Plain `panel` wrapping a 260px Recharts donut. Inner radius 66, outer 100, 2° p
 - Top-left **Selection Indicator** appears (small accent-bordered checkbox).
 - A **Deletion-Marked Mule** gets a destructive-tinted border and a `--destructive` alpha background fill.
 
-Card is also a dnd-kit sortable handle; the full card is the drag surface. Activation distance is `0` on the **Mouse Sensor** (instant) and gated by the **Long-Press Gate** (250ms / 5px tolerance) on the **Touch Sensor**.
+Card is also a dnd-kit sortable handle; in **Card View** the full card is the drag surface (no **Drag Handle**). Activation distance is `0` on the **Mouse Sensor** (instant) and gated by the **Long-Press Gate** (250ms / 5px tolerance) on the **Touch Sensor**. **List View** diverges deliberately: reorder activates only from the per-row **Drag Handle** in the leftmost column, the rest of the row is click-to-open. See ADR 0003.
 
 ### [AddCard](src/components/AddCard.tsx)
 

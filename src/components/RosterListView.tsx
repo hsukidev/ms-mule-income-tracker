@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Mule } from '../types';
 import type { WorldIncome } from '../modules/worldIncome';
 import { rosterRowMetrics } from './rosterRowMetrics';
@@ -25,25 +26,34 @@ export function RosterListView({
   onAddMule,
   isPaintEngaged = false,
 }: RosterListViewProps) {
+  const rowMetrics = useMemo(
+    () =>
+      mules.map((mule) => ({
+        mule,
+        metrics: rosterRowMetrics(
+          mule,
+          worldIncome.perMule.get(mule.id),
+          worldIncome.totalContributedMeso,
+        ),
+      })),
+    [mules, worldIncome.perMule, worldIncome.totalContributedMeso],
+  );
+
   return (
     <div data-testid="roster-list" style={{ display: 'grid', gap: 'var(--row-vgap, 8px)' }}>
-      {mules.map((mule) => {
-        const contribution = worldIncome.perMule.get(mule.id);
-        const metrics = rosterRowMetrics(mule, contribution, worldIncome.totalContributedMeso);
-        return (
-          <MuleListRow
-            key={mule.id}
-            mule={mule}
-            metrics={metrics}
-            postCapIncomeMeso={metrics.postCapMeso}
-            onClick={onCardClick}
-            bulkMode={bulkMode}
-            selected={toDelete.has(mule.id)}
-            onToggleSelect={onToggleSelect}
-            isPaintEngaged={isPaintEngaged}
-          />
-        );
-      })}
+      {rowMetrics.map(({ mule, metrics }) => (
+        <MuleListRow
+          key={mule.id}
+          mule={mule}
+          metrics={metrics}
+          postCapIncomeMeso={metrics.postCapMeso}
+          onClick={onCardClick}
+          bulkMode={bulkMode}
+          selected={toDelete.has(mule.id)}
+          onToggleSelect={onToggleSelect}
+          isPaintEngaged={isPaintEngaged}
+        />
+      ))}
       {!bulkMode && onAddMule && <AddCard onClick={onAddMule} />}
     </div>
   );

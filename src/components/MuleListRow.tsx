@@ -9,6 +9,8 @@ import { formatDroppedSlots } from '../data/muleBossSlate';
 import type { Mule } from '../types';
 import type { RosterRowMetrics } from './rosterRowMetrics';
 import { CharacterAvatar } from './CharacterAvatar';
+import weeklyCrystalPng from '../assets/weekly-crystal.png';
+import dailyCrystalPng from '../assets/daily-crystal.png';
 
 interface MuleListRowProps {
   mule: Mule;
@@ -21,10 +23,31 @@ interface MuleListRowProps {
   isPaintEngaged?: boolean;
 }
 
-const MONO = 'Geist Mono, monospace';
+export const MONO = 'Geist Mono, monospace';
 const DESTRUCTIVE = 'var(--destructive)';
 const destructiveAlpha = (pct: number) =>
   `color-mix(in oklab, var(--destructive) ${pct}%, transparent)`;
+
+const HANDLE_STRETCH_STYLE: React.CSSProperties = { width: '100%', height: '100%' };
+const HANDLE_ICON_STYLE: React.CSSProperties = {
+  width: 'var(--row-handle-icon, 18px)',
+  height: 'var(--row-handle-icon, 18px)',
+};
+
+const METRIC_ICON_STYLE: React.CSSProperties = {
+  width: 'var(--row-metric-icon, 18px)',
+  height: 'var(--row-metric-icon, 18px)',
+  objectFit: 'contain',
+  display: 'inline-block',
+  flexShrink: 0,
+};
+
+const METRIC_VALUE_STYLE: React.CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 'var(--row-eyebrow-value-size, 16px)',
+  fontWeight: 700,
+  marginLeft: 6,
+};
 
 export const MuleListRow = memo(function MuleListRow({
   mule,
@@ -40,7 +63,15 @@ export const MuleListRow = memo(function MuleListRow({
   const handlePressStart = () => setIsPressed(true);
   const handlePressEnd = () => setIsPressed(false);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: mule.id,
     disabled: bulkMode,
   });
@@ -81,7 +112,7 @@ export const MuleListRow = memo(function MuleListRow({
     opacity: mule.active ? 1 : 0.55,
     zIndex: isDragging ? 1 : undefined,
     display: 'grid',
-    gridTemplateColumns: '24px var(--row-avatar, 44px) 1fr auto auto auto',
+    gridTemplateColumns: 'var(--row-handle, 24px) var(--row-avatar, 64px) minmax(0, 1fr) auto',
     alignItems: 'center',
     gap: 'var(--row-gap, 10px)',
     padding: 'var(--row-pad, 14px 18px)',
@@ -114,13 +145,13 @@ export const MuleListRow = memo(function MuleListRow({
       data-mule-row={mule.id}
       data-paint-target={mule.id}
       data-testid={`mule-row-${mule.id}`}
+      role="button"
+      tabIndex={0}
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
       onTouchCancel={handlePressEnd}
-      {...attributes}
-      {...listeners}
     >
       {bulkMode ? (
         <span
@@ -142,36 +173,43 @@ export const MuleListRow = memo(function MuleListRow({
           {selected && <Check style={{ width: 14, height: 14, strokeWidth: 3 }} />}
         </span>
       ) : (
-        <span
-          aria-hidden
-          data-mule-row-grip
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--muted-raw, var(--muted-foreground))',
-          }}
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          aria-label="Drag to reorder"
+          {...attributes}
+          {...listeners}
+          onClick={stopBubble}
+          className="inline-flex items-center justify-center bg-transparent border-0 p-0 cursor-grab touch-none rounded-md transition-colors text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          style={HANDLE_STRETCH_STYLE}
         >
-          <GripVertical size={12} strokeWidth={1.75} />
-        </span>
+          <GripVertical strokeWidth={2} style={HANDLE_ICON_STYLE} />
+        </button>
       )}
 
       <CharacterAvatar
         avatarUrl={mule.avatarUrl}
-        size={'var(--row-avatar, 44px)'}
+        size={'var(--row-avatar, 64px)'}
         alt=""
         data-testid="card-avatar"
       />
 
-      <div style={{ minWidth: 0 }}>
-        <div className="flex flex-row items-center gap-2" style={{ minWidth: 0 }}>
+      <div
+        style={{
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--row-identity-gap, 6px)',
+        }}
+      >
+        <div className="flex flex-row items-center gap-2" style={{ minWidth: 0, flexWrap: 'wrap' }}>
           <span
             style={{
               color: mule.name
                 ? 'var(--text, var(--foreground))'
                 : 'var(--muted-raw, var(--muted-foreground))',
               fontWeight: 600,
-              fontSize: 'var(--mule-name-size, 14px)',
+              fontSize: 'var(--row-name-size, 17px)',
               fontStyle: mule.name ? 'normal' : 'italic',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -181,37 +219,11 @@ export const MuleListRow = memo(function MuleListRow({
           >
             {mule.name || 'Unnamed'}
           </span>
-          {hasNotes && (
-            <Tooltip open={notesTooltipOpen} onOpenChange={setNotesTooltipOpen}>
-              <TooltipTrigger
-                aria-label="Show character notes"
-                closeOnClick={false}
-                delay={0}
-                onClick={(e) => {
-                  stopBubble(e);
-                  setNotesTooltipOpen(true);
-                }}
-                onPointerDown={stopBubble}
-                onTouchStart={stopBubble}
-                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <FileText className="size-3.5" aria-hidden />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="max-w-xs whitespace-pre-wrap wrap-anywhere normal-case tracking-normal text-[11px]"
-              >
-                {trimmedNotes}
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-        <div className="flex flex-row items-center gap-2" style={{ marginTop: 2, minWidth: 0 }}>
           <span
             style={{
               color: 'var(--muted-raw, var(--muted-foreground))',
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 'var(--row-class-size, 11px)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               overflow: 'hidden',
@@ -226,7 +238,7 @@ export const MuleListRow = memo(function MuleListRow({
             <span
               style={{
                 fontFamily: MONO,
-                fontSize: 'var(--mule-level-size, 11px)',
+                fontSize: 'var(--row-level-size, 11px)',
                 letterSpacing: '0.1em',
                 color: 'var(--muted-raw, var(--muted-foreground))',
                 padding: '2px 6px',
@@ -239,41 +251,81 @@ export const MuleListRow = memo(function MuleListRow({
               Lv.{mule.level}
             </span>
           )}
+          {hasNotes && (
+            <Tooltip open={notesTooltipOpen} onOpenChange={setNotesTooltipOpen}>
+              <TooltipTrigger
+                aria-label="Show character notes"
+                closeOnClick={false}
+                delay={0}
+                onClick={(e) => {
+                  stopBubble(e);
+                  setNotesTooltipOpen(true);
+                }}
+                onPointerDown={stopBubble}
+                onTouchStart={stopBubble}
+                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <FileText className="size-4" aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="max-w-xs whitespace-pre-wrap wrap-anywhere normal-case tracking-normal text-[11px]"
+              >
+                {trimmedNotes}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--row-metric-row-gap, 14px)',
+            minWidth: 0,
+          }}
+        >
+          <span aria-label="Weekly count" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <img
+              src={weeklyCrystalPng}
+              alt=""
+              draggable={false}
+              data-row-eyebrow
+              style={METRIC_ICON_STYLE}
+            />
+            <span style={METRIC_VALUE_STYLE}>
+              <span style={{ color: 'var(--accent-raw, var(--accent))' }}>
+                {metrics.weeklyCount}
+              </span>
+              <span style={{ color: 'var(--muted-raw, var(--muted-foreground))' }}>/14</span>
+            </span>
+          </span>
+
+          <span aria-label="Daily count" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <img
+              src={dailyCrystalPng}
+              alt=""
+              draggable={false}
+              data-row-eyebrow
+              style={METRIC_ICON_STYLE}
+            />
+            <span style={{ ...METRIC_VALUE_STYLE, color: 'var(--accent-raw, var(--accent))' }}>
+              {metrics.dailyCount}
+            </span>
+          </span>
         </div>
       </div>
 
-      <Eyebrow label="WEEKLY">
-        <MetricTooltip ariaLabel="Weekly count" tooltip="Weekly" stopBubble={stopBubble}>
-          <span style={{ fontFamily: MONO, color: 'var(--accent-raw, var(--accent))' }}>
-            {metrics.weeklyCount}
-          </span>
-          <span style={{ fontFamily: MONO, color: 'var(--muted-raw, var(--muted-foreground))' }}>
-            /14
-          </span>
-        </MetricTooltip>
-      </Eyebrow>
-
-      <Eyebrow label="DAILY">
-        <MetricTooltip ariaLabel="Daily count" tooltip="Daily" stopBubble={stopBubble}>
-          <span style={{ fontFamily: MONO, color: 'var(--accent-raw, var(--accent))' }}>
-            {metrics.dailyCount}
-          </span>
-        </MetricTooltip>
-      </Eyebrow>
-
-      <div style={{ textAlign: 'right' }}>
+      <div style={{ textAlign: 'right', minWidth: 'var(--row-income-w, 110px)' }}>
         <div className="flex flex-row items-center justify-end gap-1.5" style={{ minWidth: 0 }}>
           <span
             style={{
               fontFamily: MONO,
-              fontSize: 18,
+              fontSize: 'var(--row-income-size, 22px)',
               fontWeight: 600,
               color: incomeColor,
               lineHeight: 1.1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              minWidth: 0,
             }}
           >
             {displayedIncome}
@@ -308,7 +360,7 @@ export const MuleListRow = memo(function MuleListRow({
         <div
           style={{
             fontFamily: MONO,
-            fontSize: 9.5,
+            fontSize: 'var(--row-eyebrow-size, 11px)',
             color: 'var(--muted-raw, var(--muted-foreground))',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
@@ -363,26 +415,5 @@ function MetricTooltip({
         {tooltip}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-function Eyebrow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ textAlign: 'right' }}>
-      <div
-        data-row-eyebrow
-        style={{
-          fontFamily: MONO,
-          fontSize: 9.5,
-          letterSpacing: '0.14em',
-          color: 'var(--muted-raw, var(--muted-foreground))',
-          textTransform: 'uppercase',
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ fontFamily: MONO, fontSize: 14, fontWeight: 600 }}>{children}</div>
-    </div>
   );
 }

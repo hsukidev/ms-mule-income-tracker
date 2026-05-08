@@ -312,11 +312,11 @@ How the **Roster** is laid out — exactly one of **Card View** or **List View**
 _Avoid_: View mode, layout mode
 
 **Card View**:
-The **Roster Display Mode** that renders each **Mule** as a **Character Card** in a responsive grid. Default mode.
+The **Roster Display Mode** that renders each **Mule** as a **Character Card** in a responsive grid. Default mode. The full card is the drag surface for reorder — there is no **Drag Handle**.
 _Avoid_: Grid view, card grid
 
 **List View**:
-The **Roster Display Mode** that renders each **Mule** as one horizontal row (avatar, identity, **Weekly Count**, **Daily Count**, **Potential Meso**, share). Subject to **Density**.
+The **Roster Display Mode** that renders each **Mule** as one horizontal row — **Drag Handle**, avatar, identity (name, class, **Lv.X**, **Weekly Count**, **Daily Count** stacked under the name), **Potential Meso**, share. Subject to **Density**. Reorder is engaged only from the **Drag Handle**, never from the row body.
 _Avoid_: List, table view, row view
 
 **Density**:
@@ -334,6 +334,10 @@ _Avoid_: Dense, small, tight
 **Density Toggle**:
 The header control that flips **Density** between **Comfy** and **Compact**. Hidden below 768px because the toggle's value is too small to matter at that scale.
 _Avoid_: Density picker, density switcher
+
+**Drag Handle**:
+The leftmost column of a **List View** row — a full-row-height grab strip (24px wide regardless of **Density**) holding a vertical-grip glyph. The sole drag-activator for reorder in **List View**: pointer drag engages from the handle only, the rest of the row is click-to-open. **Card View** has no **Drag Handle** — its full card is the drag surface. Replaced by the **Selection Indicator** in **Bulk Delete Mode** (drag is suspended). Subject to **Mouse Sensor**, **Touch Sensor**, and **Keyboard Sensor** identically to the **Character Card**.
+_Avoid_: Grip, row grip, reorder handle
 
 **Character Card**:
 The tile in the **Roster** for one **Mule** — avatar, name, class, level, and **Potential Meso**.
