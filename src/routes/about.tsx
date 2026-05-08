@@ -56,8 +56,8 @@ function AboutPage() {
             Credits
           </h2>
           <p className="mt-2" style={{ color: 'var(--text, var(--foreground))' }}>
-            YABI is an unofficial fan tool. MapleStory is © Nexon Korea Corp. YABI is not affiliated
-            with or endorsed by Nexon.
+            <em>YABI</em> is an unofficial fan tool. MapleStory is © Nexon Korea Corp. YABI is not
+            affiliated with or endorsed by Nexon.
           </p>
         </section>
 
