@@ -24,6 +24,24 @@ export const ORDERED_CATEGORIES: ChangeCategory[] = (
 
 export const releases: Release[] = [
   {
+    date: '2026-05-08',
+    version: '1.3.0',
+    changes: [
+      {
+        category: 'feature',
+        text: 'Users can now toggle between "card view" and "list view" display modes',
+      },
+      {
+        category: 'fix',
+        text: 'Display mule income as post-cap income instead of full potential income',
+      },
+      {
+        category: 'feature',
+        text: 'Users can now save and load custom boss presets. Transfer codes prior to this update will no longer work. Please generate a new transfer code',
+      },
+    ],
+  },
+  {
     date: '2026-05-05',
     version: '1.2.0',
     changes: [
