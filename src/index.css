@@ -264,9 +264,10 @@ html[data-theme-swap] *::after {
   --roster-gap: 16px;
   --mule-name-size: 14px;
   --mule-level-size: 11px;
-  --row-pad: 14px 18px;
-  --row-avatar: 44px;
-  --row-gap: 10px;
+  --row-pad: 20px 22px;
+  --row-avatar: 52px;
+  --row-gap: 14px;
+  --row-vgap: 12px;
 }
 [data-density='compact'] {
   --card-pad: 12px;
@@ -274,9 +275,10 @@ html[data-theme-swap] *::after {
   --roster-gap: 16px;
   --mule-name-size: 13px;
   --mule-level-size: 10px;
-  --row-pad: 8px 14px;
-  --row-avatar: 36px;
-  --row-gap: 6px;
+  --row-pad: 10px 14px;
+  --row-avatar: 38px;
+  --row-gap: 8px;
+  --row-vgap: 8px;
 }
 
 /* Responsive roster column counts:
@@ -328,6 +330,19 @@ html[data-theme-swap] *::after {
    * tooltip naming the metric (wired in MuleListRow's MetricTooltip). */
   [data-row-eyebrow] {
     display: none;
+  }
+}
+
+/* Comfy row-grain override below 768px: the Density Toggle is hidden in this
+ * range, so users can't escape Comfy's full-fat dimensions. Tighten Comfy's
+ * row vars here so phone/tablet List view stays scannable. Compact is left
+ * alone — users only land on it intentionally. */
+@media (max-width: 767px) {
+  [data-density='comfy'] {
+    --row-pad: 14px 16px;
+    --row-avatar: 44px;
+    --row-gap: 10px;
+    --row-vgap: 8px;
   }
 }
 @media (min-width: 1024px) {

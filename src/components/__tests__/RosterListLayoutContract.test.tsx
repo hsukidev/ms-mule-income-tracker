@@ -53,29 +53,68 @@ function rowVarFor(scope: 'comfy' | 'compact', name: string): string {
   return m[1].trim();
 }
 
+// Reads the value of a row-grain var inside the `<768px` comfy override block.
+// Below 768px the Density Toggle is hidden, so Comfy's row dimensions tighten
+// here to keep List view scannable on phone/tablet.
+function mobileComfyVarFor(name: string): string {
+  const re = new RegExp(
+    String.raw`@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*?\[data-density=['"]comfy['"]\]\s*\{[^}]*?--${name}:\s*([^;]+);`,
+    'm',
+  );
+  const m = indexCssRaw.match(re);
+  if (!m) throw new Error(`Could not find --${name} in <768px comfy override`);
+  return m[1].trim();
+}
+
 describe('Roster list layout contract — density tightens row vars', () => {
-  it('comfy declares --row-pad: 14px 18px', () => {
-    expect(rowVarFor('comfy', 'row-pad')).toBe('14px 18px');
+  it('comfy declares --row-pad: 20px 22px', () => {
+    expect(rowVarFor('comfy', 'row-pad')).toBe('20px 22px');
   });
 
-  it('compact declares --row-pad: 8px 14px', () => {
-    expect(rowVarFor('compact', 'row-pad')).toBe('8px 14px');
+  it('compact declares --row-pad: 10px 14px', () => {
+    expect(rowVarFor('compact', 'row-pad')).toBe('10px 14px');
   });
 
-  it('comfy declares --row-avatar: 44px', () => {
-    expect(rowVarFor('comfy', 'row-avatar')).toBe('44px');
+  it('comfy declares --row-avatar: 52px', () => {
+    expect(rowVarFor('comfy', 'row-avatar')).toBe('52px');
   });
 
-  it('compact declares --row-avatar: 36px', () => {
-    expect(rowVarFor('compact', 'row-avatar')).toBe('36px');
+  it('compact declares --row-avatar: 38px', () => {
+    expect(rowVarFor('compact', 'row-avatar')).toBe('38px');
   });
 
-  it('comfy declares --row-gap: 10px', () => {
-    expect(rowVarFor('comfy', 'row-gap')).toBe('10px');
+  it('comfy declares --row-gap: 14px', () => {
+    expect(rowVarFor('comfy', 'row-gap')).toBe('14px');
   });
 
-  it('compact declares --row-gap: 6px', () => {
-    expect(rowVarFor('compact', 'row-gap')).toBe('6px');
+  it('compact declares --row-gap: 8px', () => {
+    expect(rowVarFor('compact', 'row-gap')).toBe('8px');
+  });
+
+  it('comfy declares --row-vgap: 12px', () => {
+    expect(rowVarFor('comfy', 'row-vgap')).toBe('12px');
+  });
+
+  it('compact declares --row-vgap: 8px', () => {
+    expect(rowVarFor('compact', 'row-vgap')).toBe('8px');
+  });
+});
+
+describe('Roster list layout contract — <768px Comfy override', () => {
+  it('comfy below 768px declares --row-pad: 14px 16px', () => {
+    expect(mobileComfyVarFor('row-pad')).toBe('14px 16px');
+  });
+
+  it('comfy below 768px declares --row-avatar: 44px', () => {
+    expect(mobileComfyVarFor('row-avatar')).toBe('44px');
+  });
+
+  it('comfy below 768px declares --row-gap: 10px', () => {
+    expect(mobileComfyVarFor('row-gap')).toBe('10px');
+  });
+
+  it('comfy below 768px declares --row-vgap: 8px', () => {
+    expect(mobileComfyVarFor('row-vgap')).toBe('8px');
   });
 });
 
