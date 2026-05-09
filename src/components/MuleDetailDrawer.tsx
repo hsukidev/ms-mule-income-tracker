@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
-import { useIncome } from '../modules/income';
+import { Income } from '../modules/income';
 import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
 import type { PresetKey } from './MatrixToolbar';
@@ -54,7 +54,11 @@ export function MuleDetailDrawer({
     }),
     [mule?.selectedBosses, mule?.partySizes, mule?.worldId],
   );
-  const { raw: potentialIncomeRaw } = useIncome(incomeSource);
+  // The chip pair (`true` / `false`) is hard-coded here — the drawer doesn't
+  // read the global Format Preference. Income.of's abbreviated arg only feeds
+  // the unused `formatted` getter, so any flag works; pick `true` for parity
+  // with the chip default.
+  const potentialIncomeRaw = useMemo(() => Income.of(incomeSource, true).raw, [incomeSource]);
   const potentialIncome = formatMeso(potentialIncomeRaw, true);
   const fullPotentialIncome = formatMeso(potentialIncomeRaw, false);
 

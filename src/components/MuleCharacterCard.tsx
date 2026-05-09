@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
-import { useIncome } from '../modules/income';
+import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { formatMeso } from '../utils/meso';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { formatDroppedSlots, type SlateKey } from '../data/muleBossSlate';
@@ -59,7 +59,7 @@ const MuleCardInner = memo(function MuleCardInner({
   droppedKeys?: ReadonlyMap<SlateKey, number>;
   postCapIncomeMeso: number;
 }) {
-  const { abbreviated } = useIncome();
+  const { abbreviated } = useFormatPreference();
   const potentialIncome = formatMeso(postCapIncomeMeso, abbreviated);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [notesTooltipOpen, setNotesTooltipOpen] = useState(false);

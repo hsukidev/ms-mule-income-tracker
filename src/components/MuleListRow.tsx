@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Check, FileText, GripVertical, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useIncome } from '../modules/income';
+import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { formatMeso } from '../utils/meso';
 import { formatDroppedSlots } from '../data/muleBossSlate';
 import type { Mule } from '../types';
@@ -22,9 +22,9 @@ interface MuleListRowProps {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   isPaintEngaged?: boolean;
-  /** When true, override `useIncome.abbreviated` and force the abbreviated meso
-   * format. Lifted to RosterListView so a single matchMedia subscription
-   * decides for the whole roster. */
+  /** When true, override `useFormatPreference().abbreviated` and force the
+   * abbreviated meso format. Lifted to RosterListView so a single matchMedia
+   * subscription decides for the whole roster. */
   forceAbbreviated?: boolean;
 }
 
@@ -93,7 +93,7 @@ export const MuleListRow = memo(function MuleListRow({
     id: mule.id,
     disabled: bulkMode,
   });
-  const { abbreviated } = useIncome();
+  const { abbreviated } = useFormatPreference();
   const displayedIncome = formatMeso(postCapIncomeMeso, abbreviated || forceAbbreviated);
   const fullIncome = formatMeso(postCapIncomeMeso, false);
 

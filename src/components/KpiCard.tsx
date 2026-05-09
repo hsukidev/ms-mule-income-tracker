@@ -2,6 +2,7 @@ import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { formatMeso } from '../utils/meso';
 import { useWorldIncome, WORLD_WEEKLY_CRYSTAL_CAP } from '../modules/worldIncome';
+import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { ResetCountdown } from './ResetCountdown';
 import { WeeklyCapRail } from './WeeklyCapRail';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
@@ -21,9 +22,8 @@ export const KpiCard = memo(function KpiCard({ mules }: KpiCardProps) {
     weeklySlotsContributed,
     dailySlotsContributed,
     slotsTotalContributed,
-    abbreviated,
-    toggle,
   } = useWorldIncome(mules);
+  const { abbreviated, toggle } = useFormatPreference();
   const activeMuleCount = mules.reduce((n, m) => (m.active ? n + 1 : n), 0);
   const canToggleFormat = totalRaw > 0;
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
 import type { Mule } from '../types';
 import { useWorldIncome } from '../modules/worldIncome';
+import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { formatMeso } from '../utils/meso';
 import { colorForMulePosition } from '../utils/muleColor';
 import { ChartContainer, type ChartConfig } from './ui/chart';
@@ -21,7 +22,8 @@ interface IncomePieChartProps {
 }
 
 export function IncomePieChart({ mules, onSliceClick }: IncomePieChartProps) {
-  const { abbreviated, perMule } = useWorldIncome(mules);
+  const { perMule } = useWorldIncome(mules);
+  const { abbreviated } = useFormatPreference();
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
 
   // Crossing the paddingAngle gap between sectors fires a mouseLeave then a
