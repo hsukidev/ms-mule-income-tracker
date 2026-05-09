@@ -14,14 +14,7 @@ interface FormatPreferenceContextValue {
   toggle: () => void;
 }
 
-// Exported only for the IncomeProvider backward-compat shim, which calls
-// `useContext(FormatPreferenceContext)` to detect whether an outer
-// FormatPreferenceProvider is already mounted. Consumers should use the
-// `useFormatPreference` hook below.
-// eslint-disable-next-line react-refresh/only-export-components
-export const FormatPreferenceContext = createContext<FormatPreferenceContextValue | undefined>(
-  undefined,
-);
+const FormatPreferenceContext = createContext<FormatPreferenceContextValue | undefined>(undefined);
 
 // localStorage key parallels the other persisted contexts ('theme', 'density',
 // 'world', 'display'). Stored as the boolean's string form ('true' | 'false').

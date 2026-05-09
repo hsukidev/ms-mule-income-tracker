@@ -54,10 +54,11 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
   // existing assertions that pre-date the post-cap migration still hold.
   const postCapIncomeMeso =
     options?.postCapIncomeMeso ??
-    Income.of(
-      { selectedBosses: mule.selectedBosses, partySizes: mule.partySizes, worldId: mule.worldId },
-      true,
-    ).raw;
+    Income.of({
+      selectedBosses: mule.selectedBosses,
+      partySizes: mule.partySizes,
+      worldId: mule.worldId,
+    }).raw;
   return {
     ...render(
       <DndContext>

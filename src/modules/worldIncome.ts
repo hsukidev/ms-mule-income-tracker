@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { MuleBossSlate, type SlateKey, type SlateSlot } from '../data/muleBossSlate';
 import { resolveWorldGroup } from '../data/worlds';
 import type { Mule } from '../types';
-import { useIncome } from './income';
 
 /**
  * Reference-stable empty `droppedKeys` map shared by every under-cap mule.
@@ -23,8 +22,10 @@ const EMPTY_DROPPED_KEYS: ReadonlyMap<SlateKey, number> = new Map<SlateKey, numb
  * **Crystal Slots**, sorts them descending by **Slot Value**, takes the
  * top `WORLD_WEEKLY_CRYSTAL_CAP`, and attributes survivors back to their
  * owning mules — the **World Cap Cut**. The class is React-agnostic; the
- * `useWorldIncome` hook below adds memoization + format-preference
- * threading via `IncomeContext`.
+ * `useWorldIncome` hook below memoizes the aggregator output keyed on
+ * the input mule list. **Format Preference** lives in
+ * `FormatPreferenceProvider`; callers read it directly at the render
+ * boundary.
  */
 
 /**
@@ -189,20 +190,11 @@ export class WorldIncome {
   }
 }
 
-type UseWorldIncomeResult = WorldIncome & { abbreviated: boolean; toggle: () => void };
-
 /**
  * React adapter for `WorldIncome.of`. Memoizes the aggregator output keyed on
- * the mule list identity (Dashboard already feeds the deferred reference) and
- * threads the **Format Preference** + toggle from `IncomeContext` so the KPI
- * bignum can render abbreviated/full and react to user clicks.
+ * the mule list identity (Dashboard already feeds the deferred reference).
+ * Format Preference is read at the call site via `useFormatPreference()`.
  */
-export function useWorldIncome(mulesInWorld: readonly Mule[]): UseWorldIncomeResult {
-  // useIncome() with no arg is the lightweight path through IncomeContext —
-  // it gives us abbreviated + toggle without re-deriving any cap-aware math.
-  const { abbreviated, toggle } = useIncome();
-  return useMemo(
-    () => Object.assign(WorldIncome.of(mulesInWorld), { abbreviated, toggle }),
-    [mulesInWorld, abbreviated, toggle],
-  );
+export function useWorldIncome(mulesInWorld: readonly Mule[]): WorldIncome {
+  return useMemo(() => WorldIncome.of(mulesInWorld), [mulesInWorld]);
 }

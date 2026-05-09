@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/context/ThemeProvider';
 import { DensityProvider } from '@/context/DensityProvider';
 import { DisplayProvider } from '@/context/DisplayProvider';
 import { WorldProvider } from '@/context/WorldProvider';
-import { IncomeProvider } from '@/modules/income';
+import { FormatPreferenceProvider } from '@/context/FormatPreferenceProvider';
 import { routeTree } from '@/routeTree.gen';
 import type { WorldId } from '@/data/worlds';
 
@@ -52,7 +52,9 @@ export function render(
         <DensityProvider>
           <DisplayProvider>
             <WorldProvider defaultWorld={defaultWorld}>
-              <IncomeProvider defaultAbbreviated={defaultAbbreviated}>{children}</IncomeProvider>
+              <FormatPreferenceProvider defaultAbbreviated={defaultAbbreviated}>
+                {children}
+              </FormatPreferenceProvider>
             </WorldProvider>
           </DisplayProvider>
         </DensityProvider>
