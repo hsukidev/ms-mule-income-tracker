@@ -1,17 +1,19 @@
 import { memo, useEffect, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, FileText, Info, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
 import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { formatMeso } from '../utils/meso';
 import { useMatchMedia } from '../hooks/useMatchMedia';
-import { formatDroppedSlots, type SlateKey } from '../data/muleBossSlate';
+import { type SlateKey } from '../data/muleBossSlate';
 import { CharacterAvatar } from './CharacterAvatar';
 import { ROSTER_CARD_ASPECT, ROSTER_CARD_MIN_HEIGHT } from './rosterCardContract';
+import { NotesTooltipTrigger } from './RosterItem/NotesTooltipTrigger';
+import { CapDropTooltipTrigger } from './RosterItem/CapDropTooltipTrigger';
+import { SelectionIndicator } from './RosterItem/SelectionIndicator';
 
 interface MuleCharacterCardProps {
   mule: Mule;
@@ -48,6 +50,8 @@ const DEFAULT_PANEL_SHADOW = '0 0 0 1px var(--border)';
 const destructiveAlpha = (pct: number) =>
   `color-mix(in oklab, var(--destructive) ${pct}%, transparent)`;
 
+const EMPTY_DROPPED: ReadonlyMap<SlateKey, number> = new Map();
+
 const MuleCardInner = memo(function MuleCardInner({
   mule,
   hideLevelBadge = false,
@@ -61,19 +65,15 @@ const MuleCardInner = memo(function MuleCardInner({
 }) {
   const { abbreviated } = useFormatPreference();
   const potentialIncome = formatMeso(postCapIncomeMeso, abbreviated);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [notesTooltipOpen, setNotesTooltipOpen] = useState(false);
   const hasBosses = mule.selectedBosses.length > 0;
   const incomeColor =
     mule.active && hasBosses
       ? 'var(--accent-raw, var(--accent))'
       : 'var(--dim, var(--surface-dim))';
-  const droppedLines =
-    !hideLevelBadge && droppedKeys && droppedKeys.size > 0 ? formatDroppedSlots(droppedKeys) : [];
-  const trimmedNotes = mule.notes?.trim() ?? '';
-  const hasNotes = !hideLevelBadge && trimmedNotes.length > 0;
-
-  const stopBubble = (e: React.SyntheticEvent) => e.stopPropagation();
+  const notes = hideLevelBadge ? '' : (mule.notes ?? '');
+  const dropped: ReadonlyMap<SlateKey, number> = hideLevelBadge
+    ? EMPTY_DROPPED
+    : (droppedKeys ?? EMPTY_DROPPED);
 
   return (
     <>
@@ -148,30 +148,7 @@ const MuleCardInner = memo(function MuleCardInner({
           >
             {mule.muleClass || 'No class'}
           </span>
-          {hasNotes && (
-            <Tooltip open={notesTooltipOpen} onOpenChange={setNotesTooltipOpen}>
-              <TooltipTrigger
-                aria-label="Show character notes"
-                closeOnClick={false}
-                delay={0}
-                onClick={(e) => {
-                  stopBubble(e);
-                  setNotesTooltipOpen(true);
-                }}
-                onPointerDown={stopBubble}
-                onTouchStart={stopBubble}
-                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <FileText className="size-3.5" aria-hidden />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="max-w-xs whitespace-pre-wrap wrap-anywhere normal-case tracking-normal text-[11px]"
-              >
-                {trimmedNotes}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          <NotesTooltipTrigger notes={notes} iconSize="sm" />
         </div>
       </div>
 
@@ -205,32 +182,7 @@ const MuleCardInner = memo(function MuleCardInner({
           >
             {potentialIncome}
           </span>
-          {droppedLines.length > 0 && (
-            <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
-              <TooltipTrigger
-                aria-label="Show bosses dropped to cap"
-                closeOnClick={false}
-                delay={0}
-                onClick={(e) => {
-                  stopBubble(e);
-                  setTooltipOpen(true);
-                }}
-                onPointerDown={stopBubble}
-                onTouchStart={stopBubble}
-                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <Info className="size-3" aria-hidden />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="flex-col items-start gap-1 normal-case text-[11px] tracking-normal"
-              >
-                {droppedLines.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          <CapDropTooltipTrigger droppedKeys={dropped} iconSize="sm" />
         </div>
       </div>
     </>
@@ -357,27 +309,9 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
         />
 
         {bulkMode && (
-          <div
-            aria-hidden
-            data-selection-indicator
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              border: `1.5px solid ${selected ? DESTRUCTIVE : destructiveAlpha(50)}`,
-              background: selected ? DESTRUCTIVE : 'transparent',
-              color: selected ? 'white' : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 140ms, border-color 140ms',
-            }}
-          >
-            {selected && <Check style={{ width: 14, height: 14, strokeWidth: 3 }} />}
-          </div>
+          <span style={{ position: 'absolute', top: 10, left: 10 }}>
+            <SelectionIndicator selected={selected} />
+          </span>
         )}
 
         {!bulkMode && !isTouch && (

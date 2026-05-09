@@ -1,15 +1,17 @@
 import { memo, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, FileText, GripVertical, Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { GripVertical } from 'lucide-react';
 import { useFormatPreference } from '../context/FormatPreferenceProvider';
 import { formatMeso } from '../utils/meso';
-import { formatDroppedSlots } from '../data/muleBossSlate';
+import type { SlateKey } from '../data/muleBossSlate';
 import type { Mule } from '../types';
 import type { RosterRowMetrics } from './rosterRowMetrics';
 import { CharacterAvatar } from './CharacterAvatar';
 import { MetricTooltip } from './MetricTooltip';
+import { NotesTooltipTrigger } from './RosterItem/NotesTooltipTrigger';
+import { CapDropTooltipTrigger } from './RosterItem/CapDropTooltipTrigger';
+import { SelectionIndicator } from './RosterItem/SelectionIndicator';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
 import dailyCrystalPng from '../assets/daily-crystal.png';
 
@@ -32,6 +34,8 @@ export const MONO = 'Geist Mono, monospace';
 const DESTRUCTIVE = 'var(--destructive)';
 const destructiveAlpha = (pct: number) =>
   `color-mix(in oklab, var(--destructive) ${pct}%, transparent)`;
+
+const EMPTY_DROPPED: ReadonlyMap<SlateKey, number> = new Map();
 
 const HANDLE_STRETCH_STYLE: React.CSSProperties = { width: '100%', height: '100%' };
 const HANDLE_ICON_STYLE: React.CSSProperties = {
@@ -113,12 +117,8 @@ export const MuleListRow = memo(function MuleListRow({
     }
   }
 
-  const [notesTooltipOpen, setNotesTooltipOpen] = useState(false);
-  const [droppedTooltipOpen, setDroppedTooltipOpen] = useState(false);
-  const trimmedNotes = mule.notes?.trim() ?? '';
-  const hasNotes = !bulkMode && trimmedNotes.length > 0;
-  const droppedLines =
-    !bulkMode && metrics.droppedKeys.size > 0 ? formatDroppedSlots(metrics.droppedKeys) : [];
+  const notes = bulkMode ? '' : (mule.notes ?? '');
+  const droppedKeys: ReadonlyMap<SlateKey, number> = bulkMode ? EMPTY_DROPPED : metrics.droppedKeys;
   const isBulkSelected = bulkMode && selected;
   // Tint instead of MuleCharacterCard's 4% scale because a row is wide and
   // short — scaling warps the cell layout.
@@ -173,24 +173,7 @@ export const MuleListRow = memo(function MuleListRow({
       onTouchCancel={handlePressEnd}
     >
       {bulkMode ? (
-        <span
-          aria-hidden
-          data-selection-indicator
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 6,
-            border: `1.5px solid ${selected ? DESTRUCTIVE : destructiveAlpha(50)}`,
-            background: selected ? DESTRUCTIVE : 'transparent',
-            color: selected ? 'white' : 'transparent',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 140ms, border-color 140ms',
-          }}
-        >
-          {selected && <Check style={{ width: 14, height: 14, strokeWidth: 3 }} />}
-        </span>
+        <SelectionIndicator selected={selected} />
       ) : (
         <button
           ref={setActivatorNodeRef}
@@ -253,30 +236,7 @@ export const MuleListRow = memo(function MuleListRow({
               Lv.{mule.level}
             </span>
           )}
-          {hasNotes && (
-            <Tooltip open={notesTooltipOpen} onOpenChange={setNotesTooltipOpen}>
-              <TooltipTrigger
-                aria-label="Show character notes"
-                closeOnClick={false}
-                delay={0}
-                onClick={(e) => {
-                  stopBubble(e);
-                  setNotesTooltipOpen(true);
-                }}
-                onPointerDown={stopBubble}
-                onTouchStart={stopBubble}
-                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <FileText className="size-4" aria-hidden />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="max-w-xs whitespace-pre-wrap wrap-anywhere normal-case tracking-normal text-[11px]"
-              >
-                {trimmedNotes}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          <NotesTooltipTrigger notes={notes} iconSize="md" />
         </div>
 
         <div
@@ -339,32 +299,7 @@ export const MuleListRow = memo(function MuleListRow({
               {displayedIncome}
             </span>
           </MetricTooltip>
-          {droppedLines.length > 0 && (
-            <Tooltip open={droppedTooltipOpen} onOpenChange={setDroppedTooltipOpen}>
-              <TooltipTrigger
-                aria-label="Show bosses dropped to cap"
-                closeOnClick={false}
-                delay={0}
-                onClick={(e) => {
-                  stopBubble(e);
-                  setDroppedTooltipOpen(true);
-                }}
-                onPointerDown={stopBubble}
-                onTouchStart={stopBubble}
-                className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <Info className="size-3" aria-hidden />
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="flex-col items-start gap-1 normal-case text-[11px] tracking-normal"
-              >
-                {droppedLines.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          <CapDropTooltipTrigger droppedKeys={droppedKeys} iconSize="sm" />
         </div>
         <div
           data-row-share
