@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mule } from '../types';
-import { Income } from '../modules/income';
 import { formatMeso } from '../utils/meso';
 import { MuleBossSlate } from '../data/muleBossSlate';
 import type { PresetKey } from './MatrixToolbar';
@@ -40,28 +39,6 @@ export function MuleDetailDrawer({
   onUpdate,
   onDelete,
 }: MuleDetailDrawerProps) {
-  // Strip `active` so the Active-Flag Filter doesn't zero the pill when the
-  // drawer opens on an inactive mule — the drawer is the editor and needs to
-  // show potential income regardless of active state. Force abbreviation in
-  // the header chip so the readout stays compact regardless of the global
-  // Format Preference. The source object is memoized so per-keystroke drawer
-  // re-renders (from the lifted identity draft) don't blow the income cache.
-  const incomeSource = useMemo(
-    () => ({
-      selectedBosses: mule?.selectedBosses ?? [],
-      partySizes: mule?.partySizes,
-      worldId: mule?.worldId,
-    }),
-    [mule?.selectedBosses, mule?.partySizes, mule?.worldId],
-  );
-  // The chip pair (`true` / `false`) is hard-coded here — the drawer doesn't
-  // read the global Format Preference. Income.of's abbreviated arg only feeds
-  // the unused `formatted` getter, so any flag works; pick `true` for parity
-  // with the chip default.
-  const potentialIncomeRaw = useMemo(() => Income.of(incomeSource, true).raw, [incomeSource]);
-  const potentialIncome = formatMeso(potentialIncomeRaw, true);
-  const fullPotentialIncome = formatMeso(potentialIncomeRaw, false);
-
   const muleId = mule?.id ?? null;
   const selectedBosses = useMemo(() => mule?.selectedBosses ?? [], [mule?.selectedBosses]);
   const worldGroup = resolveWorldGroup(mule?.worldId);
@@ -69,6 +46,17 @@ export function MuleDetailDrawer({
     () => MuleBossSlate.from(selectedBosses, worldGroup),
     [selectedBosses, worldGroup],
   );
+
+  // Header chip is always abbreviated regardless of the global Format
+  // Preference, so the readout stays compact. Compute raw straight off the
+  // slate — bypassing `Income.of` keeps the drawer un-subscribed from format
+  // preference changes and skips the (unused) `formatted` getter.
+  const potentialIncomeRaw = useMemo(
+    () => slate.totalCrystalValue(mule?.partySizes),
+    [slate, mule?.partySizes],
+  );
+  const potentialIncome = formatMeso(potentialIncomeRaw, true);
+  const fullPotentialIncome = formatMeso(potentialIncomeRaw, false);
 
   const matrixFilter = useMatrixFilter({ muleId, slate });
   const partySizes = usePartySizes({
