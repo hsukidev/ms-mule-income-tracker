@@ -6,7 +6,6 @@ import {
   FormatPreferenceContext,
   FormatPreferenceProvider,
   useFormatPreference,
-  useAutoFullFormatOnZero as useAutoFullFormatOnZeroImpl,
 } from '../context/FormatPreferenceProvider';
 
 /**
@@ -150,4 +149,4 @@ export function useIncome(source?: IncomeSource | IncomeSource[]): UseIncomeResu
  * sites (KPI Card, etc.) importing from `income.tsx` working unchanged.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export const useAutoFullFormatOnZero = useAutoFullFormatOnZeroImpl;
+export { useAutoFullFormatOnZero } from '../context/FormatPreferenceProvider';

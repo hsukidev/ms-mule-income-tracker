@@ -14,9 +14,10 @@ interface FormatPreferenceContextValue {
   toggle: () => void;
 }
 
-// Exported for the legacy IncomeProvider shim, which derives its IncomeContext
-// value from this context. Not part of the public API; consumers should use
-// the useFormatPreference / useFormatPreferenceOptional hooks instead.
+// Exported only for the IncomeProvider backward-compat shim, which calls
+// `useContext(FormatPreferenceContext)` to detect whether an outer
+// FormatPreferenceProvider is already mounted. Consumers should use the
+// `useFormatPreference` hook below.
 // eslint-disable-next-line react-refresh/only-export-components
 export const FormatPreferenceContext = createContext<FormatPreferenceContextValue | undefined>(
   undefined,
