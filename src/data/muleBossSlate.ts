@@ -541,27 +541,6 @@ function partySizesMatch(
   return true;
 }
 
-/**
- * **User Preset Match** — return the first **User Preset** whose
- * `slateKeys` set-equal the receiver's keys AND whose per-family
- * `partySizes` match `current.partySizes` (default-aware), or `null`
- * when none match. The **Selection Invariant** rules out duplicate keys
- * upstream so a plain `Set` compare is sufficient.
- */
-function userPresetMatch(
-  current: { slateKeys: readonly string[]; partySizes: Record<string, number> },
-  userPresets: readonly UserPreset[],
-): UserPreset | null {
-  const targetKeys = new Set(current.slateKeys);
-  for (const preset of userPresets) {
-    if (preset.slateKeys.length !== targetKeys.size) continue;
-    if (!preset.slateKeys.every((key) => targetKeys.has(key))) continue;
-    if (!partySizesMatch(preset.partySizes, current.partySizes)) continue;
-    return preset;
-  }
-  return null;
-}
-
 export class MuleBossSlate {
   /**
    * Reference-stable empty slate cache, keyed by **World Group**. At most
@@ -735,7 +714,14 @@ export class MuleBossSlate {
     snapshots: readonly UserPreset[],
     partySizes: Record<string, number>,
   ): UserPreset | null {
-    return userPresetMatch({ slateKeys: this.keys, partySizes }, snapshots);
+    const targetKeys = new Set<string>(this.keys);
+    for (const preset of snapshots) {
+      if (preset.slateKeys.length !== targetKeys.size) continue;
+      if (!preset.slateKeys.every((key) => targetKeys.has(key))) continue;
+      if (!partySizesMatch(preset.partySizes, partySizes)) continue;
+      return preset;
+    }
+    return null;
   }
 
   /**

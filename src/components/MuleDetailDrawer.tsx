@@ -10,6 +10,7 @@ import { MuleBossSlate } from '../data/muleBossSlate';
 import type { PresetKey } from './MatrixToolbar';
 import { resolveWorldGroup } from '../data/worlds';
 import { useUserPresets } from '../hooks/useUserPresets';
+import type { UserPreset } from '../data/userPresets';
 import { BossMatrix } from './BossMatrix';
 import { BossSearch } from './BossSearch';
 import { MatrixToolbar } from './MatrixToolbar';
@@ -73,14 +74,13 @@ export function MuleDetailDrawer({
   });
   const { userPresets, createUserPreset, deleteUserPreset } = useUserPresets();
   const { stablePartySizes } = partySizes;
-  // **Active Pill** derivation — inlined here (replaces the old
-  // `usePresetPill` hook). Order: User Preset Match → Canonical
-  // Full-Slate Equality → non-empty slate → empty. `slate` already
-  // memoizes on `[selectedBosses, worldGroup]` upstream, so the deps
-  // below cover every input that can change the result.
+  // **Active Pill** derivation. Priority: User Preset Match → empty slate →
+  // Canonical Full-Slate Equality → CUSTOM fallthrough. The empty check sits
+  // after the User Preset Match so an empty saved preset can still match an
+  // empty slate.
   const pill = useMemo<{
     activePill: PresetKey | null;
-    matchedUserPreset: ReturnType<MuleBossSlate['matchedUserPreset']>;
+    matchedUserPreset: UserPreset | null;
   }>(() => {
     const matchedUserPreset = slate.matchedUserPreset(userPresets, stablePartySizes);
     if (matchedUserPreset) return { activePill: 'CUSTOM', matchedUserPreset };

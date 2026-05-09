@@ -11,8 +11,8 @@ const MAX_NAME_LENGTH = 40;
  * Capture-only-snapshot-families: build the snapshot's `partySizes` from
  * the live mule's record, restricted to families that appear in
  * `slateKeys`. Each captured family resolves to `mulePartySizes[family]
- * ?? 1` so default-aware match in `userPresetMatch` doesn't have to
- * carry the empty/1 distinction at compare time.
+ * ?? 1` so the default-aware match in `MuleBossSlate.matchedUserPreset`
+ * doesn't have to carry the empty/1 distinction at compare time.
  */
 function captureSnapshotPartySizes(
   slateKeys: readonly string[],
