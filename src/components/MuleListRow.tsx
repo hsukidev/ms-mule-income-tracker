@@ -2,8 +2,7 @@ import { memo, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
-import { useFormatPreference } from '../context/FormatPreferenceProvider';
-import { formatMeso } from '../utils/meso';
+import { useFormattedIncome } from '../hooks/useFormattedIncome';
 import type { SlateKey } from '../data/muleBossSlate';
 import type { Mule } from '../types';
 import type { RosterRowMetrics } from './rosterRowMetrics';
@@ -24,8 +23,9 @@ interface MuleListRowProps {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   isPaintEngaged?: boolean;
-  /** When true, override `useFormatPreference().abbreviated` and force the
-   * abbreviated meso format. Lifted to RosterListView so a single matchMedia
+  /** When true, override the global **Format Preference** and force the
+   * abbreviated meso format (threaded through `useFormattedIncome`'s
+   * `opts.force`). Lifted to RosterListView so a single matchMedia
    * subscription decides for the whole roster. */
   forceAbbreviated?: boolean;
 }
@@ -97,9 +97,9 @@ export const MuleListRow = memo(function MuleListRow({
     id: mule.id,
     disabled: bulkMode,
   });
-  const { abbreviated } = useFormatPreference();
-  const displayedIncome = formatMeso(postCapIncomeMeso, abbreviated || forceAbbreviated);
-  const fullIncome = formatMeso(postCapIncomeMeso, false);
+  const { abbreviated: displayedIncome, full: fullIncome } = useFormattedIncome(postCapIncomeMeso, {
+    force: forceAbbreviated,
+  });
 
   function handleActivate() {
     if (bulkMode) onToggleSelect?.(mule.id);

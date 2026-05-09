@@ -5,8 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { Mule } from '../types';
-import { useFormatPreference } from '../context/FormatPreferenceProvider';
-import { formatMeso } from '../utils/meso';
+import { useFormattedIncome } from '../hooks/useFormattedIncome';
 import { useMatchMedia } from '../hooks/useMatchMedia';
 import { type SlateKey } from '../data/muleBossSlate';
 import { CharacterAvatar } from './CharacterAvatar';
@@ -63,8 +62,7 @@ const MuleCardInner = memo(function MuleCardInner({
   droppedKeys?: ReadonlyMap<SlateKey, number>;
   postCapIncomeMeso: number;
 }) {
-  const { abbreviated } = useFormatPreference();
-  const potentialIncome = formatMeso(postCapIncomeMeso, abbreviated);
+  const { abbreviated: potentialIncome } = useFormattedIncome(postCapIncomeMeso);
   const hasBosses = mule.selectedBosses.length > 0;
   const incomeColor =
     mule.active && hasBosses
