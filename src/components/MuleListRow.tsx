@@ -299,7 +299,7 @@ export const MuleListRow = memo(function MuleListRow({
               {displayedIncome}
             </span>
           </MetricTooltip>
-          <CapDropTooltipTrigger droppedKeys={droppedKeys} iconSize="sm" />
+          <CapDropTooltipTrigger droppedKeys={droppedKeys} />
         </div>
         <div
           data-row-share

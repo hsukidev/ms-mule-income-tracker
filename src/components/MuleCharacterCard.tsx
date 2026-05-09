@@ -182,7 +182,7 @@ const MuleCardInner = memo(function MuleCardInner({
           >
             {potentialIncome}
           </span>
-          <CapDropTooltipTrigger droppedKeys={dropped} iconSize="sm" />
+          <CapDropTooltipTrigger droppedKeys={dropped} />
         </div>
       </div>
     </>

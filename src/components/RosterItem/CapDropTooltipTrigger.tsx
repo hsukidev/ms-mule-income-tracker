@@ -5,19 +5,12 @@ import { formatDroppedSlots, type SlateKey } from '../../data/muleBossSlate';
 
 interface CapDropTooltipTriggerProps {
   droppedKeys: ReadonlyMap<SlateKey, number>;
-  iconSize?: 'sm' | 'md';
 }
-
-const ICON_CLASS: Record<NonNullable<CapDropTooltipTriggerProps['iconSize']>, string> = {
-  sm: 'size-3',
-  md: 'size-3',
-};
 
 const stopBubble = (e: React.SyntheticEvent) => e.stopPropagation();
 
 export const CapDropTooltipTrigger = memo(function CapDropTooltipTrigger({
   droppedKeys,
-  iconSize = 'sm',
 }: CapDropTooltipTriggerProps) {
   const [open, setOpen] = useState(false);
   if (droppedKeys.size === 0) return null;
@@ -38,7 +31,7 @@ export const CapDropTooltipTrigger = memo(function CapDropTooltipTrigger({
         onTouchStart={stopBubble}
         className="inline-flex shrink-0 items-center justify-center bg-transparent p-0 border-0 cursor-pointer text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <Info className={ICON_CLASS[iconSize]} aria-hidden />
+        <Info className="size-3" aria-hidden />
       </TooltipTrigger>
       <TooltipContent
         side="top"
