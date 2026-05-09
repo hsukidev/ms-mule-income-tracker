@@ -19,7 +19,6 @@ import { useDeleteConfirm } from './MuleDetailDrawer/hooks/useDeleteConfirm';
 import { useMuleIdentityDraft } from './MuleDetailDrawer/hooks/useMuleIdentityDraft';
 import { useMatrixFilter } from './MuleDetailDrawer/hooks/useMatrixFilter';
 import { usePartySizes } from './MuleDetailDrawer/hooks/usePartySizes';
-import { usePresetPill } from './MuleDetailDrawer/hooks/usePresetPill';
 import { useSlateActions } from './MuleDetailDrawer/hooks/useSlateActions';
 import { CrystalTally } from './MuleDetailDrawer/CrystalTally';
 import { MuleIdentityFields } from './MuleDetailDrawer/MuleIdentityFields';
@@ -74,12 +73,22 @@ export function MuleDetailDrawer({
   });
   const { userPresets, createUserPreset, deleteUserPreset } = useUserPresets();
   const { stablePartySizes } = partySizes;
-  const pill = usePresetPill({
-    slate,
-    selectedBosses,
-    partySizes: stablePartySizes,
-    userPresets,
-  });
+  // **Active Pill** derivation — inlined here (replaces the old
+  // `usePresetPill` hook). Order: User Preset Match → Canonical
+  // Full-Slate Equality → non-empty slate → empty. `slate` already
+  // memoizes on `[selectedBosses, worldGroup]` upstream, so the deps
+  // below cover every input that can change the result.
+  const pill = useMemo<{
+    activePill: PresetKey | null;
+    matchedUserPreset: ReturnType<MuleBossSlate['matchedUserPreset']>;
+  }>(() => {
+    const matchedUserPreset = slate.matchedUserPreset(userPresets, stablePartySizes);
+    if (matchedUserPreset) return { activePill: 'CUSTOM', matchedUserPreset };
+    if (slate.totalKeys === 0) return { activePill: null, matchedUserPreset: null };
+    const canonical = slate.matchedCanonical();
+    if (canonical) return { activePill: canonical, matchedUserPreset: null };
+    return { activePill: 'CUSTOM', matchedUserPreset: null };
+  }, [slate, stablePartySizes, userPresets]);
   const slateActions = useSlateActions({
     muleId,
     partySizes: stablePartySizes,

@@ -1,9 +1,14 @@
 import type { Boss, BossCadence, BossDifficulty, BossTier } from '../types';
-import { bosses, getBossById, TIER_LESS_FAMILIES } from './bosses';
+import { bosses, getBossById, getBossByFamily, TIER_LESS_FAMILIES } from './bosses';
 import { FALLBACK_WORLD_GROUP, type WorldGroup } from './worlds';
 import { formatMeso } from '../utils/meso';
-import { conform, isPresetActive, type CanonicalPresetKey } from './bossPresets';
-import { userPresetMatch, type UserPreset } from './userPresets';
+import {
+  normalizeEntry,
+  PRESET_FAMILIES,
+  type CanonicalPresetKey,
+  type PresetEntry,
+} from './bossPresets';
+import type { UserPreset } from './userPresets';
 
 /**
  * `MuleBossSlate` — the validated, immutable value class representing a
@@ -437,6 +442,126 @@ export function formatDroppedSlots(droppedKeys: ReadonlyMap<SlateKey, number>): 
   return entries.map((e) => e.line);
 }
 
+/**
+ * Resolve the **Default Tier** selection key for a normalized **Preset Entry**.
+ * Returns `null` if the family or its **Default Tier** is unresolvable.
+ * Module-private helper for `conform` / `isPresetActive`.
+ */
+function defaultTierKey(entry: PresetEntry): string | null {
+  const boss = getBossByFamily(entry.family);
+  if (!boss) return null;
+  const diff = boss.difficulty.find((d) => d.tier === entry.tiers[0]);
+  if (!diff) return null;
+  return makeKey(boss.id, diff.tier, diff.cadence);
+}
+
+/**
+ * Build `{ bossId → entry }` for a **Canonical Preset's** entries. Entries
+ * whose family doesn't resolve are skipped so callers can iterate without
+ * null checks.
+ */
+function entryByBossId(preset: CanonicalPresetKey): Map<string, PresetEntry> {
+  const map = new Map<string, PresetEntry>();
+  for (const spec of PRESET_FAMILIES[preset]) {
+    const entry = normalizeEntry(spec);
+    if (!entry) continue;
+    const boss = getBossByFamily(entry.family);
+    if (!boss) continue;
+    map.set(boss.id, entry);
+  }
+  return map;
+}
+
+/**
+ * **Full-Slate Equality** — `true` iff every **Preset Entry** is satisfied
+ * by exactly one weekly key whose tier is in **Accepted Tiers**, no weekly
+ * keys exist on families outside the preset's entries, AND the slate
+ * carries zero daily and zero monthly keys.
+ */
+function isPresetActive(preset: CanonicalPresetKey, keys: readonly string[]): boolean {
+  const entries = entryByBossId(preset);
+  const weeklyTierByBossId = new Map<string, BossTier>();
+  for (const key of keys) {
+    const parsed = parseKey(key);
+    if (!parsed) continue;
+    if (parsed.cadence !== 'weekly') return false;
+    if (!entries.has(parsed.bossId)) return false;
+    weeklyTierByBossId.set(parsed.bossId, parsed.tier);
+  }
+  for (const [bossId, entry] of entries) {
+    const tier = weeklyTierByBossId.get(bossId);
+    if (!tier) return false;
+    if (!entry.tiers.includes(tier)) return false;
+  }
+  return true;
+}
+
+/**
+ * **Conform** the slate's keys to `preset`: keep weekly keys whose family
+ * is in the preset and whose tier is in **Accepted Tiers**; wipe every
+ * other weekly key plus all daily and monthly keys; for every entry not
+ * already satisfied, add the **Default Tier** key. Idempotent on an
+ * already-**Active Preset** selection.
+ */
+function conform(keys: readonly string[], preset: CanonicalPresetKey): string[] {
+  const entries = entryByBossId(preset);
+  const next: string[] = [];
+  const satisfied = new Set<string>();
+  for (const key of keys) {
+    const parsed = parseKey(key);
+    if (!parsed) continue;
+    if (parsed.cadence !== 'weekly') continue;
+    const entry = entries.get(parsed.bossId);
+    if (!entry) continue;
+    if (!entry.tiers.includes(parsed.tier)) continue;
+    next.push(key);
+    satisfied.add(parsed.bossId);
+  }
+  for (const [bossId, entry] of entries) {
+    if (satisfied.has(bossId)) continue;
+    const key = defaultTierKey(entry);
+    if (key) next.push(key);
+  }
+  return next;
+}
+
+/**
+ * Default-aware per-family party-size compare for **User Preset Match**:
+ * for every family in the snapshot's `partySizes`,
+ * `(snapshot[family] ?? 1) === (current[family] ?? 1)`. Extraneous
+ * entries on `current` for families not in the snapshot are ignored.
+ */
+function partySizesMatch(
+  snapshot: Record<string, number>,
+  current: Record<string, number>,
+): boolean {
+  for (const family of Object.keys(snapshot)) {
+    if ((snapshot[family] ?? 1) !== (current[family] ?? 1)) return false;
+  }
+  return true;
+}
+
+/**
+ * **User Preset Match** — return the first **User Preset** whose
+ * `slateKeys` set-equal the receiver's keys AND whose per-family
+ * `partySizes` match `current.partySizes` (default-aware), or `null`
+ * when none match. The **Selection Invariant** rules out duplicate keys
+ * upstream so a plain `Set` compare is sufficient.
+ */
+function userPresetMatch(
+  current: { slateKeys: readonly string[]; partySizes: Record<string, number> },
+  userPresets: readonly UserPreset[],
+): UserPreset | null {
+  const targetKeys = new Set(current.slateKeys);
+  for (const preset of userPresets) {
+    if (preset.slateKeys.length !== targetKeys.size) continue;
+    if (!preset.slateKeys.every((key) => targetKeys.has(key))) continue;
+    if (!partySizesMatch(preset.partySizes, current.partySizes)) continue;
+    return preset;
+  }
+  return null;
+}
+
 export class MuleBossSlate {
   /**
    * Reference-stable empty slate cache, keyed by **World Group**. At most
@@ -637,6 +762,17 @@ export class MuleBossSlate {
         selected: b.selected,
       })),
     }));
+  }
+
+  /**
+   * Total count of **Slate Keys** across every **Boss Cadence**. Cheap
+   * proxy for `keys.length` that callers can read without reaching into
+   * `keys` — useful for the **Drawer's** **Active Pill** derivation,
+   * which needs the empty-vs-non-empty distinction without caring about
+   * cadence buckets.
+   */
+  get totalKeys(): number {
+    return this.keys.length;
   }
 
   /** Count of **Slate Keys** whose **Boss Cadence** is `weekly`. */

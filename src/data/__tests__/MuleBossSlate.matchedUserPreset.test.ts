@@ -79,6 +79,12 @@ describe('MuleBossSlate.matchedUserPreset', () => {
     expect(slate.matchedUserPreset([], {})).toBeNull();
   });
 
+  it('returns null on a non-empty slate when the only snapshot is empty', () => {
+    const slate = MuleBossSlate.from([HARD_LUCID]);
+    const a = preset('a', 'A', []);
+    expect(slate.matchedUserPreset([a], {})).toBeNull();
+  });
+
   it('selects the first matching snapshot from a list', () => {
     const slate = MuleBossSlate.from([HARD_LUCID]);
     const a = preset('a', 'A', [NORMAL_LUCID]);
