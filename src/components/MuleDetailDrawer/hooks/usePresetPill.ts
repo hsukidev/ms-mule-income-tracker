@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
-import { userPresetMatch, type UserPreset } from '../../../data/userPresets';
+import { type UserPreset } from '../../../data/userPresets';
 import type { PresetKey } from '../../MatrixToolbar';
 
 /**
@@ -36,10 +36,7 @@ export function usePresetPill({
   matchedUserPreset: UserPreset | null;
 } {
   return useMemo(() => {
-    const matchedUserPreset = userPresetMatch(
-      { slateKeys: selectedBosses, partySizes },
-      userPresets,
-    );
+    const matchedUserPreset = slate.matchedUserPreset(userPresets, partySizes);
     if (matchedUserPreset) return { activePill: 'CUSTOM', matchedUserPreset };
     if (selectedBosses.length === 0) return { activePill: null, matchedUserPreset: null };
     const canonical = slate.matchedCanonical();

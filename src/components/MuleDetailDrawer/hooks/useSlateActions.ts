@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
-import { userPresetMatch, type UserPreset } from '../../../data/userPresets';
+import { type UserPreset } from '../../../data/userPresets';
 import { toast } from '../../../lib/toast';
 import type { PresetKey } from '../../MatrixToolbar';
 
@@ -34,14 +34,12 @@ import type { PresetKey } from '../../MatrixToolbar';
  */
 export function useSlateActions({
   muleId,
-  selectedBosses,
   partySizes,
   slate,
   userPresets,
   onUpdate,
 }: {
   muleId: string | null;
-  selectedBosses: readonly string[];
   partySizes: Record<string, number>;
   slate: MuleBossSlate;
   userPresets: readonly UserPreset[];
@@ -85,13 +83,13 @@ export function useSlateActions({
       if (!snapshot) return;
       // Short-circuit when the snapshot already matches the current state — same
       // contract as `applyPreset` for canonical pills (zero `onUpdate` on re-click).
-      if (userPresetMatch({ slateKeys: selectedBosses, partySizes }, [snapshot])) return;
+      if (slate.matchedUserPreset([snapshot], partySizes)) return;
       onUpdate(muleId, {
         selectedBosses: MuleBossSlate.from(snapshot.slateKeys).keys as string[],
         partySizes: { ...snapshot.partySizes },
       });
     },
-    [muleId, selectedBosses, partySizes, userPresets, onUpdate],
+    [muleId, slate, partySizes, userPresets, onUpdate],
   );
 
   const resetBosses = useCallback(() => {

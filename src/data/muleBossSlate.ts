@@ -3,6 +3,7 @@ import { bosses, getBossById, TIER_LESS_FAMILIES } from './bosses';
 import { FALLBACK_WORLD_GROUP, type WorldGroup } from './worlds';
 import { formatMeso } from '../utils/meso';
 import { conform, isPresetActive, type CanonicalPresetKey } from './bossPresets';
+import { userPresetMatch, type UserPreset } from './userPresets';
 
 /**
  * `MuleBossSlate` — the validated, immutable value class representing a
@@ -586,6 +587,30 @@ export class MuleBossSlate {
       if (isPresetActive(preset, this.keys)) return preset;
     }
     return null;
+  }
+
+  /**
+   * **Matched User Preset** — return the first **User Preset** in
+   * `snapshots` whose `slateKeys` set-equal the receiver's keys AND whose
+   * per-family party sizes match the caller-supplied `partySizes`, or
+   * `null` when none match.
+   *
+   * Slate-key equality is order-insensitive (set semantics — the
+   * **Selection Invariant** rules out duplicate keys upstream).
+   *
+   * Party-size equality is default-aware: for every family present in the
+   * snapshot's `partySizes`,
+   * `(snapshot[family] ?? 1) === (current[family] ?? 1)`. Extraneous
+   * entries on `partySizes` for families not in the snapshot are ignored.
+   *
+   * Slate stays party-size-agnostic; `partySizes` is threaded in by the
+   * caller (the **Mule's** party sizes, not the slate's).
+   */
+  matchedUserPreset(
+    snapshots: readonly UserPreset[],
+    partySizes: Record<string, number>,
+  ): UserPreset | null {
+    return userPresetMatch({ slateKeys: this.keys, partySizes }, snapshots);
   }
 
   /**

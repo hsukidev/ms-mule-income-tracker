@@ -82,7 +82,6 @@ export function MuleDetailDrawer({
   });
   const slateActions = useSlateActions({
     muleId,
-    selectedBosses,
     partySizes: stablePartySizes,
     slate,
     userPresets,

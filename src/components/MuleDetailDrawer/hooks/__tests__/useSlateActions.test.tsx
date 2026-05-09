@@ -72,7 +72,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -91,7 +90,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [NORMAL_LUCID],
           partySizes: {},
           slate: makeSlate([NORMAL_LUCID]),
           userPresets: [],
@@ -110,7 +108,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -133,7 +130,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: fourteen,
           partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
@@ -160,7 +156,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: fourteen,
           partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
@@ -181,7 +176,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: fourteen,
           partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
@@ -202,7 +196,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: fourteen,
           partySizes: {},
           slate: makeSlate(fourteen),
           userPresets: [],
@@ -224,7 +217,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -243,7 +235,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: CRA_KEYS,
           partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
@@ -262,7 +253,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: CRA_KEYS,
           partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
@@ -281,7 +271,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -304,7 +293,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: initial,
           partySizes: {},
           slate: makeSlate(initial),
           userPresets: [],
@@ -325,7 +313,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: CRA_KEYS,
           partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets: [],
@@ -345,7 +332,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [HORNTAIL_DAILY],
           partySizes: {},
           slate: makeSlate([HORNTAIL_DAILY]),
           userPresets: [],
@@ -366,7 +352,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -388,7 +373,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
@@ -411,7 +395,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: CRA_KEYS,
           partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets,
@@ -439,7 +422,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets,
@@ -459,7 +441,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [preset('p1', 'A', [HARD_LUCID])],
@@ -478,7 +459,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [preset('p1', 'A', [HARD_LUCID])],
@@ -498,7 +478,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: CRA_KEYS,
           partySizes: {},
           slate: makeSlate(CRA_KEYS),
           userPresets,
@@ -522,7 +501,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [HARD_LUCID],
           partySizes: { lucid: 4 },
           slate: makeSlate([HARD_LUCID]),
           userPresets,
@@ -543,7 +521,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [HARD_LUCID],
           partySizes: {},
           slate: makeSlate([HARD_LUCID]),
           userPresets: [],
@@ -565,7 +542,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
-          selectedBosses: [HARD_LUCID],
           partySizes: {},
           slate: makeSlate([HARD_LUCID]),
           userPresets: [],
@@ -585,7 +561,6 @@ describe('useSlateActions', () => {
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: null,
-          selectedBosses: [],
           partySizes: {},
           slate: makeSlate([]),
           userPresets: [],
