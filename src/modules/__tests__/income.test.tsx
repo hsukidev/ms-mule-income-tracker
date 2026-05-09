@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { Income, IncomeProvider, useAutoFullFormatOnZero, useIncome } from '../income';
@@ -9,6 +9,13 @@ const LUCID = bosses.find((b) => b.family === 'lucid')!.id;
 const WILL = bosses.find((b) => b.family === 'will')!.id;
 const HARD_LUCID = `${LUCID}:hard:weekly`;
 const HARD_WILL = `${WILL}:hard:weekly`;
+
+// Format Preference now persists to localStorage via FormatPreferenceProvider,
+// so each test must start from a clean slate or earlier toggles leak in via
+// the shim's auto-mounted provider.
+beforeEach(() => {
+  localStorage.clear();
+});
 
 const AbbrevOff = ({ children }: { children: ReactNode }) => (
   <IncomeProvider defaultAbbreviated={false}>{children}</IncomeProvider>

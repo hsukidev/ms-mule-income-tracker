@@ -1,16 +1,13 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { MuleBossSlate } from '../data/muleBossSlate';
 import { resolveWorldGroup } from '../data/worlds';
 import { formatMeso } from '../utils/meso';
+import {
+  FormatPreferenceContext,
+  FormatPreferenceProvider,
+  useFormatPreference,
+  useAutoFullFormatOnZero as useAutoFullFormatOnZeroImpl,
+} from '../context/FormatPreferenceProvider';
 
 /**
  * An **Income Source** — anything whose **Raw Income** is the cadence-weighted
@@ -87,8 +84,12 @@ interface IncomeContextValue {
 const IncomeContext = createContext<IncomeContextValue | undefined>(undefined);
 
 /**
- * Holds the global **Format Preference** state and exposes a toggle to every
- * `useIncome` consumer inside the tree. Defaults to abbreviated.
+ * Backward-compat shim. **Format Preference** state lives in
+ * `FormatPreferenceProvider` now; this component derives `IncomeContext`'s
+ * `{ abbreviated, toggle }` value from `useFormatPreference()`. When no outer
+ * `FormatPreferenceProvider` is present (e.g. legacy tests that mount this
+ * provider standalone), it transparently mounts one — `defaultAbbreviated`
+ * forwards through in that case.
  */
 export function IncomeProvider({
   children,
@@ -97,8 +98,19 @@ export function IncomeProvider({
   children: ReactNode;
   defaultAbbreviated?: boolean;
 }) {
-  const [abbreviated, setAbbreviated] = useState(defaultAbbreviated);
-  const toggle = useCallback(() => setAbbreviated((a) => !a), []);
+  const outer = useContext(FormatPreferenceContext);
+  if (!outer) {
+    return (
+      <FormatPreferenceProvider defaultAbbreviated={defaultAbbreviated}>
+        <IncomeShim>{children}</IncomeShim>
+      </FormatPreferenceProvider>
+    );
+  }
+  return <IncomeShim>{children}</IncomeShim>;
+}
+
+function IncomeShim({ children }: { children: ReactNode }) {
+  const { abbreviated, toggle } = useFormatPreference();
   const value = useMemo(() => ({ abbreviated, toggle }), [abbreviated, toggle]);
   return <IncomeContext.Provider value={value}>{children}</IncomeContext.Provider>;
 }
@@ -133,23 +145,9 @@ export function useIncome(source?: IncomeSource | IncomeSource[]): UseIncomeResu
 }
 
 /**
- * **Auto-Fullformat-On-Zero Rule** — if `raw === 0` while abbreviated, flip
- * the global **Format Preference** to full once so a dead roster renders as
- * `0` instead of `0B`. No-op otherwise. Idempotent across re-renders of the
- * same zero+abbreviated state.
+ * Re-export of the **Auto-Fullformat-On-Zero Rule** hook. The rule now lives
+ * alongside `FormatPreferenceProvider`; this re-export keeps existing call
+ * sites (KPI Card, etc.) importing from `income.tsx` working unchanged.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useAutoFullFormatOnZero(raw: number): void {
-  const { abbreviated, toggle } = useIncomeContext();
-  const firedRef = useRef(false);
-  useEffect(() => {
-    if (raw === 0 && abbreviated) {
-      if (!firedRef.current) {
-        firedRef.current = true;
-        toggle();
-      }
-    } else {
-      firedRef.current = false;
-    }
-  }, [raw, abbreviated, toggle]);
-}
+export const useAutoFullFormatOnZero = useAutoFullFormatOnZeroImpl;

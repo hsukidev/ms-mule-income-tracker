@@ -38,6 +38,14 @@ export function render(
       // ignore; matches the provider's defensive try/catch around storage
     }
   }
+  // Same pattern for FormatPreferenceProvider, which now persists `abbreviated`
+  // to localStorage. Without seeding, prior tests in the same file (which
+  // toggled or wrote to storage) leak in and override `defaultAbbreviated`.
+  try {
+    localStorage.setItem('abbreviated', String(defaultAbbreviated));
+  } catch {
+    // ignore; matches the provider's defensive try/catch around storage
+  }
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <ThemeProvider defaultTheme={defaultTheme}>

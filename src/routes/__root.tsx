@@ -3,6 +3,7 @@ import { ThemeProvider } from '../context/ThemeProvider';
 import { DensityProvider } from '../context/DensityProvider';
 import { DisplayProvider } from '../context/DisplayProvider';
 import { WorldProvider } from '../context/WorldProvider';
+import { FormatPreferenceProvider } from '../context/FormatPreferenceProvider';
 import { IncomeProvider } from '../modules/income';
 import { Header } from '../components/Header';
 import { Toaster } from '../components/ui/sonner';
@@ -19,12 +20,14 @@ function RootLayout() {
         <DensityProvider>
           <DisplayProvider>
             <WorldProvider>
-              <IncomeProvider>
-                <div className="min-h-screen bg-background text-foreground">
-                  <Header />
-                  <Outlet />
-                </div>
-              </IncomeProvider>
+              <FormatPreferenceProvider>
+                <IncomeProvider>
+                  <div className="min-h-screen bg-background text-foreground">
+                    <Header />
+                    <Outlet />
+                  </div>
+                </IncomeProvider>
+              </FormatPreferenceProvider>
             </WorldProvider>
           </DisplayProvider>
         </DensityProvider>
