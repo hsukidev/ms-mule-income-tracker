@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
-import { type UserPreset } from '../../../data/userPresets';
+import type { UserPreset } from '../../../data/userPresets';
 import type { PresetKey } from '../../MatrixToolbar';
 
 /**

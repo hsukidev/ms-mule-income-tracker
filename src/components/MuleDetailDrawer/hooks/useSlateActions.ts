@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
-import { type UserPreset } from '../../../data/userPresets';
+import type { UserPreset } from '../../../data/userPresets';
 import { toast } from '../../../lib/toast';
 import type { PresetKey } from '../../MatrixToolbar';
 
