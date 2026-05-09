@@ -64,6 +64,10 @@ _Avoid_: Participating mule
 A **Mule** whose **Active Flag** is `false` — user-declared parked, excluded from **Total Weekly Income**.
 _Avoid_: Parked mule, disabled mule
 
+**Contributing Mule**:
+An **Active Mule** whose **Weekly Count** + **Daily Count** is at least one — i.e. earns non-zero **Potential Meso** this week. The predicate behind the income-line accent tint on **Character Card** and **List View** rows. Distinct from **Active Mule** (intent flag, may earn zero via **Monthly Income Regression**) and from **Contributed Meso** (post-cut output). A monthly-only **Active Mule** is **not** a **Contributing Mule**.
+_Avoid_: Earning mule (overloaded with Active Flag wording)
+
 **Mule Notes**:
 Optional freeform text attached to a **Mule** (≤500 characters); trimmed-empty is equivalent to absent.
 _Avoid_: Comments, description, memo
@@ -254,6 +258,9 @@ _Avoid_: Strict match, exact match
 **Full-Slate Equality**:
 The **Active Preset** match rule for **Canonical Presets** — the **Boss Slate** must satisfy the original weekly equality **and** carry zero **Slate Keys** of any other cadence (no dailies, no monthlies). Toggling a single daily cell demotes a Canonical match to **Custom Preset**. Replaces **Same-Cadence Equality**.
 
+**Matched Canonical Preset**:
+The **Canonical Preset** under which a **Boss Slate** satisfies **Full-Slate Equality**, or `null`. Surfaced as `MuleBossSlate.matchedCanonical()` — the slate-side query the **Drawer** reads to derive the **Active Pill**.
+
 **User Preset Match**:
 The **User Preset** match rule — the **Boss Slate's** full key set (every cadence) is order-insensitive set-equal to the snapshot's `slateKeys`, **and** for every **Boss Family** present in the snapshot, `(currentMule.partySizes[family] ?? 1) === (snapshot.partySizes[family] ?? 1)`. Extraneous **Party Sizes** entries on the live **Mule** for families not in the snapshot are ignored. Drives both popover row highlighting and **Custom Preset** pill activation.
 
@@ -348,6 +355,13 @@ _Avoid_: Dense, small, tight
 **Density Toggle**:
 The header control that flips **Density** between **Comfy** and **Compact**. Hidden below 768px because the toggle's value is too small to matter at that scale.
 _Avoid_: Density picker, density switcher
+
+**Format Preference**:
+The global meso-display toggle — exactly one of `abbreviated` (`5.31B`) or `full` (`5,310,000,000`). Persisted per user; threaded to every meso readout (**KPI Card** bignum, **Character Card** headline, **Drawer** chip, **Cap Drop Badge**). Lives in its own seam, not bundled with **Potential Income** or **Total Weekly Income** values.
+_Avoid_: Abbreviated flag, number format
+
+**Auto-Fullformat-On-Zero Rule**:
+The one-shot side effect that flips **Format Preference** from `abbreviated` to `full` when **Total Weekly Income** is `0` — so a dead roster renders as `0` instead of `0B`. Idempotent across re-renders of the same zero+abbreviated state; resets when income becomes non-zero.
 
 **Drag Handle**:
 The leftmost column of a **List View** row — a full-row-height grab strip (24px wide regardless of **Density**) holding a vertical-grip glyph. The sole drag-activator for reorder in **List View**: pointer drag engages from the handle only, the rest of the row is click-to-open. **Card View** has no **Drag Handle** — its full card is the drag surface. Replaced by the **Selection Indicator** in **Bulk Delete Mode** (drag is suspended). Subject to **Mouse Sensor**, **Touch Sensor**, and **Keyboard Sensor** identically to the **Character Card**.
