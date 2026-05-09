@@ -75,6 +75,7 @@ export function MuleDetailDrawer({
   const { userPresets, createUserPreset, deleteUserPreset } = useUserPresets();
   const { stablePartySizes } = partySizes;
   const pill = usePresetPill({
+    slate,
     selectedBosses,
     partySizes: stablePartySizes,
     userPresets,

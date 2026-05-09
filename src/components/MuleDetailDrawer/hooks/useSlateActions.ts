@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import type { Mule } from '../../../types';
 import { MuleBossSlate } from '../../../data/muleBossSlate';
-import { conform, isPresetActive } from '../../../data/bossPresets';
 import { userPresetMatch, type UserPreset } from '../../../data/userPresets';
 import { toast } from '../../../lib/toast';
 import type { PresetKey } from '../../MatrixToolbar';
@@ -18,9 +17,9 @@ import type { PresetKey } from '../../MatrixToolbar';
  * - `applyPreset('CUSTOM')` is a **no-op**. The popover owns
  *   click-actions for the Custom Preset pill — opening the popover is
  *   the toolbar's responsibility, not this hook's.
- * - `applyPreset(canonical)` short-circuits when
- *   `isPresetActive(preset, selectedBosses)` is already `true` (no
- *   `onUpdate`); otherwise it runs **Conform** and persists.
+ * - `applyPreset(canonical)` delegates to `slate.applyCanonical(preset)`
+ *   and persists only when `changed === true`. The no-op short-circuit
+ *   for an already-**Active Preset** lives inside the slate.
  * - `applyUserPreset(presetId)` looks up the snapshot in
  *   `userPresets[]`, runs `MuleBossSlate.from(snapshot.slateKeys)` for
  *   cap-validity normalisation, and replaces `selectedBosses` *and*
@@ -72,13 +71,11 @@ export function useSlateActions({
       // CUSTOM click is owned by the toolbar (popover open/close); the
       // pill's lit state is derived from the slate, not from a click.
       if (preset === 'CUSTOM') return;
-      if (isPresetActive(preset, selectedBosses)) return;
-      const next = conform(slate.keys, preset);
-      onUpdate(muleId, {
-        selectedBosses: MuleBossSlate.from(next).keys as string[],
-      });
+      const next = slate.applyCanonical(preset);
+      if (!next.changed) return;
+      onUpdate(muleId, { selectedBosses: next.slate.keys as string[] });
     },
-    [muleId, slate, selectedBosses, onUpdate],
+    [muleId, slate, onUpdate],
   );
 
   const applyUserPreset = useCallback(

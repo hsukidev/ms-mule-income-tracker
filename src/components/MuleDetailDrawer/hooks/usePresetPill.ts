@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import { isPresetActive, type CanonicalPresetKey } from '../../../data/bossPresets';
+import { MuleBossSlate } from '../../../data/muleBossSlate';
 import { userPresetMatch, type UserPreset } from '../../../data/userPresets';
 import type { PresetKey } from '../../MatrixToolbar';
-
-const CANONICAL_PRESETS: readonly CanonicalPresetKey[] = ['CRA', 'LOMIEN', 'CTENE'];
 
 /**
  * Owns the **Active Pill** derivation. Pure now that the **User Preset
@@ -24,10 +22,12 @@ const CANONICAL_PRESETS: readonly CanonicalPresetKey[] = ['CRA', 'LOMIEN', 'CTEN
  * authoritative way for the **Custom Preset** pill to light.
  */
 export function usePresetPill({
+  slate,
   selectedBosses,
   partySizes,
   userPresets,
 }: {
+  slate: MuleBossSlate;
   selectedBosses: readonly string[];
   partySizes: Record<string, number>;
   userPresets: readonly UserPreset[];
@@ -42,8 +42,8 @@ export function usePresetPill({
     );
     if (matchedUserPreset) return { activePill: 'CUSTOM', matchedUserPreset };
     if (selectedBosses.length === 0) return { activePill: null, matchedUserPreset: null };
-    const canonical = CANONICAL_PRESETS.find((p) => isPresetActive(p, selectedBosses));
+    const canonical = slate.matchedCanonical();
     if (canonical) return { activePill: canonical, matchedUserPreset: null };
     return { activePill: 'CUSTOM', matchedUserPreset: null };
-  }, [selectedBosses, partySizes, userPresets]);
+  }, [slate, selectedBosses, partySizes, userPresets]);
 }

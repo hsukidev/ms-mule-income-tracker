@@ -23,7 +23,7 @@ const NORMAL_LUCID = `${LUCID_BOSS.id}:normal:weekly`;
 const HORNTAIL_BOSS = bosses.find((b) => b.family === 'horntail')!;
 const HORNTAIL_DAILY = `${HORNTAIL_BOSS.id}:chaos:daily`;
 
-const ARKARIUM_BOSS = bosses.find((b) => b.family === 'arkarium')!;
+const BALDRIX_BOSS = bosses.find((b) => b.family === 'baldrix')!;
 
 const CRA_KEYS = PRESET_FAMILIES.CRA.map((entry) => presetEntryKey(entry)!);
 const CTENE_KEYS = PRESET_FAMILIES.CTENE.map((entry) => presetEntryKey(entry)!);
@@ -297,10 +297,10 @@ describe('useSlateActions', () => {
       expect(new Set(update.selectedBosses)).toEqual(new Set(CRA_KEYS));
     });
 
-    it('canonical click wipes non-preset weeklies (CRA + Arkarium → CRA)', () => {
-      const arkariumKey = `${ARKARIUM_BOSS.id}:normal:weekly`;
+    it('canonical click wipes non-preset weeklies (CRA + Baldrix → CRA)', () => {
+      const baldrixKey = `${BALDRIX_BOSS.id}:hard:weekly`;
       const onUpdate = vi.fn();
-      const initial = [...CRA_KEYS, arkariumKey];
+      const initial = [...CRA_KEYS, baldrixKey];
       const { result } = renderHook(() =>
         useSlateActions({
           muleId: 'mule-1',
@@ -316,7 +316,7 @@ describe('useSlateActions', () => {
         result.current.applyPreset('CRA');
       });
       const update = onUpdate.mock.calls[0][1] as { selectedBosses: string[] };
-      expect(update.selectedBosses).not.toContain(arkariumKey);
+      expect(update.selectedBosses).not.toContain(baldrixKey);
       for (const k of CRA_KEYS) expect(update.selectedBosses).toContain(k);
     });
 

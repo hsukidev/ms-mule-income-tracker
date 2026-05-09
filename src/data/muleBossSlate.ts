@@ -2,6 +2,7 @@ import type { Boss, BossCadence, BossDifficulty, BossTier } from '../types';
 import { bosses, getBossById, TIER_LESS_FAMILIES } from './bosses';
 import { FALLBACK_WORLD_GROUP, type WorldGroup } from './worlds';
 import { formatMeso } from '../utils/meso';
+import { conform, isPresetActive, type CanonicalPresetKey } from './bossPresets';
 
 /**
  * `MuleBossSlate` — the validated, immutable value class representing a
@@ -451,6 +452,17 @@ export class MuleBossSlate {
    */
   static readonly EMPTY: MuleBossSlate = MuleBossSlate.emptyFor(FALLBACK_WORLD_GROUP);
 
+  /**
+   * Canonical preset search order for `matchedCanonical()`. Declaration
+   * order is the tiebreak — at most one preset can satisfy **Full-Slate
+   * Equality** at a time, so this only matters when adding a new preset.
+   */
+  private static readonly CANONICAL_SEARCH_ORDER: readonly CanonicalPresetKey[] = [
+    'CRA',
+    'LOMIEN',
+    'CTENE',
+  ];
+
   /** Read-only array of validated **Slate Keys**, in caller-supplied order. */
   readonly keys: readonly SlateKey[];
 
@@ -542,6 +554,38 @@ export class MuleBossSlate {
     if (next === this.keys) return this;
     if (next.length === 0) return MuleBossSlate.emptyFor(this.worldGroup);
     return new MuleBossSlate(next, this.worldGroup);
+  }
+
+  /**
+   * Apply a **Canonical Preset** to this slate.
+   *
+   * - Returns `{ slate: this, changed: false }` when the receiver already
+   *   satisfies **Full-Slate Equality** with `preset` — the no-op
+   *   short-circuit becomes a slate invariant.
+   * - Otherwise runs **Conform** and re-validates via the same constructor
+   *   pipeline as `MuleBossSlate.from` (Selection Invariant dedupe +
+   *   Weekly Crystal Cap trim), inheriting the receiver's **World Group**.
+   *
+   * `'CUSTOM'` is not accepted — the type signature requires
+   * `CanonicalPresetKey`. Custom-pill click is owned by the toolbar.
+   */
+  applyCanonical(preset: CanonicalPresetKey): { slate: MuleBossSlate; changed: boolean } {
+    if (isPresetActive(preset, this.keys)) return { slate: this, changed: false };
+    const next = conform(this.keys, preset);
+    return { slate: MuleBossSlate.from(next, this.worldGroup), changed: true };
+  }
+
+  /**
+   * **Matched Canonical Preset** — return the first **Canonical Preset**
+   * satisfying **Full-Slate Equality** against the receiver, or `null`
+   * when none match. Searches in declaration order (`CRA → LOMIEN → CTENE`);
+   * at most one match by definition.
+   */
+  matchedCanonical(): CanonicalPresetKey | null {
+    for (const preset of MuleBossSlate.CANONICAL_SEARCH_ORDER) {
+      if (isPresetActive(preset, this.keys)) return preset;
+    }
+    return null;
   }
 
   /**

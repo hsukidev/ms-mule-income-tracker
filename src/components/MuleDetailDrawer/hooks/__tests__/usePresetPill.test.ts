@@ -4,6 +4,7 @@ import { renderHook } from '@testing-library/react';
 import { usePresetPill } from '../usePresetPill';
 import { bosses } from '../../../../data/bosses';
 import { PRESET_FAMILIES, presetEntryKey } from '../../../../data/bossPresets';
+import { MuleBossSlate } from '../../../../data/muleBossSlate';
 import type { UserPreset } from '../../../../data/userPresets';
 
 const CRA_KEYS = PRESET_FAMILIES.CRA.map((entry) => presetEntryKey(entry)!);
@@ -27,7 +28,12 @@ function preset(
 describe('usePresetPill', () => {
   it('returns null on empty selection with no presets', () => {
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: [], partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from([]),
+        selectedBosses: [],
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBeNull();
     expect(result.current.matchedUserPreset).toBeNull();
@@ -35,7 +41,12 @@ describe('usePresetPill', () => {
 
   it('returns the canonical match when no User Preset matches', () => {
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: LOMIEN_KEYS, partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from(LOMIEN_KEYS),
+        selectedBosses: LOMIEN_KEYS,
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBe('LOMIEN');
     expect(result.current.matchedUserPreset).toBeNull();
@@ -44,7 +55,12 @@ describe('usePresetPill', () => {
   it('returns CUSTOM when a User Preset Match exists, even on a CRA-equal slate', () => {
     const userPreset = preset('p1', 'My CRA', CRA_KEYS);
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: CRA_KEYS, partySizes: {}, userPresets: [userPreset] }),
+      usePresetPill({
+        slate: MuleBossSlate.from(CRA_KEYS),
+        selectedBosses: CRA_KEYS,
+        partySizes: {},
+        userPresets: [userPreset],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
     expect(result.current.matchedUserPreset).toBe(userPreset);
@@ -54,7 +70,12 @@ describe('usePresetPill', () => {
     const customKeys = [BALDRIX_KEY, HORNTAIL_DAILY];
     const userPreset = preset('p1', 'Mine', customKeys);
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: customKeys, partySizes: {}, userPresets: [userPreset] }),
+      usePresetPill({
+        slate: MuleBossSlate.from(customKeys),
+        selectedBosses: customKeys,
+        partySizes: {},
+        userPresets: [userPreset],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
     expect(result.current.matchedUserPreset).toBe(userPreset);
@@ -62,7 +83,12 @@ describe('usePresetPill', () => {
 
   it('returns CUSTOM (no match) when ≥1 slate key but no User Preset Match and no canonical match', () => {
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: [BALDRIX_KEY], partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from([BALDRIX_KEY]),
+        selectedBosses: [BALDRIX_KEY],
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
     expect(result.current.matchedUserPreset).toBeNull();
@@ -71,7 +97,12 @@ describe('usePresetPill', () => {
   it('demotes a CRA-equal slate to CUSTOM when a daily key is present (Full-Slate Equality)', () => {
     const keys = [...CRA_KEYS, HORNTAIL_DAILY];
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: keys, partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from(keys),
+        selectedBosses: keys,
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
   });
@@ -81,34 +112,48 @@ describe('usePresetPill', () => {
     const bmExtreme = `${blackMage.id}:extreme:monthly`;
     const keys = [...CRA_KEYS, bmExtreme];
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: keys, partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from(keys),
+        selectedBosses: keys,
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
   });
 
   it('lights CUSTOM on a daily-only slate', () => {
     const { result } = renderHook(() =>
-      usePresetPill({ selectedBosses: [HORNTAIL_DAILY], partySizes: {}, userPresets: [] }),
+      usePresetPill({
+        slate: MuleBossSlate.from([HORNTAIL_DAILY]),
+        selectedBosses: [HORNTAIL_DAILY],
+        partySizes: {},
+        userPresets: [],
+      }),
     );
     expect(result.current.activePill).toBe('CUSTOM');
   });
 
   it('returned object identity is stable across rerenders that do not change inputs', () => {
     const stableSelected: string[] = CRA_KEYS as string[];
+    const stableSlate = MuleBossSlate.from(stableSelected);
     const stablePartySizes: Record<string, number> = {};
     const stableUserPresets: UserPreset[] = [];
     const { result, rerender } = renderHook(
       ({
+        slate,
         selectedBosses,
         partySizes,
         userPresets,
       }: {
+        slate: MuleBossSlate;
         selectedBosses: string[];
         partySizes: Record<string, number>;
         userPresets: UserPreset[];
-      }) => usePresetPill({ selectedBosses, partySizes, userPresets }),
+      }) => usePresetPill({ slate, selectedBosses, partySizes, userPresets }),
       {
         initialProps: {
+          slate: stableSlate,
           selectedBosses: stableSelected,
           partySizes: stablePartySizes,
           userPresets: stableUserPresets,
@@ -121,6 +166,7 @@ describe('usePresetPill', () => {
 
     // Rerender with the same input references — memo should preserve identity.
     rerender({
+      slate: stableSlate,
       selectedBosses: stableSelected,
       partySizes: stablePartySizes,
       userPresets: stableUserPresets,
@@ -131,7 +177,12 @@ describe('usePresetPill', () => {
   it('returned object identity changes when selectedBosses changes', () => {
     const { result, rerender } = renderHook(
       ({ selectedBosses }: { selectedBosses: string[] }) =>
-        usePresetPill({ selectedBosses, partySizes: {}, userPresets: [] }),
+        usePresetPill({
+          slate: MuleBossSlate.from(selectedBosses),
+          selectedBosses,
+          partySizes: {},
+          userPresets: [],
+        }),
       { initialProps: { selectedBosses: [] as string[] } },
     );
 
