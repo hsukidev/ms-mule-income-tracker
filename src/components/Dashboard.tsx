@@ -23,6 +23,7 @@ import { lensMules } from '../data/worlds';
 import { useMuleActions } from '../hooks/useMuleActions';
 import { useBulkDragPaint } from '../hooks/useBulkDragPaint';
 import { useWorldIncome } from '../modules/worldIncome';
+import { rosterRowMetrics, type RosterRowMetrics } from './rosterRowMetrics';
 import { MuleCharacterCard } from './MuleCharacterCard';
 import { MuleDetailDrawer } from './MuleDetailDrawer';
 import { RosterListView } from './RosterListView';
@@ -76,6 +77,22 @@ export function Dashboard() {
   // deferred list separately to absorb boss-matrix burst updates.
   const worldIncome = useWorldIncome(mulesInWorld);
   const capPerMule = worldIncome.perMule;
+
+  // Per-mule metrics threaded into both Card and Row from a single source so
+  // the **Contributing Mule** predicate evaluates against the same numbers
+  // across modes. Memoized on mules + worldIncome so each card's metrics
+  // object identity is stable across drawer-edit / bulk-toggle re-renders,
+  // preserving the MuleCharacterCard memo barrier.
+  const cardMetrics = useMemo(() => {
+    const m = new Map<string, RosterRowMetrics>();
+    for (const mule of mulesInWorld) {
+      m.set(
+        mule.id,
+        rosterRowMetrics(mule, capPerMule.get(mule.id), worldIncome.totalContributedMeso),
+      );
+    }
+    return m;
+  }, [mulesInWorld, capPerMule, worldIncome.totalContributedMeso]);
 
   // Split sensors so mouse stays instant (distance: 0) while touch gates
   // behind a 250ms long-press — a unified PointerSensor would delay desktop
@@ -256,6 +273,7 @@ export function Dashboard() {
                   >
                     {mulesInWorld.map((mule) => {
                       const contribution = capPerMule.get(mule.id);
+                      const metrics = cardMetrics.get(mule.id)!;
                       return (
                         <MuleCharacterCard
                           key={mule.id}
@@ -268,6 +286,7 @@ export function Dashboard() {
                           isPaintEngaged={isPaintEngaged}
                           droppedKeys={contribution?.droppedKeys}
                           postCapIncomeMeso={contribution?.contributedMeso ?? 0}
+                          metrics={metrics}
                         />
                       );
                     })}

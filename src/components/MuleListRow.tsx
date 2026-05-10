@@ -11,6 +11,7 @@ import { MetricTooltip } from './MetricTooltip';
 import { NotesTooltipTrigger } from './RosterItem/NotesTooltipTrigger';
 import { CapDropTooltipTrigger } from './RosterItem/CapDropTooltipTrigger';
 import { SelectionIndicator } from './RosterItem/SelectionIndicator';
+import { isContributingMule } from './RosterItem/contributingMule';
 import weeklyCrystalPng from '../assets/weekly-crystal.png';
 import dailyCrystalPng from '../assets/daily-crystal.png';
 
@@ -152,10 +153,9 @@ export const MuleListRow = memo(function MuleListRow({
     userSelect: 'none',
   };
 
-  const incomeColor =
-    mule.active && (metrics.weeklyCount > 0 || metrics.dailyCount > 0)
-      ? 'var(--accent-raw, var(--accent))'
-      : 'var(--dim, var(--surface-dim))';
+  const incomeColor = isContributingMule(mule, metrics)
+    ? 'var(--accent-raw, var(--accent))'
+    : 'var(--dim, var(--surface-dim))';
 
   return (
     <div

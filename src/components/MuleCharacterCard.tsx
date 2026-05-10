@@ -13,6 +13,7 @@ import { ROSTER_CARD_ASPECT, ROSTER_CARD_MIN_HEIGHT } from './rosterCardContract
 import { NotesTooltipTrigger } from './RosterItem/NotesTooltipTrigger';
 import { CapDropTooltipTrigger } from './RosterItem/CapDropTooltipTrigger';
 import { SelectionIndicator } from './RosterItem/SelectionIndicator';
+import { isContributingMule } from './RosterItem/contributingMule';
 
 interface MuleCharacterCardProps {
   mule: Mule;
@@ -34,6 +35,12 @@ interface MuleCharacterCardProps {
   // Dashboard level so the card, the row, the pie chart, and the KPI all
   // read the same number. Defaults to 0 (no income) when omitted.
   postCapIncomeMeso?: number;
+  // Per-mule cadence counts threaded from the Dashboard the same way
+  // MuleListRow already receives them. Drives the **Contributing Mule**
+  // predicate behind the income-line accent tint, so Card and Row stay in
+  // sync by construction. Object identity must be stable across renders
+  // (memoize at the Dashboard level) to preserve the outer memo barrier.
+  metrics: { weeklyCount: number; dailyCount: number };
 }
 
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
@@ -56,18 +63,18 @@ const MuleCardInner = memo(function MuleCardInner({
   hideLevelBadge = false,
   droppedKeys,
   postCapIncomeMeso,
+  metrics,
 }: {
   mule: Mule;
   hideLevelBadge?: boolean;
   droppedKeys?: ReadonlyMap<SlateKey, number>;
   postCapIncomeMeso: number;
+  metrics: { weeklyCount: number; dailyCount: number };
 }) {
   const { abbreviated: potentialIncome } = useFormattedIncome(postCapIncomeMeso);
-  const hasBosses = mule.selectedBosses.length > 0;
-  const incomeColor =
-    mule.active && hasBosses
-      ? 'var(--accent-raw, var(--accent))'
-      : 'var(--dim, var(--surface-dim))';
+  const incomeColor = isContributingMule(mule, metrics)
+    ? 'var(--accent-raw, var(--accent))'
+    : 'var(--dim, var(--surface-dim))';
   const notes = hideLevelBadge ? '' : (mule.notes ?? '');
   const dropped: ReadonlyMap<SlateKey, number> = hideLevelBadge
     ? EMPTY_DROPPED
@@ -197,6 +204,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
   isPaintEngaged = false,
   droppedKeys,
   postCapIncomeMeso = 0,
+  metrics,
 }: MuleCharacterCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mule.id,
@@ -304,6 +312,7 @@ export const MuleCharacterCard = memo(function MuleCharacterCard({
           hideLevelBadge={bulkMode}
           droppedKeys={droppedKeys}
           postCapIncomeMeso={postCapIncomeMeso}
+          metrics={metrics}
         />
 
         {bulkMode && (

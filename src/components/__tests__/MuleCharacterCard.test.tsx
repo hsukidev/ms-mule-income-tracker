@@ -43,6 +43,22 @@ interface RenderCardOptions {
    * — under-cap mules have post-cap === potential.
    */
   postCapIncomeMeso?: number;
+  /**
+   * Per-mule cadence counts. Defaults to counts derived from
+   * `mule.selectedBosses` so existing tests that assert accent color on a
+   * weekly-boss-selected mule continue to pass unchanged.
+   */
+  metrics?: { weeklyCount: number; dailyCount: number };
+}
+
+function deriveMetrics(selectedBosses: readonly string[]) {
+  let weeklyCount = 0;
+  let dailyCount = 0;
+  for (const key of selectedBosses) {
+    if (key.endsWith(':weekly')) weeklyCount++;
+    else if (key.endsWith(':daily')) dailyCount++;
+  }
+  return { weeklyCount, dailyCount };
 }
 
 function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) {
@@ -59,6 +75,7 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
       partySizes: mule.partySizes,
       worldId: mule.worldId,
     }).raw;
+  const metrics = options?.metrics ?? deriveMetrics(mule.selectedBosses);
   return {
     ...render(
       <DndContext>
@@ -72,6 +89,7 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
             onToggleSelect={onToggleSelect}
             droppedKeys={options?.droppedKeys}
             postCapIncomeMeso={postCapIncomeMeso}
+            metrics={metrics}
           />
         </SortableContext>
       </DndContext>,
@@ -221,6 +239,25 @@ describe('MuleCharacterCard', () => {
     const incomeSpans = screen.getAllByText('504M');
     for (const span of incomeSpans) {
       expect(span.style.color).toContain('accent');
+    }
+  });
+
+  it('renders active monthly-only mule income line in dim (Card View bug fix — issue #265)', () => {
+    // Black Mage Hard is monthly cadence and earns 0 meso this week per
+    // **Monthly Income Regression**. Pre-fix Card painted accent because
+    // its predicate was `selectedBosses.length > 0`; now it shares the
+    // canonical `isContributingMule(mule, metrics)` predicate with Row.
+    const HARD_BLACK_MAGE_MONTHLY = `${bosses.find((b) => b.family === 'black-mage')!.id}:hard:monthly`;
+    renderCard(
+      { active: true, selectedBosses: [HARD_BLACK_MAGE_MONTHLY] },
+      { metrics: { weeklyCount: 0, dailyCount: 0 }, postCapIncomeMeso: 0 },
+    );
+    const incomeSpans = screen.getAllByText('0');
+    const colored = incomeSpans.find((s) => s.style.color.includes('dim'));
+    expect(colored).toBeTruthy();
+    // And no accent tint on any '0' candidate.
+    for (const s of incomeSpans) {
+      expect(s.style.color).not.toContain('accent');
     }
   });
 
@@ -435,6 +472,7 @@ describe('MuleCharacterCard', () => {
               bulkMode={false}
               selected={false}
               onToggleSelect={vi.fn()}
+              metrics={{ weeklyCount: 0, dailyCount: 0 }}
             />
           </SortableContext>
         </DndContext>,
