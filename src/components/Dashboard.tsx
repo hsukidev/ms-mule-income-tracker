@@ -80,10 +80,10 @@ export function Dashboard() {
 
   // Per-mule metrics threaded into both Card and Row from a single source so
   // the **Contributing Mule** predicate evaluates against the same numbers
-  // across modes. Memoized on mules + worldIncome so each card's metrics
+  // across modes. Memoized on mules + worldIncome so each item's metrics
   // object identity is stable across drawer-edit / bulk-toggle re-renders,
-  // preserving the MuleCharacterCard memo barrier.
-  const cardMetrics = useMemo(() => {
+  // preserving the MuleCharacterCard / MuleListRow memo barriers.
+  const metricsByMule = useMemo(() => {
     const m = new Map<string, RosterRowMetrics>();
     for (const mule of mulesInWorld) {
       m.set(
@@ -255,7 +255,7 @@ export function Dashboard() {
                 {display === 'list' ? (
                   <RosterListView
                     mules={mulesInWorld}
-                    worldIncome={worldIncome}
+                    metricsByMule={metricsByMule}
                     onCardClick={handleCardClick}
                     bulkMode={bulkMode}
                     toDelete={toDelete}
@@ -272,8 +272,7 @@ export function Dashboard() {
                     }}
                   >
                     {mulesInWorld.map((mule) => {
-                      const contribution = capPerMule.get(mule.id);
-                      const metrics = cardMetrics.get(mule.id)!;
+                      const metrics = metricsByMule.get(mule.id)!;
                       return (
                         <MuleCharacterCard
                           key={mule.id}
@@ -284,8 +283,8 @@ export function Dashboard() {
                           selected={toDelete.has(mule.id)}
                           onToggleSelect={toggleDelete}
                           isPaintEngaged={isPaintEngaged}
-                          droppedKeys={contribution?.droppedKeys}
-                          postCapIncomeMeso={contribution?.contributedMeso ?? 0}
+                          droppedKeys={metrics.droppedKeys}
+                          postCapIncomeMeso={metrics.postCapMeso}
                           metrics={metrics}
                         />
                       );

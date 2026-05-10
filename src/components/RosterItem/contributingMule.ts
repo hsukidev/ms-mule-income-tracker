@@ -1,5 +1,11 @@
 import type { Mule } from '../../types';
 
+/** Inputs to `isContributingMule` — the cadence-count subset of `RosterRowMetrics`. */
+export interface ContributingMuleMetrics {
+  weeklyCount: number;
+  dailyCount: number;
+}
+
 /**
  * Canonical **Contributing Mule** predicate — the one rule behind the income
  * line's accent tint in both **Card View** and **List View**. A mule
@@ -10,7 +16,7 @@ import type { Mule } from '../../types';
  */
 export function isContributingMule(
   mule: Pick<Mule, 'active'>,
-  metrics: { weeklyCount: number; dailyCount: number },
+  metrics: ContributingMuleMetrics,
 ): boolean {
   return mule.active && metrics.weeklyCount + metrics.dailyCount > 0;
 }

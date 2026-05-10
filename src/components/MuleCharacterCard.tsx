@@ -13,7 +13,7 @@ import { ROSTER_CARD_ASPECT, ROSTER_CARD_MIN_HEIGHT } from './rosterCardContract
 import { NotesTooltipTrigger } from './RosterItem/NotesTooltipTrigger';
 import { CapDropTooltipTrigger } from './RosterItem/CapDropTooltipTrigger';
 import { SelectionIndicator } from './RosterItem/SelectionIndicator';
-import { isContributingMule } from './RosterItem/contributingMule';
+import { isContributingMule, type ContributingMuleMetrics } from './RosterItem/contributingMule';
 
 interface MuleCharacterCardProps {
   mule: Mule;
@@ -40,7 +40,7 @@ interface MuleCharacterCardProps {
   // predicate behind the income-line accent tint, so Card and Row stay in
   // sync by construction. Object identity must be stable across renders
   // (memoize at the Dashboard level) to preserve the outer memo barrier.
-  metrics: { weeklyCount: number; dailyCount: number };
+  metrics: ContributingMuleMetrics;
 }
 
 // `--destructive` is stored as `hsl(...)`, not a raw triplet — blend via
@@ -69,7 +69,7 @@ const MuleCardInner = memo(function MuleCardInner({
   hideLevelBadge?: boolean;
   droppedKeys?: ReadonlyMap<SlateKey, number>;
   postCapIncomeMeso: number;
-  metrics: { weeklyCount: number; dailyCount: number };
+  metrics: ContributingMuleMetrics;
 }) {
   const { abbreviated: potentialIncome } = useFormattedIncome(postCapIncomeMeso);
   const incomeColor = isContributingMule(mule, metrics)

@@ -15,6 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { WorldIncome } from '../../modules/worldIncome';
+import { rosterRowMetrics, type RosterRowMetrics } from '../rosterRowMetrics';
 import { RosterListView } from '../RosterListView';
 import type { Mule } from '../../types';
 
@@ -48,13 +49,19 @@ function Harness({ initial }: { initial: Mule[] }) {
     }
   }
   const worldIncome = WorldIncome.of(order);
+  const metricsByMule = new Map<string, RosterRowMetrics>(
+    order.map((m) => [
+      m.id,
+      rosterRowMetrics(m, worldIncome.perMule.get(m.id), worldIncome.totalContributedMeso),
+    ]),
+  );
   return (
     <div>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <SortableContext items={order.map((m) => m.id)} strategy={verticalListSortingStrategy}>
           <RosterListView
             mules={order}
-            worldIncome={worldIncome}
+            metricsByMule={metricsByMule}
             onCardClick={vi.fn()}
             bulkMode={false}
             toDelete={new Set()}

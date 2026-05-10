@@ -14,6 +14,8 @@ import type { Mule } from '../../types';
 import { bosses } from '../../data/bosses';
 import type { SlateKey } from '../../data/muleBossSlate';
 import { Income } from '../../modules/income';
+import { rosterRowMetrics } from '../rosterRowMetrics';
+import type { ContributingMuleMetrics } from '../RosterItem/contributingMule';
 
 const LUCID = bosses.find((b) => b.family === 'lucid')!.id;
 const HILLA = bosses.find((b) => b.family === 'hilla')!.id;
@@ -45,20 +47,11 @@ interface RenderCardOptions {
   postCapIncomeMeso?: number;
   /**
    * Per-mule cadence counts. Defaults to counts derived from
-   * `mule.selectedBosses` so existing tests that assert accent color on a
-   * weekly-boss-selected mule continue to pass unchanged.
+   * `mule.selectedBosses` (via the canonical `rosterRowMetrics`) so existing
+   * tests that assert accent color on a weekly-boss-selected mule continue
+   * to pass unchanged.
    */
-  metrics?: { weeklyCount: number; dailyCount: number };
-}
-
-function deriveMetrics(selectedBosses: readonly string[]) {
-  let weeklyCount = 0;
-  let dailyCount = 0;
-  for (const key of selectedBosses) {
-    if (key.endsWith(':weekly')) weeklyCount++;
-    else if (key.endsWith(':daily')) dailyCount++;
-  }
-  return { weeklyCount, dailyCount };
+  metrics?: ContributingMuleMetrics;
 }
 
 function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) {
@@ -75,7 +68,7 @@ function renderCard(overrides: Partial<Mule> = {}, options?: RenderCardOptions) 
       partySizes: mule.partySizes,
       worldId: mule.worldId,
     }).raw;
-  const metrics = options?.metrics ?? deriveMetrics(mule.selectedBosses);
+  const metrics = options?.metrics ?? rosterRowMetrics(mule, undefined, 0);
   return {
     ...render(
       <DndContext>

@@ -1,14 +1,16 @@
-import { useMemo } from 'react';
 import type { Mule } from '../types';
-import type { WorldIncome } from '../modules/worldIncome';
 import { useMatchMedia } from '../hooks/useMatchMedia';
-import { rosterRowMetrics } from './rosterRowMetrics';
+import type { RosterRowMetrics } from './rosterRowMetrics';
 import { MuleListRow } from './MuleListRow';
 import { AddCard } from './AddCard';
 
 interface RosterListViewProps {
   mules: readonly Mule[];
-  worldIncome: WorldIncome;
+  /** Per-mule metrics keyed by mule id. Built once at the Dashboard level so
+   * Card and Row evaluate the **Contributing Mule** predicate against the
+   * same numbers (see `Dashboard.metricsByMule`). Each mule in `mules` must
+   * have a corresponding entry. */
+  metricsByMule: ReadonlyMap<string, RosterRowMetrics>;
   onCardClick: (id: string) => void;
   bulkMode: boolean;
   toDelete: ReadonlySet<string>;
@@ -19,7 +21,7 @@ interface RosterListViewProps {
 
 export function RosterListView({
   mules,
-  worldIncome,
+  metricsByMule,
   onCardClick,
   bulkMode,
   toDelete,
@@ -32,35 +34,25 @@ export function RosterListView({
   // doesn't open 50 matchMedia listeners.
   const forceAbbreviated = useMatchMedia('(max-width: 634px)');
 
-  const rowMetrics = useMemo(
-    () =>
-      mules.map((mule) => ({
-        mule,
-        metrics: rosterRowMetrics(
-          mule,
-          worldIncome.perMule.get(mule.id),
-          worldIncome.totalContributedMeso,
-        ),
-      })),
-    [mules, worldIncome.perMule, worldIncome.totalContributedMeso],
-  );
-
   return (
     <div data-testid="roster-list" style={{ display: 'grid', gap: 'var(--row-vgap, 8px)' }}>
-      {rowMetrics.map(({ mule, metrics }) => (
-        <MuleListRow
-          key={mule.id}
-          mule={mule}
-          metrics={metrics}
-          postCapIncomeMeso={metrics.postCapMeso}
-          onClick={onCardClick}
-          bulkMode={bulkMode}
-          selected={toDelete.has(mule.id)}
-          onToggleSelect={onToggleSelect}
-          isPaintEngaged={isPaintEngaged}
-          forceAbbreviated={forceAbbreviated}
-        />
-      ))}
+      {mules.map((mule) => {
+        const metrics = metricsByMule.get(mule.id)!;
+        return (
+          <MuleListRow
+            key={mule.id}
+            mule={mule}
+            metrics={metrics}
+            postCapIncomeMeso={metrics.postCapMeso}
+            onClick={onCardClick}
+            bulkMode={bulkMode}
+            selected={toDelete.has(mule.id)}
+            onToggleSelect={onToggleSelect}
+            isPaintEngaged={isPaintEngaged}
+            forceAbbreviated={forceAbbreviated}
+          />
+        );
+      })}
       {!bulkMode && onAddMule && <AddCard onClick={onAddMule} />}
     </div>
   );
